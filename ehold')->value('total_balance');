@@ -1,0 +1,15 @@
+[90m= [39m[34;4mIlluminate\Support\Collection[39;24m {#5405
+    [34mall[39m: [
+      {#5403
+        +"[1mtransaction_type[22m": "[32mdeposit[39m",
+        +"[1mtotal_weight[22m": "[32m7.50[39m",
+        +"[1mtotal_amount[22m": "[32m47.50[39m",
+      },
+      {#5400
+        +"[1mtransaction_type[22m": "[32mwithdraw[39m",
+        +"[1mtotal_weight[22m": "[32m0.00[39m",
+        +"[1mtotal_amount[22m": "[32m50.00[39m",
+      },
+    ],
+  }
+
