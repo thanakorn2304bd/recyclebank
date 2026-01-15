@@ -226,3 +226,68 @@ CREATE TABLE log_activity (
     FOREIGN KEY (user_id) REFERENCES user_account(user_id)
     ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE `household`
+  ADD COLUMN `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE `member`
+  ADD COLUMN `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE `material`
+  ADD COLUMN `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+ALTER TABLE `material_category`
+  ADD COLUMN `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+-- =========================================================
+-- ADD INDEXES (PERFORMANCE & FK)
+-- =========================================================
+
+-- household
+ALTER TABLE household
+  ADD INDEX idx_household_community_id (community_id),
+  ADD INDEX idx_household_created_by (created_by);
+
+-- member
+ALTER TABLE member
+  ADD INDEX idx_member_household_id (household_id),
+  ADD INDEX idx_member_id_card (id_card);
+
+-- user_account
+ALTER TABLE user_account
+  ADD INDEX idx_user_account_household_id (household_id),
+  ADD INDEX idx_user_account_staff_id (staff_id);
+
+-- material
+ALTER TABLE material
+  ADD INDEX idx_material_category_id (category_id),
+  ADD INDEX idx_material_name (material_name);
+
+-- material_price
+ALTER TABLE material_price
+  ADD INDEX idx_material_price_material_id (material_id),
+  ADD INDEX idx_material_price_created_by (created_by),
+  ADD INDEX idx_material_price_effective (material_id, effective_date, expired_date);
+
+-- transaction
+ALTER TABLE `transaction`
+  ADD INDEX idx_transaction_household_id (household_id),
+  ADD INDEX idx_transaction_recorded_by (recorded_by),
+  ADD INDEX idx_transaction_date (transaction_date),
+  ADD INDEX idx_transaction_household_date (household_id, transaction_date);
+
+-- transaction_detail
+ALTER TABLE transaction_detail
+  ADD INDEX idx_transaction_detail_transaction_id (transaction_id),
+  ADD INDEX idx_transaction_detail_material_id (material_id);
+
+-- log_activity
+ALTER TABLE log_activity
+  ADD INDEX idx_log_activity_user_id (user_id),
+  ADD INDEX idx_log_activity_timestamp (`timestamp`),
+  ADD INDEX idx_log_activity_user_time (user_id, `timestamp`),
+  ADD INDEX idx_log_activity_module (module);
