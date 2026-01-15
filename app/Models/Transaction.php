@@ -40,14 +40,6 @@ class Transaction extends Model
     {
         return $this->hasMany(TransactionDetail::class, 'transaction_id', 'transaction_id');
     }
-    public function householdHis()
-    {
-        return $this->belongsTo(\App\Models\Household::class, 'household_id', 'household_id');
-    }
-
-    public function detailsHis()
-    {
-        return $this->hasMany(\App\Models\TransactionDetail::class, 'transaction_id', 'transaction_id');
-    }
+    
 
 }
