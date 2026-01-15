@@ -30,8 +30,10 @@ class TransactionDetail extends Model
         return $this->belongsTo(Transaction::class, 'transaction_id', 'transaction_id');
     }
 
+    
     public function material()
     {
-        return $this->belongsTo(Material::class, 'material_id', 'material_id');
+        return $this->belongsTo(\App\Models\Material::class, 'material_id', 'material_id');
     }
+
 }

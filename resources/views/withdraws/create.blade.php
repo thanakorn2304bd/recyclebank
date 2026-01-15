@@ -35,7 +35,5 @@
     <a class="btn btn-secondary mt-3" href="{{ route('materials.index') }}">กลับหน้า “วัสดุ”</a>
   </form>
 
-  <div class="alert alert-info mt-3">
-    ตอนนี้ระบบกัน “ถอนเกินยอดคงเหลือ” ไว้แล้ว ถ้าจะให้ติดลบได้ค่อยปรับ logic ใน WithdrawController
-  </div>
+  
 </x-layouts.admin>

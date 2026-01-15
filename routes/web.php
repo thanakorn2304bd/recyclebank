@@ -5,6 +5,7 @@ use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MaterialPriceController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\WithdrawController;
+use App\Http\Controllers\TransactionHistoryController;
 
 Route::get('/', function () {
     return redirect()->route('materials.index');
@@ -22,3 +23,7 @@ Route::post('deposits', [DepositController::class, 'store'])->name('deposits.sto
 
 Route::get('withdraws/create', [WithdrawController::class, 'create'])->name('withdraws.create');
 Route::post('withdraws', [WithdrawController::class, 'store'])->name('withdraws.store');
+
+Route::get('transactions', [TransactionHistoryController::class, 'index'])->name('transactions.index');
+Route::get('households/{household}/transactions', [TransactionHistoryController::class, 'household'])->name('transactions.household');
+Route::get('transactions/{transaction}', [TransactionHistoryController::class, 'show'])->name('transactions.show');

@@ -13,6 +13,7 @@
     <div class="navbar-nav">
       <a class="nav-link" href="{{ route('deposits.create') }}">ฝาก/รับซื้อ</a>
       <a class="nav-link" href="{{ route('withdraws.create') }}">ถอน</a>
+      <a class="nav-link" href="{{ route('transactions.index') }}">ประวัติรายการ</a>
       <a class="nav-link" href="{{ route('material-categories.index') }}">หมวดวัสดุ</a>
       <a class="nav-link" href="{{ route('materials.index') }}">วัสดุ</a>
       <a class="nav-link" href="{{ route('material-prices.index') }}">ราคา</a>

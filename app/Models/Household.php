@@ -55,4 +55,9 @@ class Household extends Model
     {
         return $this->hasMany(UserAccount::class, 'household_id', 'household_id');
     }
+    public function transactionsHis()
+    {
+        return $this->hasMany(\App\Models\Transaction::class, 'household_id', 'household_id');
+    }
+
 }
