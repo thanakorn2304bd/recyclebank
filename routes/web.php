@@ -1,20 +1,24 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MaterialCategoryController;
+use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\MaterialPriceController;
+use App\Http\Controllers\DepositController;
+use App\Http\Controllers\WithdrawController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('materials.index');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::resource('material-categories', MaterialCategoryController::class)->except(['show']);
+Route::resource('materials', MaterialController::class)->except(['show']);
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
+// ราคา: ใช้ resource + เพิ่ม route ดู “ราคาปัจจุบัน” ต่อวัสดุ
+Route::resource('material-prices', MaterialPriceController::class)->except(['show', 'edit', 'update']);
+Route::get('materials/{material}/prices', [MaterialPriceController::class, 'materialPrices'])->name('materials.prices');
 
-require __DIR__.'/auth.php';
+Route::get('deposits/create', [DepositController::class, 'create'])->name('deposits.create');
+Route::post('deposits', [DepositController::class, 'store'])->name('deposits.store');
+
+Route::get('withdraws/create', [WithdrawController::class, 'create'])->name('withdraws.create');
+Route::post('withdraws', [WithdrawController::class, 'store'])->name('withdraws.store');
