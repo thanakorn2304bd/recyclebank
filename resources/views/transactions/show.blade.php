@@ -18,7 +18,11 @@
 
     <div class="d-flex gap-2">
       <a class="btn btn-outline-secondary" href="{{ route('transactions.index') }}">กลับ</a>
-      <a class="btn btn-outline-primary" href="#" onclick="window.print(); return false;">พิมพ์</a>
+      <a class="btn btn-success"
+       href="{{ route('transactions.receipt', $transaction) }}"
+       target="_blank">
+        ใบเสร็จ PDF (A5)
+      </a>
     </div>
   </div>
 

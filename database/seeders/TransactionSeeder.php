@@ -28,8 +28,8 @@ class TransactionSeeder extends Seeder
 
         // ====== 1) DEPOSIT ตัวอย่าง (ฝากจากการขายวัสดุ) ======
         $items = [
-            ['name' => 'ขวด PET', 'weight' => 2.50],
-            ['name' => 'กระดาษลัง', 'weight' => 5.00],
+            ['name' => 'เพทใส', 'weight' => 2.50],
+            ['name' => 'ลังกระดาษ', 'weight' => 5.00],
         ];
 
         $details = [];

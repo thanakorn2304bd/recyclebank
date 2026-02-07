@@ -13,6 +13,7 @@
     <div class="navbar-nav">
       <a class="nav-link" href="{{ route('material-categories.index') }}">หมวดวัสดุ</a>
       <a class="nav-link" href="{{ route('materials.index') }}">วัสดุ</a>
+      <a class="nav-link" href="{{ route('households.index') }}">ครัวเรือน</a>
       <a class="nav-link" href="{{ route('material-prices.index') }}">ราคา</a>
     </div>
   </div>

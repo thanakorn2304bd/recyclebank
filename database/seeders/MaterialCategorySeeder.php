@@ -9,8 +9,23 @@ class MaterialCategorySeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('material_category')->updateOrInsert(['category_name' => 'พลาสติก'], ['category_name' => 'พลาสติก']);
-        DB::table('material_category')->updateOrInsert(['category_name' => 'กระดาษ'], ['category_name' => 'กระดาษ']);
-        DB::table('material_category')->updateOrInsert(['category_name' => 'โลหะ'], ['category_name' => 'โลหะ']);
+        $categories = [
+            'โลหะ',
+            'อลูมิเนียม',
+            'แบตเตอรี่',
+            'กระดาษ',
+            'เหล็ก',
+            'พลาสติก',
+            'แก้ว',
+            'เบ็ดเตล็ด',
+            'อิเล็กทรอนิก/เครื่องใช้ไฟฟ้า',
+        ];
+
+        foreach ($categories as $name) {
+            DB::table('material_category')->updateOrInsert(
+                ['category_name' => $name],
+                ['category_name' => $name]
+            );
+        }
     }
 }

@@ -9,13 +9,16 @@ use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class DepositController extends Controller
 {
     public function create()
     {
-        $households = Household::orderBy('account_no')->get(['household_id','account_no','contact_person','total_balance']);
-        $materials  = Material::where('is_active', 1)->orderBy('material_name')->get(['material_id','material_name','unit']);
+        $materials  = Material::with('category')
+            ->where('is_active', 1)
+            ->orderBy('material_name')
+            ->get(['material_id','material_name','unit','category_id']);
 
         // ส่ง “ราคาปัจจุบัน” ให้หน้าเว็บใช้แสดง/คำนวณ
         // ดึงแบบ 1 query ต่อ material ไม่ดี -> ใช้ subquery เลือกราคาที่ effective_date ล่าสุด
@@ -33,13 +36,14 @@ class DepositController extends Controller
             ->map(fn($rows) => (float) $rows->first()->price)
             ->toArray();
 
-        return view('deposits.create', compact('households', 'materials', 'currentPrices'));
+        return view('deposits.create', compact('materials', 'currentPrices'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'household_id' => ['required','integer','exists:household,household_id'],
+            'community_id' => ['required','string','max:2'],
+            'house_no' => ['required','string','max:20'],
             'transaction_date' => ['required','date'],
 
             // รายการวัสดุ
@@ -48,7 +52,23 @@ class DepositController extends Controller
             'items.*.weight' => ['required','numeric','min:0.01'],
         ]);
 
-        $householdId = (int)$data['household_id'];
+        $communityId = trim($data['community_id']);
+        if (ctype_digit($communityId)) {
+            $communityId = str_pad($communityId, 2, '0', STR_PAD_LEFT);
+        }
+        $houseNo = trim($data['house_no']);
+
+        $household = Household::where('community_id', $communityId)
+            ->where('house_no', $houseNo)
+            ->first(['household_id','account_no','contact_person']);
+
+        if (!$household) {
+            return back()
+                ->withErrors("ไม่พบครัวเรือนสำหรับเลขที่ชุมชน {$communityId} และบ้านเลขที่ {$houseNo}")
+                ->withInput();
+        }
+
+        $householdId = (int)$household->household_id;
         $date = $data['transaction_date'];
 
         // recorded_by: ยังไม่ผูก login user_account ก็ใช้ fallback เป็น user_id ที่มีอยู่จริง
@@ -121,5 +141,52 @@ class DepositController extends Controller
                 ->route('deposits.create')
                 ->with('success', "บันทึกฝาก/รับซื้อสำเร็จ (ยอดรวม " . number_format($totalAmount, 2) . ")");
         });
+    }
+
+    public function lookupHousehold(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'community_id' => ['required','string','max:2'],
+            'house_no' => ['required','string','max:20'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'found' => false,
+                'message' => 'กรุณากรอกเลขที่ชุมชนและบ้านเลขที่ให้ครบถ้วน',
+            ], 422);
+        }
+
+        $communityId = trim($request->input('community_id'));
+        if (ctype_digit($communityId)) {
+            $communityId = str_pad($communityId, 2, '0', STR_PAD_LEFT);
+        }
+        $houseNo = trim($request->input('house_no'));
+
+        $household = Household::with('community')
+            ->where('community_id', $communityId)
+            ->where('house_no', $houseNo)
+            ->first();
+
+        if (!$household) {
+            return response()->json([
+                'found' => false,
+                'message' => "ไม่พบครัวเรือนสำหรับเลขที่ชุมชน {$communityId} และบ้านเลขที่ {$houseNo}",
+            ]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'household' => [
+                'household_id' => $household->household_id,
+                'account_no' => $household->account_no,
+                'contact_person' => $household->contact_person,
+                'total_balance' => (float) $household->total_balance,
+                'community_id' => $household->community_id,
+                'community_name' => $household->community?->community_name,
+                'house_no' => $household->house_no,
+                'active_status' => $household->active_status,
+            ],
+        ]);
     }
 }
