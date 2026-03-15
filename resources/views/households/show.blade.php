@@ -10,6 +10,9 @@
     <div class="d-flex gap-2 flex-wrap">
       <a class="btn btn-outline-secondary" href="{{ route('households.index') }}">กลับ</a>
       @if($isPrivileged)
+        <a class="btn btn-outline-warning" href="{{ route('households.credentials.create', $household) }}">
+          {{ $memberAccount ? 'รีเซ็ตรหัสผ่าน' : 'ตั้งรหัสผ่าน' }}
+        </a>
         <a class="btn btn-outline-primary" href="{{ route('households.edit', $household) }}">แก้ไข</a>
       @endif
       <a class="btn btn-outline-success" href="{{ route('transactions.household', $household) }}">ดู statement</a>
@@ -69,6 +72,25 @@
               {{ $household->created_by ?? '-' }}
             @endif
           </dd>
+
+          <dt class="col-5 text-muted mb-2">ชื่อผู้ใช้</dt>
+          <dd class="col-7 mb-2">{{ $memberAccount?->username ?? 'ยังไม่ได้ตั้งรหัสผ่าน' }}</dd>
+
+          <dt class="col-5 text-muted mb-2">บัญชีเข้าใช้</dt>
+          <dd class="col-7 mb-2">
+            @if($memberAccount)
+              @if($memberAccount->is_active)
+                <span class="badge bg-success">พร้อมใช้งาน</span>
+              @else
+                <span class="badge bg-secondary">ปิดการเข้าใช้งาน</span>
+              @endif
+            @else
+              <span class="text-muted">ยังไม่มีบัญชีเข้าใช้</span>
+            @endif
+          </dd>
+
+          <dt class="col-5 text-muted mb-2">เข้าใช้ล่าสุด</dt>
+          <dd class="col-7 mb-2">{{ $memberAccount?->last_login?->format('d/m/Y H:i') ?? '-' }}</dd>
 
           <dt class="col-5 text-muted mb-0">อัปเดตล่าสุด</dt>
           <dd class="col-7 mb-0">{{ $household->updated_at?->format('d/m/Y H:i') ?? '-' }}</dd>

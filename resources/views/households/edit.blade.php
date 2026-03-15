@@ -54,6 +54,7 @@
           <option value="active" @selected(old('active_status', $household->active_status) === 'active')>ใช้งาน</option>
           <option value="inactive" @selected(old('active_status', $household->active_status) === 'inactive')>ปิด</option>
         </select>
+        <div class="form-text">เมื่อเปลี่ยนเป็น "ใช้งาน" ครัวเรือนนี้จะสามารถเข้าสู่ระบบด้วยบัญชีของตนเองได้</div>
       </div>
 
       <div class="col-md-4">

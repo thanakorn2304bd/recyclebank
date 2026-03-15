@@ -42,6 +42,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('material-categories', MaterialCategoryController::class)->except(['show']);
         Route::resource('materials', MaterialController::class)->except(['show']);
         Route::resource('households', HouseholdController::class)->except(['index', 'show']);
+        Route::get('households/{household}/credentials', [HouseholdController::class, 'createCredentials'])->name('households.credentials.create');
+        Route::post('households/{household}/credentials', [HouseholdController::class, 'storeCredentials'])->name('households.credentials.store');
 
         // ราคา: ใช้ resource + เพิ่ม route ดู “ราคาปัจจุบัน” ต่อวัสดุ
         Route::resource('material-prices', MaterialPriceController::class)->except(['show', 'edit', 'update']);

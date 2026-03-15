@@ -10,6 +10,7 @@
             <x-input-label for="username" value="ชื่อผู้ใช้" />
             <x-text-input id="username" class="block mt-1 w-full" type="text" name="username" :value="old('username')" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('username')" class="mt-2" />
+            <p class="mt-2 text-sm text-gray-500">ครัวเรือนใช้เลขบัญชีเป็นชื่อผู้ใช้ในการเข้าสู่ระบบ</p>
         </div>
 
         <!-- Password -->
@@ -25,6 +26,10 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
+            <a class="underline text-sm text-gray-600 hover:text-emerald-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500" href="{{ route('register') }}">
+                สมัครสมาชิกครัวเรือน
+            </a>
+
             <x-primary-button class="ms-3">
                 เข้าสู่ระบบ
             </x-primary-button>

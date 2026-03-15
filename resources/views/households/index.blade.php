@@ -50,7 +50,7 @@
           <th style="width:140px;">โทรศัพท์</th>
           <th style="width:110px;">สถานะ</th>
           <th style="width:130px;" class="text-end">ยอดคงเหลือ</th>
-          <th style="width:240px;"></th>
+          <th style="width:320px;"></th>
         </tr>
       </thead>
       <tbody>
@@ -78,6 +78,7 @@
             <td class="text-end">
               <a class="btn btn-sm btn-outline-primary me-1" href="{{ route('households.show', $h) }}">ดูรายละเอียด</a>
               @if($isPrivileged)
+                <a class="btn btn-sm btn-outline-warning me-1" href="{{ route('households.credentials.create', $h) }}">รหัสผ่าน</a>
                 <a class="btn btn-sm btn-outline-secondary me-1" href="{{ route('households.edit', $h) }}">แก้ไข</a>
                 <form class="d-inline" method="POST" action="{{ route('households.destroy', $h) }}"
                       onsubmit="return confirm('ลบครัวเรือนนี้?')">
