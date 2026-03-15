@@ -1,10 +1,15 @@
 <x-layouts.admin title="ประวัติรายการ">
+  @php
+    $isPrivileged = in_array(auth()->user()->role, ['admin', 'staff'], true);
+  @endphp
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0">ประวัติรายการ (ทั้งหมด)</h3>
-    <div class="d-flex gap-2">
-      <a class="btn btn-outline-dark" href="{{ route('deposits.create') }}">+ ฝาก/รับซื้อ</a>
-      <a class="btn btn-outline-dark" href="{{ route('withdraws.create') }}">+ ถอน</a>
-    </div>
+    @if($isPrivileged)
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-dark" href="{{ route('deposits.create') }}">+ ฝาก/รับซื้อ</a>
+        <a class="btn btn-outline-dark" href="{{ route('withdraws.create') }}">+ ถอน</a>
+      </div>
+    @endif
   </div>
 
   <form class="row g-2 mb-3">

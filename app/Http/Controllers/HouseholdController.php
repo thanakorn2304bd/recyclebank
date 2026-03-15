@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Community;
 use App\Models\Household;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class HouseholdController extends Controller
@@ -15,7 +16,7 @@ class HouseholdController extends Controller
         $communityId = $request->string('community_id')->toString();
         $status = $request->string('status')->toString();
 
-        $households = Household::query()
+        $householdsQuery = Household::query()
             ->with('community')
             ->when($q, function ($qb) use ($q) {
                 $qb->where(function ($sub) use ($q) {
@@ -26,7 +27,19 @@ class HouseholdController extends Controller
                 });
             })
             ->when($communityId, fn($qb) => $qb->where('community_id', $communityId))
-            ->when($status, fn($qb) => $qb->where('active_status', $status))
+            ->when($status, fn($qb) => $qb->where('active_status', $status));
+
+        if ($this->isMember()) {
+            $memberHouseholdId = $this->memberHouseholdId();
+
+            if ($memberHouseholdId) {
+                $householdsQuery->where('household_id', $memberHouseholdId);
+            } else {
+                $householdsQuery->whereRaw('1 = 0');
+            }
+        }
+
+        $households = $householdsQuery
             ->orderBy('account_no')
             ->paginate(15)
             ->withQueryString();
@@ -58,7 +71,7 @@ class HouseholdController extends Controller
 
         $data['total_balance'] = 0.00;
 
-        $createdBy = session('user_id') ?? DB::table('user_account')->min('user_id');
+        $createdBy = Auth::id() ?? DB::table('user_account')->min('user_id');
         if ($createdBy) {
             $data['created_by'] = $createdBy;
         }
@@ -73,6 +86,19 @@ class HouseholdController extends Controller
     {
         $communities = Community::orderBy('community_id')->get();
         return view('households.edit', compact('household', 'communities'));
+    }
+
+    public function show(Household $household)
+    {
+        $this->ensureCanViewHousehold($household);
+
+        $household->load([
+            'community',
+            'createdByUser',
+            'members' => fn($query) => $query->orderByDesc('is_head')->orderBy('full_name'),
+        ]);
+
+        return view('households.show', compact('household'));
     }
 
     public function update(Request $request, Household $household)
@@ -113,5 +139,28 @@ class HouseholdController extends Controller
 
         return redirect()->route('households.index')
             ->with('success', 'ลบครัวเรือนเรียบร้อย');
+    }
+
+    private function isMember(): bool
+    {
+        return Auth::check() && Auth::user()->role === 'member';
+    }
+
+    private function memberHouseholdId(): ?int
+    {
+        $householdId = Auth::user()?->household_id;
+
+        return $householdId ? (int) $householdId : null;
+    }
+
+    private function ensureCanViewHousehold(Household $household): void
+    {
+        if (! $this->isMember()) {
+            return;
+        }
+
+        if ((int) $household->household_id !== (int) $this->memberHouseholdId()) {
+            abort(403, 'ผู้ใช้ทั่วไปสามารถดูได้เฉพาะข้อมูลของตนเอง');
+        }
     }
 }

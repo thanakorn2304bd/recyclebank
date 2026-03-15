@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Material;
 use App\Models\MaterialPrice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class MaterialPriceController extends Controller
@@ -45,8 +46,7 @@ class MaterialPriceController extends Controller
             'expired_date'   => ['nullable','date','after_or_equal:effective_date'],
         ]);
 
-        // created_by: ถ้ายังไม่มีระบบ login user_account ให้ fallback
-        $createdBy = session('user_id') ?? 1;
+        $createdBy = Auth::id() ?? 1;
 
         DB::transaction(function () use ($data, $createdBy) {
             // ถ้ามี “ราคาที่ active อยู่” (expired_date null) ของวัสดุเดียวกัน

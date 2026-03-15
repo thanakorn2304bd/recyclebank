@@ -1,4 +1,7 @@
 <x-layouts.admin title="Statement ครัวเรือน">
+  @php
+    $isPrivileged = in_array(auth()->user()->role, ['admin', 'staff'], true);
+  @endphp
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h3 class="mb-0">Statement ครัวเรือน</h3>
@@ -22,8 +25,10 @@
     <div class="col-md-6 d-flex align-items-end gap-2">
       <button class="btn btn-outline-primary w-100">กรอง</button>
       <a class="btn btn-outline-secondary w-100" href="{{ route('transactions.household', $household) }}">ล้าง</a>
-      <a class="btn btn-outline-dark w-100" href="{{ route('deposits.create') }}">+ ฝาก</a>
-      <a class="btn btn-outline-dark w-100" href="{{ route('withdraws.create') }}">+ ถอน</a>
+      @if($isPrivileged)
+        <a class="btn btn-outline-dark w-100" href="{{ route('deposits.create') }}">+ ฝาก</a>
+        <a class="btn btn-outline-dark w-100" href="{{ route('withdraws.create') }}">+ ถอน</a>
+      @endif
     </div>
   </form>
 

@@ -4,11 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 
 class ReceiptController extends Controller
 {
     public function receipt(Transaction $transaction)
     {
+        if (
+            Auth::check()
+            && Auth::user()->role === 'member'
+            && (int) $transaction->household_id !== (int) (Auth::user()->household_id ?? 0)
+        ) {
+            abort(403, 'ผู้ใช้ทั่วไปสามารถดูได้เฉพาะข้อมูลของตนเอง');
+        }
+
         $transaction->load([
             'household',
             'details.material',

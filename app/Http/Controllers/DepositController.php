@@ -8,6 +8,7 @@ use App\Models\MaterialPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -71,8 +72,7 @@ class DepositController extends Controller
         $householdId = (int)$household->household_id;
         $date = $data['transaction_date'];
 
-        // recorded_by: ยังไม่ผูก login user_account ก็ใช้ fallback เป็น user_id ที่มีอยู่จริง
-        $recordedBy = session('user_id') ?? DB::table('user_account')->min('user_id') ?? 1;
+        $recordedBy = Auth::id() ?? DB::table('user_account')->min('user_id') ?? 1;
 
         $today = now()->toDateString();
 

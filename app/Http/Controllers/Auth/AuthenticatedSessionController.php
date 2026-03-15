@@ -28,7 +28,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = $request->user();
+        $request->session()->put('user_id', $user->user_id);
+
+        $user->last_login = now();
+        $user->save();
+
+        return redirect()->intended(route('households.index', absolute: false));
     }
 
     /**
@@ -41,6 +47,8 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
+
+        $request->session()->forget('user_id');
 
         return redirect('/');
     }

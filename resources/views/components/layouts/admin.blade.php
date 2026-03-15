@@ -127,6 +127,10 @@
   </style>
 </head>
 <body>
+@php
+  $authUser = auth()->user();
+  $isPrivileged = $authUser && in_array($authUser->role, ['admin', 'staff'], true);
+@endphp
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('main-menu') }}">
@@ -137,15 +141,28 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="rbNavbar">
-      <div class="navbar-nav ms-auto">
-        <a class="nav-link" href="{{ route('deposits.create') }}">ฝาก/รับซื้อ</a>
-        <a class="nav-link" href="{{ route('withdraws.create') }}">ถอน</a>
+      <div class="navbar-nav ms-auto align-items-lg-center">
+        @if($isPrivileged)
+          <a class="nav-link" href="{{ route('deposits.create') }}">ฝาก/รับซื้อ</a>
+          <a class="nav-link" href="{{ route('withdraws.create') }}">ถอน</a>
+        @endif
         <a class="nav-link" href="{{ route('transactions.index') }}">ประวัติรายการ</a>
         <a class="nav-link" href="{{ route('households.index') }}">ครัวเรือน</a>
-        <a class="nav-link" href="{{ route('material-categories.index') }}">หมวดวัสดุ</a>
-        <a class="nav-link" href="{{ route('materials.index') }}">วัสดุ</a>
-        <a class="nav-link" href="{{ route('material-prices.index') }}">ราคา</a>
+        @if($isPrivileged)
+          <a class="nav-link" href="{{ route('material-categories.index') }}">หมวดวัสดุ</a>
+          <a class="nav-link" href="{{ route('materials.index') }}">วัสดุ</a>
+          <a class="nav-link" href="{{ route('material-prices.index') }}">ราคา</a>
+        @endif
       </div>
+      @if($authUser)
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 ms-lg-3 mt-2 mt-lg-0">
+          <span class="small text-muted">{{ $authUser->username }} ({{ $authUser->role }})</span>
+          <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-outline-dark">ออกจากระบบ</button>
+          </form>
+        </div>
+      @endif
     </div>
   </div>
 </nav>

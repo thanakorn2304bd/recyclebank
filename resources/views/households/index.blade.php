@@ -1,7 +1,12 @@
 <x-layouts.admin title="ครัวเรือน">
+  @php
+    $isPrivileged = in_array(auth()->user()->role, ['admin', 'staff'], true);
+  @endphp
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0">ครัวเรือน</h3>
-    <a class="btn btn-primary" href="{{ route('households.create') }}">+ เพิ่มครัวเรือน</a>
+    @if($isPrivileged)
+      <a class="btn btn-primary" href="{{ route('households.create') }}">+ เพิ่มครัวเรือน</a>
+    @endif
   </div>
 
   <form class="row g-2 mb-3">
@@ -45,7 +50,7 @@
           <th style="width:140px;">โทรศัพท์</th>
           <th style="width:110px;">สถานะ</th>
           <th style="width:130px;" class="text-end">ยอดคงเหลือ</th>
-          <th style="width:200px;"></th>
+          <th style="width:240px;"></th>
         </tr>
       </thead>
       <tbody>
@@ -71,12 +76,15 @@
             </td>
             <td class="text-end">{{ number_format((float)$h->total_balance, 2) }}</td>
             <td class="text-end">
-              <a class="btn btn-sm btn-outline-secondary" href="{{ route('households.edit', $h) }}">แก้ไข</a>
-              <form class="d-inline" method="POST" action="{{ route('households.destroy', $h) }}"
-                    onsubmit="return confirm('ลบครัวเรือนนี้?')">
-                @csrf @method('DELETE')
-                <button class="btn btn-sm btn-outline-danger">ลบ</button>
-              </form>
+              <a class="btn btn-sm btn-outline-primary me-1" href="{{ route('households.show', $h) }}">ดูรายละเอียด</a>
+              @if($isPrivileged)
+                <a class="btn btn-sm btn-outline-secondary me-1" href="{{ route('households.edit', $h) }}">แก้ไข</a>
+                <form class="d-inline" method="POST" action="{{ route('households.destroy', $h) }}"
+                      onsubmit="return confirm('ลบครัวเรือนนี้?')">
+                  @csrf @method('DELETE')
+                  <button class="btn btn-sm btn-outline-danger">ลบ</button>
+                </form>
+              @endif
             </td>
           </tr>
         @empty

@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             StaffSeeder::class,
             UserAccountSeeder::class,
             HouseholdSeeder::class,
+            MemberUserAccountSeeder::class,
             MemberSeeder::class,
 
             MaterialCategorySeeder::class,

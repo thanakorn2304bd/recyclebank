@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Household;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class WithdrawController extends Controller
@@ -27,7 +28,7 @@ class WithdrawController extends Controller
         $date = $data['transaction_date'];
         $amount = round((float)$data['amount'], 2);
 
-        $recordedBy = session('user_id') ?? DB::table('user_account')->min('user_id') ?? 1;
+        $recordedBy = Auth::id() ?? DB::table('user_account')->min('user_id') ?? 1;
 
         return DB::transaction(function () use ($householdId, $date, $amount, $recordedBy) {
 
