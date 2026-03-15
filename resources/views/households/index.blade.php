@@ -38,10 +38,10 @@
   </form>
 
   <div class="table-responsive">
-    <table class="table table-striped bg-white">
+    <table class="table table-striped bg-white" data-sortable-table>
       <thead>
         <tr>
-          <th style="width:80px;">ID</th>
+          <th style="width:80px;" data-sort-type="number">ID</th>
           <th style="width:140px;">เลขบัญชี</th>
           <th>ชุมชน</th>
           <th style="width:120px;">บ้านเลขที่</th>
@@ -49,8 +49,8 @@
           <th>ผู้ติดต่อ</th>
           <th style="width:140px;">โทรศัพท์</th>
           <th style="width:110px;">สถานะ</th>
-          <th style="width:130px;" class="text-end">ยอดคงเหลือ</th>
-          <th style="width:320px;"></th>
+          <th style="width:130px;" class="text-end" data-sort-type="number">ยอดคงเหลือ</th>
+          <th style="width:320px;" data-sortable="false"></th>
         </tr>
       </thead>
       <tbody>

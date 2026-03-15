@@ -50,16 +50,16 @@
     </div>
   </form>
 
-  <table class="table table-striped bg-white">
+  <table class="table table-striped bg-white" data-sortable-table>
     <thead>
       <tr>
-        <th style="width:90px;">#</th>
-        <th style="width:140px;">วันที่</th>
+        <th style="width:90px;" data-sort-type="number">#</th>
+        <th style="width:140px;" data-sort-type="date">วันที่</th>
         <th style="width:110px;">ประเภท</th>
         <th>ครัวเรือน</th>
-        <th style="width:130px;" class="text-end">น้ำหนัก</th>
-        <th style="width:140px;" class="text-end">จำนวนเงิน</th>
-        <th style="width:140px;"></th>
+        <th style="width:130px;" class="text-end" data-sort-type="number">น้ำหนัก</th>
+        <th style="width:140px;" class="text-end" data-sort-type="number">จำนวนเงิน</th>
+        <th style="width:140px;" data-sortable="false"></th>
       </tr>
     </thead>
     <tbody>

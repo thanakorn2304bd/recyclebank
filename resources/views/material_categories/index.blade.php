@@ -4,12 +4,12 @@
     <a class="btn btn-primary" href="{{ route('material-categories.create') }}">+ เพิ่มหมวด</a>
   </div>
 
-  <table class="table table-striped bg-white">
+  <table class="table table-striped bg-white" data-sortable-table>
     <thead>
       <tr>
         <th style="width:120px;">ID</th>
         <th>ชื่อหมวด</th>
-        <th style="width:200px;"></th>
+        <th style="width:200px;" data-sortable="false"></th>
       </tr>
     </thead>
     <tbody>

@@ -15,6 +15,17 @@ class HouseholdController extends Controller
 {
     public function index(Request $request)
     {
+        if ($this->isMember()) {
+            $memberHouseholdId = $this->memberHouseholdId();
+
+            if ($memberHouseholdId) {
+                return redirect()->route('households.show', ['household' => $memberHouseholdId]);
+            }
+
+            return redirect()->route('main-menu')
+                ->withErrors('ไม่พบบัญชีครัวเรือนของผู้ใช้นี้');
+        }
+
         $q = $request->string('q')->toString();
         $communityId = $request->string('community_id')->toString();
         $status = $request->string('status')->toString();
@@ -31,16 +42,6 @@ class HouseholdController extends Controller
             })
             ->when($communityId, fn($qb) => $qb->where('community_id', $communityId))
             ->when($status, fn($qb) => $qb->where('active_status', $status));
-
-        if ($this->isMember()) {
-            $memberHouseholdId = $this->memberHouseholdId();
-
-            if ($memberHouseholdId) {
-                $householdsQuery->where('household_id', $memberHouseholdId);
-            } else {
-                $householdsQuery->whereRaw('1 = 0');
-            }
-        }
 
         $households = $householdsQuery
             ->orderBy('account_no')
@@ -70,11 +71,17 @@ class HouseholdController extends Controller
             'register_date' => ['required','date'],
             'active_status' => ['required','in:pending,active,inactive'],
             'accumulated_months' => ['required','integer','min:0'],
+            'members' => ['nullable', 'array'],
+            'members.*.full_name' => ['nullable', 'string', 'max:100'],
+            'members.*.id_card' => ['nullable', 'string', 'max:20'],
+            'members.*.relation' => ['nullable', 'string', 'max:50'],
+            'members.*.is_head' => ['nullable'],
         ], [
             'account_no.size' => 'เลขบัญชีต้องมี 10 หลัก',
             'house_no.regex' => 'บ้านเลขที่ต้องมีตัวเลขอย่างน้อย 1 หลัก',
         ]);
 
+        $members = $this->validatedMembers($data['members'] ?? []);
         $generatedAccountNo = $this->generateAccountNo($data['community_id'], $data['house_no']);
         $data['account_no'] = trim((string) ($data['account_no'] ?? ''));
 
@@ -107,7 +114,12 @@ class HouseholdController extends Controller
             $data['created_by'] = $createdBy;
         }
 
-        $household = Household::create($data);
+        $household = DB::transaction(function () use ($data, $members) {
+            $household = Household::create($data);
+            $this->createMembers($household, $members);
+
+            return $household;
+        });
 
         return redirect()->route('households.credentials.create', $household)
             ->with('success', 'บันทึกข้อมูลครัวเรือนแล้ว กรุณาตั้งรหัสผ่านสำหรับเข้าใช้งาน');
@@ -296,5 +308,61 @@ class HouseholdController extends Controller
         $memberAccount->household_id = $household->household_id;
         $memberAccount->staff_id = null;
         $memberAccount->is_active = $household->active_status !== 'inactive';
+    }
+
+    private function validatedMembers(array $members): array
+    {
+        $normalizedMembers = collect($members)
+            ->map(function ($member) {
+                return [
+                    'full_name' => trim((string) ($member['full_name'] ?? '')),
+                    'id_card' => preg_replace('/\D+/', '', (string) ($member['id_card'] ?? '')) ?? '',
+                    'relation' => trim((string) ($member['relation'] ?? '')),
+                    'is_head' => filter_var($member['is_head'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                ];
+            })
+            ->filter(function ($member) {
+                return $member['full_name'] !== ''
+                    || $member['id_card'] !== ''
+                    || $member['relation'] !== ''
+                    || $member['is_head'];
+            })
+            ->values()
+            ->all();
+
+        Validator::make([
+            'members' => $normalizedMembers,
+        ], [
+            'members' => ['nullable', 'array'],
+            'members.*.full_name' => ['required', 'string', 'max:100'],
+            'members.*.id_card' => ['required', 'digits:13', 'distinct'],
+            'members.*.relation' => ['required', 'string', 'max:50'],
+            'members.*.is_head' => ['nullable', 'boolean'],
+        ], [
+            'members.*.full_name.required' => 'กรุณากรอกชื่อสมาชิกในครัวเรือนให้ครบ',
+            'members.*.id_card.required' => 'กรุณากรอกเลขบัตรประชาชนของสมาชิกให้ครบ',
+            'members.*.id_card.digits' => 'เลขบัตรประชาชนของสมาชิกต้องมี 13 หลัก',
+            'members.*.id_card.distinct' => 'เลขบัตรประชาชนของสมาชิกห้ามซ้ำกัน',
+            'members.*.relation.required' => 'กรุณากรอกความสัมพันธ์ของสมาชิกให้ครบ',
+        ])->after(function ($validator) use ($normalizedMembers) {
+            if ($normalizedMembers === []) {
+                $validator->errors()->add('members', 'กรุณาเพิ่มสมาชิกในครัวเรือนอย่างน้อย 1 คน');
+            }
+
+            if (collect($normalizedMembers)->where('is_head', true)->count() > 1) {
+                $validator->errors()->add('members', 'เลือกหัวหน้าครัวเรือนได้เพียง 1 คน');
+            }
+        })->validate();
+
+        return $normalizedMembers;
+    }
+
+    private function createMembers(Household $household, array $members): void
+    {
+        if ($members === []) {
+            return;
+        }
+
+        $household->members()->createMany($members);
     }
 }

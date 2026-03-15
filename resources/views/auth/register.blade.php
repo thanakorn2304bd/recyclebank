@@ -1,10 +1,25 @@
 <x-guest-layout>
+    @php
+        $oldMembers = old('members', []);
+        $oldMembers = is_array($oldMembers) ? array_values($oldMembers) : [];
+    @endphp
+
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-emerald-900">สมัครสมาชิกครัวเรือน</h1>
         <p class="mt-2 text-sm text-gray-600">
             กรอกข้อมูลครัวเรือนเพื่อส่งคำขอสมัครเข้าใช้งาน ระบบจะตั้งสถานะเป็นรออนุมัติ และ staff/admin จะตรวจสอบก่อนเปิดใช้งานบัญชี
         </p>
     </div>
+
+    @if ($errors->any())
+        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <ul class="list-disc space-y-1 ps-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <form method="POST" action="{{ route('register') }}">
         @csrf
@@ -53,6 +68,28 @@
             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
         </div>
 
+        <div class="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-emerald-900">สมาชิกในครัวเรือน</h2>
+                    <p class="mt-1 text-sm text-emerald-800/75">ต้องมีสมาชิกอย่างน้อย 1 คน โดยระบบจะใช้ชื่อผู้ติดต่อเป็นค่าเริ่มต้นของคนแรก และยังแก้ไขได้</p>
+                </div>
+                <button
+                    type="button"
+                    id="addHouseholdMemberBtn"
+                    class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-200 transition hover:bg-emerald-100"
+                >
+                    เพิ่มสมาชิกครัวเรือน
+                </button>
+            </div>
+
+            <div id="householdMembersEmpty" class="mt-4 rounded-xl border border-dashed border-emerald-200 bg-white/80 px-4 py-6 text-center text-sm text-emerald-700/70">
+                ระบบจะเตรียมสมาชิกคนแรกให้อัตโนมัติจากชื่อผู้ติดต่อ
+            </div>
+
+            <div id="householdMembersContainer" class="mt-4 space-y-3"></div>
+        </div>
+
         <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             หลังสมัคร ระบบจะสร้างบัญชีครัวเรือนในสถานะรออนุมัติ และจะยังไม่สามารถเข้าสู่ระบบได้จนกว่า staff/admin จะยืนยัน
         </div>
@@ -94,7 +131,13 @@
             const accountNoInput = document.getElementById('account_no');
             const communitySelect = document.getElementById('community_id');
             const houseNoInput = document.getElementById('house_no');
+            const contactPersonInput = document.getElementById('contact_person');
+            const addHouseholdMemberBtn = document.getElementById('addHouseholdMemberBtn');
+            const householdMembersContainer = document.getElementById('householdMembersContainer');
+            const householdMembersEmpty = document.getElementById('householdMembersEmpty');
             const currentYear = @json(now()->format('Y'));
+            const oldMembers = @json($oldMembers);
+            let memberIndex = 0;
 
             function generateAccountNo() {
                 const communityId = communitySelect.value.trim();
@@ -115,6 +158,179 @@
             communitySelect.addEventListener('change', updateAccountNo);
             houseNoInput.addEventListener('input', updateAccountNo);
 
+            function contactPersonName() {
+                return contactPersonInput.value.trim();
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function toggleMembersEmptyState() {
+                householdMembersEmpty.classList.toggle('hidden', householdMembersContainer.children.length > 0);
+            }
+
+            function syncMemberRowState() {
+                const memberRows = householdMembersContainer.querySelectorAll('.household-member-row');
+
+                memberRows.forEach(function (row, index) {
+                    const orderLabel = row.querySelector('.member-order-label');
+                    const removeButton = row.querySelector('.remove-household-member');
+
+                    if (orderLabel) {
+                        orderLabel.textContent = `สมาชิกคนที่ ${index + 1}`;
+                    }
+
+                    if (removeButton) {
+                        removeButton.disabled = memberRows.length === 1;
+                    }
+                });
+
+                if (memberRows.length === 0) {
+                    memberIndex = 0;
+                }
+
+                toggleMembersEmptyState();
+            }
+
+            function syncFirstMemberNameFromContact() {
+                const firstRow = householdMembersContainer.querySelector('.household-member-row');
+
+                if (!firstRow || firstRow.dataset.canAutoContactSync !== 'true' || firstRow.dataset.autoContactSync !== 'true') {
+                    return;
+                }
+
+                const fullNameInput = firstRow.querySelector('[data-member-field="full_name"]');
+
+                if (fullNameInput) {
+                    fullNameInput.value = contactPersonName();
+                }
+            }
+
+            function syncHeadSelection(activeCheckbox) {
+                householdMembersContainer.querySelectorAll('[data-member-field="is_head"]').forEach(function (checkbox) {
+                    const row = checkbox.closest('.household-member-row');
+                    const relationInput = row ? row.querySelector('[data-member-field="relation"]') : null;
+
+                    if (checkbox === activeCheckbox) {
+                        if (checkbox.checked && relationInput) {
+                            relationInput.value = 'หัวหน้าครัวเรือน';
+                        } else if (relationInput && relationInput.value.trim() === 'หัวหน้าครัวเรือน') {
+                            relationInput.value = '';
+                        }
+
+                        return;
+                    }
+
+                    checkbox.checked = false;
+
+                    if (relationInput && relationInput.value.trim() === 'หัวหน้าครัวเรือน') {
+                        relationInput.value = '';
+                    }
+                });
+            }
+
+            function addMemberRow(member = {}, options = {}) {
+                const index = memberIndex++;
+                const isHead = member.is_head === true || member.is_head === 1 || member.is_head === '1';
+                const canAutoContactSync = options.autoSyncContactName === true;
+                const incomingFullName = String(member.full_name ?? '').trim();
+                const initialFullName = incomingFullName !== '' ? incomingFullName : (canAutoContactSync ? contactPersonName() : '');
+                const initialRelation = String(member.relation ?? '').trim() || (isHead ? 'หัวหน้าครัวเรือน' : '');
+                const wrapper = document.createElement('div');
+                wrapper.className = 'household-member-row rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm';
+                wrapper.dataset.canAutoContactSync = canAutoContactSync ? 'true' : 'false';
+                wrapper.dataset.autoContactSync = canAutoContactSync && (incomingFullName === '' || incomingFullName === contactPersonName()) ? 'true' : 'false';
+                wrapper.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="member-order-label text-sm font-semibold text-emerald-900"></div>
+                            <div class="mt-1 text-xs text-emerald-700/70">กรอกข้อมูลสมาชิกถ้าต้องการบันทึกไปพร้อมกัน</div>
+                        </div>
+                        <button type="button" class="remove-household-member inline-flex items-center justify-center rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
+                            ลบ
+                        </button>
+                    </div>
+
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">ชื่อ-นามสกุล</label>
+                            <input type="text" name="members[${index}][full_name]" value="${escapeHtml(initialFullName)}" data-member-field="full_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">เลขบัตรประชาชน</label>
+                            <input type="text" name="members[${index}][id_card]" value="${escapeHtml(member.id_card)}" inputmode="numeric" maxlength="13" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">ความสัมพันธ์กับหัวหน้า</label>
+                            <input type="text" name="members[${index}][relation]" value="${escapeHtml(initialRelation)}" data-member-field="relation" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+                    </div>
+
+                    <label class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-900">
+                        <input type="checkbox" name="members[${index}][is_head]" value="1" ${isHead ? 'checked' : ''} data-member-field="is_head" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                        เป็นหัวหน้าครัวเรือน
+                    </label>
+                `;
+
+                const fullNameInput = wrapper.querySelector('[data-member-field="full_name"]');
+                const headCheckbox = wrapper.querySelector('[data-member-field="is_head"]');
+                const removeButton = wrapper.querySelector('.remove-household-member');
+
+                fullNameInput.addEventListener('input', function () {
+                    if (wrapper.dataset.canAutoContactSync !== 'true') {
+                        return;
+                    }
+
+                    wrapper.dataset.autoContactSync = fullNameInput.value.trim() === contactPersonName() ? 'true' : 'false';
+                });
+
+                headCheckbox.addEventListener('change', function () {
+                    syncHeadSelection(headCheckbox);
+                });
+
+                removeButton.addEventListener('click', function () {
+                    if (removeButton.disabled) {
+                        return;
+                    }
+
+                    wrapper.remove();
+                    syncMemberRowState();
+                    syncFirstMemberNameFromContact();
+                });
+
+                householdMembersContainer.appendChild(wrapper);
+
+                if (headCheckbox.checked) {
+                    syncHeadSelection(headCheckbox);
+                }
+
+                syncMemberRowState();
+                syncFirstMemberNameFromContact();
+            }
+
+            addHouseholdMemberBtn.addEventListener('click', function () {
+                addMemberRow({}, { autoSyncContactName: householdMembersContainer.children.length === 0 });
+            });
+
+            contactPersonInput.addEventListener('input', syncFirstMemberNameFromContact);
+
+            if (oldMembers.length > 0) {
+                oldMembers.forEach(function (member, index) {
+                    addMemberRow(member, { autoSyncContactName: index === 0 });
+                });
+            } else {
+                addMemberRow({}, { autoSyncContactName: true });
+            }
+
+            syncMemberRowState();
             updateAccountNo();
         });
     </script>

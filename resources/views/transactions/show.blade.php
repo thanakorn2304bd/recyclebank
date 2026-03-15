@@ -52,13 +52,13 @@
       รายการถอน ไม่มีรายละเอียดวัสดุ (transaction_detail)
     </div>
   @else
-    <table class="table table-striped bg-white">
+    <table class="table table-striped bg-white" data-sortable-table>
       <thead>
         <tr>
           <th>วัสดุ</th>
-          <th style="width:140px;" class="text-end">น้ำหนัก</th>
-          <th style="width:140px;" class="text-end">ราคา/หน่วย</th>
-          <th style="width:160px;" class="text-end">จำนวนเงิน</th>
+          <th style="width:140px;" class="text-end" data-sort-type="number">น้ำหนัก</th>
+          <th style="width:140px;" class="text-end" data-sort-type="number">ราคา/หน่วย</th>
+          <th style="width:160px;" class="text-end" data-sort-type="number">จำนวนเงิน</th>
         </tr>
       </thead>
       <tbody>

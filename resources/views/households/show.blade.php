@@ -109,10 +109,10 @@
           <div class="text-muted text-center py-4">ยังไม่มีสมาชิกในครัวเรือนนี้</div>
         @else
           <div class="table-responsive">
-            <table class="table table-sm table-striped mb-0">
+            <table class="table table-sm table-striped mb-0" data-sortable-table>
               <thead>
                 <tr>
-                  <th style="width:50px;">#</th>
+                  <th style="width:50px;" data-sort-type="number">#</th>
                   <th>ชื่อ-นามสกุล</th>
                   <th style="width:160px;">เลขบัตรประชาชน</th>
                   <th style="width:140px;">ความสัมพันธ์</th>

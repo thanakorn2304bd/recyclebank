@@ -8,6 +8,7 @@ use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\WithdrawController;
 use App\Http\Controllers\TransactionHistoryController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\ReportController;
 use App\Models\Material;
 use Illuminate\Support\Facades\Route;
 
@@ -59,6 +60,9 @@ Route::middleware('auth')->group(function () {
 
     // สมาชิกดูได้เฉพาะข้อมูลของตนเอง (กรองใน controller)
     Route::resource('households', HouseholdController::class)->only(['index', 'show']);
+    Route::get('reports/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
+    Route::get('reports/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export.excel');
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('transactions', [TransactionHistoryController::class, 'index'])->name('transactions.index');
     Route::get('households/{household}/transactions', [TransactionHistoryController::class, 'household'])->name('transactions.household');
     Route::get('transactions/{transaction}', [TransactionHistoryController::class, 'show'])->name('transactions.show');

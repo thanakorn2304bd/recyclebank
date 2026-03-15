@@ -134,6 +134,15 @@
                                     ประวัติรายการ
                                 </a>
 
+                                <a href="{{ route('reports.index') }}" class="group flex items-center gap-3 rounded-xl border border-emerald-100/60 bg-white px-3 py-2.5 text-sm font-semibold text-emerald-900 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+                                    <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700 group-hover:bg-cyan-200">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 19h16M7 16V9m5 7V5m5 11v-4"/>
+                                        </svg>
+                                    </span>
+                                    สรุปรายงาน
+                                </a>
+
                                 <a href="{{ route('households.index') }}" class="group flex items-center gap-3 rounded-xl border border-emerald-100/60 bg-white px-3 py-2.5 text-sm font-semibold text-emerald-900 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
                                     <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 group-hover:bg-indigo-200">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +192,7 @@
                                 <div class="text-emerald-800">ผู้ใช้: {{ $authUser->username }} ({{ $authUser->role }})</div>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50">
+                                    <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100">
                                         ออกจากระบบ
                                     </button>
                                 </form>
@@ -212,6 +221,12 @@
                                         <a href="{{ route('materials.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:text-emerald-800">
                                             จัดการวัสดุ
                                         </a>
+                                        <form method="POST" action="{{ route('logout') }}" class="inline-flex">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 hover:text-red-800">
+                                                ออกจากระบบ
+                                            </button>
+                                        </form>
                                     </div>
                                 @elseif(!$authUser)
                                     <div class="flex flex-wrap items-center gap-2">

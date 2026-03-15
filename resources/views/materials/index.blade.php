@@ -40,38 +40,15 @@
     </div>
   </form>
 
-  <table class="table table-striped bg-white">
-    @php
-      $baseQuery = request()->except('page');
-      $sortUrl = function (string $key) use ($baseQuery, $sort, $dir) {
-        $nextDir = ($sort === $key && $dir === 'asc') ? 'desc' : 'asc';
-        $query = array_merge($baseQuery, ['sort' => $key, 'dir' => $nextDir]);
-        $qs = http_build_query($query);
-        return url()->current() . ($qs ? ('?' . $qs) : '');
-      };
-      $sortIcon = function (string $key) use ($sort, $dir) {
-        if ($sort !== $key) return '';
-        return $dir === 'asc' ? ' ▲' : ' ▼';
-      };
-    @endphp
+  <table class="table table-striped bg-white" data-sortable-table>
     <thead>
       <tr>
-        <th style="width:90px;">
-          <a class="text-decoration-none text-reset" href="{{ $sortUrl('id') }}">ID{{ $sortIcon('id') }}</a>
-        </th>
-        <th>
-          <a class="text-decoration-none text-reset" href="{{ $sortUrl('name') }}">ชื่อวัสดุ{{ $sortIcon('name') }}</a>
-        </th>
-        <th>
-          <a class="text-decoration-none text-reset" href="{{ $sortUrl('category') }}">หมวด{{ $sortIcon('category') }}</a>
-        </th>
-        <th style="width:90px;">
-          <a class="text-decoration-none text-reset" href="{{ $sortUrl('unit') }}">หน่วย{{ $sortIcon('unit') }}</a>
-        </th>
-        <th style="width:110px;">
-          <a class="text-decoration-none text-reset" href="{{ $sortUrl('status') }}">สถานะ{{ $sortIcon('status') }}</a>
-        </th>
-        <th style="width:260px;"></th>
+        <th style="width:90px;" data-sort-type="number">ID</th>
+        <th>ชื่อวัสดุ</th>
+        <th>หมวด</th>
+        <th style="width:90px;">หน่วย</th>
+        <th style="width:110px;">สถานะ</th>
+        <th style="width:260px;" data-sortable="false"></th>
       </tr>
     </thead>
     <tbody>

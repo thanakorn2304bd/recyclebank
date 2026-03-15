@@ -23,14 +23,14 @@
     </div>
   </form>
 
-  <table class="table table-striped bg-white">
+  <table class="table table-striped bg-white" data-sortable-table>
     <thead>
       <tr>
         <th>วัสดุ</th>
-        <th style="width:120px;">ราคา</th>
-        <th style="width:150px;">เริ่มใช้</th>
-        <th style="width:150px;">หมดอายุ</th>
-        <th style="width:120px;"></th>
+        <th style="width:120px;" data-sort-type="number">ราคา</th>
+        <th style="width:150px;" data-sort-type="date">เริ่มใช้</th>
+        <th style="width:150px;" data-sort-type="date">หมดอายุ</th>
+        <th style="width:120px;" data-sortable="false"></th>
       </tr>
     </thead>
     <tbody>

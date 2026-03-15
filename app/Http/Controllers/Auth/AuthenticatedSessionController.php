@@ -34,7 +34,14 @@ class AuthenticatedSessionController extends Controller
         $user->last_login = now();
         $user->save();
 
-        return redirect()->intended(route('households.index', absolute: false));
+        $householdId = $user->household_id ?: $user->household?->household_id;
+        $defaultRoute = $user->role === 'member'
+            ? ($householdId
+                ? route('households.show', ['household' => $householdId], absolute: false)
+                : route('households.index', absolute: false))
+            : route('main-menu', absolute: false);
+
+        return redirect()->intended($defaultRoute);
     }
 
     /**

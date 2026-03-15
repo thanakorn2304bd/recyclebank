@@ -4,12 +4,12 @@
     <a class="btn btn-primary" href="{{ route('material-prices.create', ['material_id' => $material->material_id]) }}">+ เพิ่มราคา</a>
   </div>
 
-  <table class="table table-striped bg-white">
+  <table class="table table-striped bg-white" data-sortable-table>
     <thead>
       <tr>
-        <th style="width:120px;">ราคา</th>
-        <th style="width:160px;">เริ่มใช้</th>
-        <th style="width:160px;">หมดอายุ</th>
+        <th style="width:120px;" data-sort-type="number">ราคา</th>
+        <th style="width:160px;" data-sort-type="date">เริ่มใช้</th>
+        <th style="width:160px;" data-sort-type="date">หมดอายุ</th>
       </tr>
     </thead>
     <tbody>
