@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
         Route::get('deposits/lookup-household', [DepositController::class, 'lookupHousehold'])->name('deposits.lookup-household');
         Route::post('deposits', [DepositController::class, 'store'])->name('deposits.store');
 
+        Route::get('withdraws/preview', [WithdrawController::class, 'preview'])->name('withdraws.preview');
         Route::get('withdraws/create', [WithdrawController::class, 'create'])->name('withdraws.create');
         Route::post('withdraws', [WithdrawController::class, 'store'])->name('withdraws.store');
     });

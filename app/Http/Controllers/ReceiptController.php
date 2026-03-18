@@ -21,7 +21,16 @@ class ReceiptController extends Controller
         $transaction->load([
             'household',
             'details.material',
+            'recordedByUser.staff',
         ]);
+
+        if ($transaction->transaction_type === 'withdraw') {
+            $pdf = Pdf::loadView('pdf.withdraw_slip_a5_landscape', [
+                'tx' => $transaction,
+            ])->setPaper('a5', 'landscape');
+
+            return $pdf->stream('withdraw-slip_'.$transaction->transaction_id.'.pdf');
+        }
 
         // จำนวนแถวต่อ 1 หน้า (ตามแบบฟอร์ม)
         $rowsPerPage = 7;

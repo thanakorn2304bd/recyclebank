@@ -21,7 +21,7 @@
       <a class="btn btn-success"
        href="{{ route('transactions.receipt', $transaction) }}"
        target="_blank">
-        ใบเสร็จ PDF (A5)
+        {{ $transaction->transaction_type === 'withdraw' ? 'ใบถอนเงิน PDF' : 'ใบเสร็จ PDF (A5)' }}
       </a>
     </div>
   </div>
