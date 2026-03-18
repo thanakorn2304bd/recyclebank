@@ -1,23 +1,60 @@
 <x-layouts.admin title="ถอน (Withdraw)">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">ถอนเงิน (Withdraw)</h3>
-    <a class="btn btn-outline-dark" href="{{ route('deposits.create') }}">ไปหน้า “ฝาก/รับซื้อ”</a>
+  <div class="rb-page-header">
+    <div>
+      <div class="rb-page-kicker">Cash Withdrawal</div>
+      <h1 class="rb-page-title">ถอนเงิน</h1>
+      <p class="rb-page-subtitle">
+        ตรวจสอบครัวเรือน ยอดคงเหลือ และจำนวนเงินที่จะถอนก่อนบันทึก พร้อมเปิดใบถอน PDF ได้ทันที
+      </p>
+    </div>
+    <div class="rb-page-actions">
+      <a class="btn btn-outline-dark" href="{{ route('deposits.create') }}">ไปหน้า “ฝาก/รับซื้อ”</a>
+    </div>
   </div>
 
-  <form method="POST" action="{{ route('withdraws.store') }}" class="bg-white p-3 rounded" id="withdrawForm">
+  <div class="rb-stat-grid">
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">วันที่ทำรายการ</div>
+      <div class="rb-stat-value" id="transactionDateDisplay">{{ old('transaction_date', now()->toDateString()) }}</div>
+      <div class="rb-stat-meta">เลือกวันที่สำหรับบันทึกและพิมพ์เอกสาร</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">ยอดที่จะถอน</div>
+      <div class="rb-stat-value" id="withdrawAmountDisplay">{{ old('amount', '0.00') }}</div>
+      <div class="rb-stat-meta">ระบบจะตรวจสอบว่ายอดไม่เกินคงเหลือ</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">ครัวเรือนที่เลือก</div>
+      <div class="rb-stat-value rb-stat-value-sm" id="householdNameDisplay">ยังไม่ได้ค้นหา</div>
+      <div class="rb-stat-meta" id="householdMetaDisplay">ค้นหาจากเลขที่ชุมชนและบ้านเลขที่</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">ยอดคงเหลือ</div>
+      <div class="rb-stat-value" id="balanceDisplay">0.00</div>
+      <div class="rb-stat-meta">อัปเดตหลังค้นหาครัวเรือนสำเร็จ</div>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ route('withdraws.store') }}" class="rb-surface p-4 p-lg-4" id="withdrawForm">
     @csrf
 
+    <div class="rb-section-head">
+      <div>
+        <h2 class="rb-card-title">ค้นหาครัวเรือนและระบุยอดถอน</h2>
+        <p class="rb-card-subtitle">ยืนยันว่าค้นพบครัวเรือนและยอดคงเหลือเพียงพอก่อนบันทึกรายการ</p>
+      </div>
+      <span class="rb-chip">Step 1</span>
+    </div>
+
     <div class="row g-3">
-      <div class="col-md-6">
+      <div class="col-lg-6">
         <label class="form-label">ค้นหาครัวเรือน</label>
         <div class="row g-2">
           <div class="col-md-4">
-            <input class="form-control" id="communityIdInput" name="community_id" value="{{ old('community_id') }}"
-                   placeholder="เลขที่ชุมชน" inputmode="numeric" maxlength="2" required>
+            <input class="form-control" id="communityIdInput" name="community_id" value="{{ old('community_id') }}" placeholder="เลขที่ชุมชน" inputmode="numeric" maxlength="2" required>
           </div>
           <div class="col-md-5">
-            <input class="form-control" id="houseNoInput" name="house_no" value="{{ old('house_no') }}"
-                   placeholder="บ้านเลขที่" required>
+            <input class="form-control" id="houseNoInput" name="house_no" value="{{ old('house_no') }}" placeholder="บ้านเลขที่" required>
           </div>
           <div class="col-md-3 d-grid">
             <button type="button" class="btn btn-outline-primary" id="searchHouseholdBtn">ค้นหา</button>
@@ -26,18 +63,18 @@
         <div class="form-text">ระบบจะค้นหาครัวเรือนจากเลขที่ชุมชน + บ้านเลขที่</div>
       </div>
 
-      <div class="col-md-3">
+      <div class="col-lg-3">
         <label class="form-label">วันที่ทำรายการ</label>
         <input type="date" class="form-control" name="transaction_date" value="{{ old('transaction_date', now()->toDateString()) }}" required>
       </div>
 
-      <div class="col-md-3">
+      <div class="col-lg-3">
         <label class="form-label">จำนวนเงินที่ถอน</label>
         <input type="number" step="0.01" min="0.01" class="form-control" name="amount" value="{{ old('amount') }}" required>
       </div>
 
       <div class="col-12">
-        <div id="householdInfo" class="border rounded-3 bg-light p-3 d-none">
+        <div id="householdInfo" class="rb-info-panel d-none">
           <div class="row g-2">
             <div class="col-md-4">
               <label class="form-label small">บัญชี</label>
@@ -65,20 +102,26 @@
             </div>
           </div>
         </div>
-        <div id="householdError" class="alert alert-warning mt-2 d-none" role="alert"></div>
+        <div id="householdError" class="alert alert-warning mt-3 d-none" role="alert"></div>
       </div>
     </div>
 
-    <div class="d-flex flex-wrap gap-2 mt-3">
+    <div class="d-flex flex-wrap gap-2 mt-4">
       <button type="button" class="btn btn-outline-secondary" id="previewWithdrawPdfBtn">ตรวจสอบไฟล์ PDF</button>
-      <button class="btn btn-outline-primary">บันทึกและพิมพ์ใบถอน PDF</button>
-      <a class="btn btn-secondary" href="{{ route('materials.index') }}">กลับหน้า “วัสดุ”</a>
+      <button class="btn btn-primary">บันทึกและพิมพ์ใบถอน PDF</button>
+      <a class="btn btn-outline-secondary" href="{{ route('materials.index') }}">กลับหน้า “วัสดุ”</a>
     </div>
 
     <div class="form-text mt-2">
       ระบบจะเปิดเอกสารใบถอนเงินสำหรับพิมพ์และลงลายมือชื่อทันทีหลังบันทึกรายการ
     </div>
   </form>
+
+  <style>
+    .rb-stat-value-sm {
+      font-size: 1.35rem;
+    }
+  </style>
 
   <script>
     const lookupUrl = @json(route('deposits.lookup-household'));
@@ -98,6 +141,30 @@
     const infoBalance = document.getElementById('infoBalance');
     const transactionDateInput = withdrawForm.elements.namedItem('transaction_date');
     const amountInput = withdrawForm.elements.namedItem('amount');
+    const transactionDateDisplay = document.getElementById('transactionDateDisplay');
+    const withdrawAmountDisplay = document.getElementById('withdrawAmountDisplay');
+    const householdNameDisplay = document.getElementById('householdNameDisplay');
+    const householdMetaDisplay = document.getElementById('householdMetaDisplay');
+    const balanceDisplay = document.getElementById('balanceDisplay');
+
+    function formatDateDisplay(value) {
+      if (!value || typeof value !== 'string') {
+        return '-';
+      }
+
+      const parts = value.split('-');
+
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+
+      return value;
+    }
+
+    function updateSummary() {
+      transactionDateDisplay.textContent = formatDateDisplay(transactionDateInput.value);
+      withdrawAmountDisplay.textContent = Number(amountInput.value || 0).toFixed(2);
+    }
 
     function clearHouseholdInfo() {
       infoAccountNo.value = '';
@@ -106,6 +173,9 @@
       infoHouseNo.value = '';
       infoStatus.value = '';
       infoBalance.value = '';
+      householdNameDisplay.textContent = 'ยังไม่ได้ค้นหา';
+      householdMetaDisplay.textContent = 'ค้นหาจากเลขที่ชุมชนและบ้านเลขที่';
+      balanceDisplay.textContent = '0.00';
     }
 
     async function lookupHousehold() {
@@ -149,6 +219,9 @@
         infoHouseNo.value = h.house_no || '';
         infoStatus.value = h.active_status || '';
         infoBalance.value = Number(h.total_balance || 0).toFixed(2);
+        householdNameDisplay.textContent = h.contact_person || 'พบครัวเรือนแล้ว';
+        householdMetaDisplay.textContent = `${h.account_no || '-'} · ${h.community_name || h.community_id || ''}`;
+        balanceDisplay.textContent = Number(h.total_balance || 0).toFixed(2);
         householdInfo.classList.remove('d-none');
       } catch (err) {
         householdError.textContent = 'เกิดข้อผิดพลาดระหว่างค้นหา กรุณาลองใหม่';
@@ -228,8 +301,11 @@
       el.addEventListener('input', () => {
         householdError.classList.add('d-none');
         householdError.textContent = '';
+        updateSummary();
       });
     });
+
+    updateSummary();
 
     if (communityIdInput.value.trim() && houseNoInput.value.trim()) {
       lookupHousehold();

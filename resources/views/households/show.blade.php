@@ -2,12 +2,16 @@
   @php
     $isPrivileged = in_array(auth()->user()->role, ['admin', 'staff'], true);
   @endphp
-  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+
+  <div class="rb-page-header">
     <div>
-      <h3 class="mb-0">รายละเอียดครัวเรือน</h3>
-      <div class="text-muted">บัญชี {{ $household->account_no }} | ผู้ติดต่อ {{ $household->contact_person }}</div>
+      <div class="rb-page-kicker">Household Profile</div>
+      <h1 class="rb-page-title">รายละเอียดครัวเรือน</h1>
+      <p class="rb-page-subtitle">
+        บัญชี {{ $household->account_no }} | ผู้ติดต่อ {{ $household->contact_person }}
+      </p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
+    <div class="rb-page-actions">
       <a class="btn btn-outline-secondary" href="{{ route('households.index') }}">กลับ</a>
       @if($isPrivileged)
         <a class="btn btn-outline-warning" href="{{ route('households.credentials.create', $household) }}">
@@ -15,40 +19,77 @@
         </a>
         <a class="btn btn-outline-primary" href="{{ route('households.edit', $household) }}">แก้ไข</a>
       @endif
-      <a class="btn btn-outline-success" href="{{ route('transactions.household', $household) }}">ดู statement</a>
+      <a class="btn btn-primary" href="{{ route('transactions.household', $household) }}">ดู statement</a>
     </div>
   </div>
 
-  <div class="row g-3">
+  <div class="rb-stat-grid">
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">ยอดคงเหลือ</div>
+      <div class="rb-stat-value">{{ number_format((float)$household->total_balance, 2) }}</div>
+      <div class="rb-stat-meta">ยอดเงินสะสมล่าสุดของครัวเรือนนี้</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">สมาชิก</div>
+      <div class="rb-stat-value">{{ number_format($household->members->count()) }}</div>
+      <div class="rb-stat-meta">จำนวนสมาชิกที่ผูกกับครัวเรือน</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">สถานะ</div>
+      <div class="rb-stat-value">
+        @if($household->active_status === 'active')
+          ใช้งาน
+        @elseif($household->active_status === 'pending')
+          รออนุมัติ
+        @else
+          ปิด
+        @endif
+      </div>
+      <div class="rb-stat-meta">สถานะการใช้งานของบัญชีครัวเรือน</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">บัญชีเข้าใช้</div>
+      <div class="rb-stat-value">{{ $memberAccount ? 'พร้อมใช้' : 'ยังไม่มี' }}</div>
+      <div class="rb-stat-meta">
+        {{ $memberAccount?->username ? 'ชื่อผู้ใช้ ' . $memberAccount->username : 'ยังไม่ได้ตั้งรหัสผ่านสำหรับสมาชิก' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
     <div class="col-lg-5">
-      <div class="bg-white p-3">
-        <h5 class="mb-3">ข้อมูลครัวเรือน</h5>
-        <dl class="row mb-0">
-          <dt class="col-5 text-muted mb-2">เลขบัญชี</dt>
-          <dd class="col-7 mb-2">{{ $household->account_no }}</dd>
+      <div class="rb-surface p-4 h-100">
+        <div class="rb-section-head">
+          <div>
+            <h2 class="rb-card-title">ข้อมูลครัวเรือน</h2>
+            <p class="rb-card-subtitle">ข้อมูลบัญชี ชุมชน ผู้ติดต่อ และสถานะการใช้งาน</p>
+          </div>
+        </div>
 
-          <dt class="col-5 text-muted mb-2">ชุมชน</dt>
-          <dd class="col-7 mb-2">
-            {{ $household->community?->community_id }} - {{ $household->community?->community_name }}
-          </dd>
+        <dl class="row rb-detail-list mb-0">
+          <dt class="col-sm-5 mb-3">เลขบัญชี</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->account_no }}</dd>
 
-          <dt class="col-5 text-muted mb-2">บ้านเลขที่</dt>
-          <dd class="col-7 mb-2">{{ $household->house_no }}</dd>
+          <dt class="col-sm-5 mb-3">ชุมชน</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->community?->community_id }} - {{ $household->community?->community_name }}</dd>
 
-          <dt class="col-5 text-muted mb-2">หมู่</dt>
-          <dd class="col-7 mb-2">{{ $household->village_no ?? '-' }}</dd>
+          <dt class="col-sm-5 mb-3">บ้านเลขที่</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->house_no }}</dd>
 
-          <dt class="col-5 text-muted mb-2">ผู้ติดต่อ</dt>
-          <dd class="col-7 mb-2">{{ $household->contact_person }}</dd>
+          <dt class="col-sm-5 mb-3">หมู่</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->village_no ?? '-' }}</dd>
 
-          <dt class="col-5 text-muted mb-2">โทรศัพท์</dt>
-          <dd class="col-7 mb-2">{{ $household->phone ?? '-' }}</dd>
+          <dt class="col-sm-5 mb-3">ผู้ติดต่อ</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->contact_person }}</dd>
 
-          <dt class="col-5 text-muted mb-2">วันที่สมัคร</dt>
-          <dd class="col-7 mb-2">{{ $household->register_date?->format('d/m/Y') ?? '-' }}</dd>
+          <dt class="col-sm-5 mb-3">โทรศัพท์</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->phone ?? '-' }}</dd>
 
-          <dt class="col-5 text-muted mb-2">สถานะ</dt>
-          <dd class="col-7 mb-2">
+          <dt class="col-sm-5 mb-3">วันที่สมัคร</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->register_date?->format('d/m/Y') ?? '-' }}</dd>
+
+          <dt class="col-sm-5 mb-3">สถานะ</dt>
+          <dd class="col-sm-7 mb-3">
             @if($household->active_status === 'active')
               <span class="badge bg-success">ใช้งาน</span>
             @elseif($household->active_status === 'pending')
@@ -58,14 +99,11 @@
             @endif
           </dd>
 
-          <dt class="col-5 text-muted mb-2">สะสม (เดือน)</dt>
-          <dd class="col-7 mb-2">{{ $household->accumulated_months }}</dd>
+          <dt class="col-sm-5 mb-3">สะสม (เดือน)</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->accumulated_months }}</dd>
 
-          <dt class="col-5 text-muted mb-2">ยอดคงเหลือ</dt>
-          <dd class="col-7 mb-2"><strong>{{ number_format((float)$household->total_balance, 2) }}</strong></dd>
-
-          <dt class="col-5 text-muted mb-2">ผู้บันทึก</dt>
-          <dd class="col-7 mb-2">
+          <dt class="col-sm-5 mb-3">ผู้บันทึก</dt>
+          <dd class="col-sm-7 mb-3">
             @if($household->createdByUser)
               {{ $household->createdByUser->username }} ({{ $household->created_by }})
             @else
@@ -73,11 +111,11 @@
             @endif
           </dd>
 
-          <dt class="col-5 text-muted mb-2">ชื่อผู้ใช้</dt>
-          <dd class="col-7 mb-2">{{ $memberAccount?->username ?? 'ยังไม่ได้ตั้งรหัสผ่าน' }}</dd>
+          <dt class="col-sm-5 mb-3">ชื่อผู้ใช้</dt>
+          <dd class="col-sm-7 mb-3">{{ $memberAccount?->username ?? 'ยังไม่ได้ตั้งรหัสผ่าน' }}</dd>
 
-          <dt class="col-5 text-muted mb-2">บัญชีเข้าใช้</dt>
-          <dd class="col-7 mb-2">
+          <dt class="col-sm-5 mb-3">บัญชีเข้าใช้</dt>
+          <dd class="col-sm-7 mb-3">
             @if($memberAccount)
               @if($memberAccount->is_active)
                 <span class="badge bg-success">พร้อมใช้งาน</span>
@@ -89,27 +127,30 @@
             @endif
           </dd>
 
-          <dt class="col-5 text-muted mb-2">เข้าใช้ล่าสุด</dt>
-          <dd class="col-7 mb-2">{{ $memberAccount?->last_login?->format('d/m/Y H:i') ?? '-' }}</dd>
+          <dt class="col-sm-5 mb-3">เข้าใช้ล่าสุด</dt>
+          <dd class="col-sm-7 mb-3">{{ $memberAccount?->last_login?->format('d/m/Y H:i') ?? '-' }}</dd>
 
-          <dt class="col-5 text-muted mb-0">อัปเดตล่าสุด</dt>
-          <dd class="col-7 mb-0">{{ $household->updated_at?->format('d/m/Y H:i') ?? '-' }}</dd>
+          <dt class="col-sm-5 mb-0">อัปเดตล่าสุด</dt>
+          <dd class="col-sm-7 mb-0">{{ $household->updated_at?->format('d/m/Y H:i') ?? '-' }}</dd>
         </dl>
       </div>
     </div>
 
     <div class="col-lg-7">
-      <div class="bg-white p-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="mb-0">สมาชิกในครัวเรือน</h5>
-          <span class="badge text-bg-secondary">{{ $household->members->count() }} คน</span>
+      <div class="rb-surface p-4 h-100">
+        <div class="rb-section-head">
+          <div>
+            <h2 class="rb-card-title">สมาชิกในครัวเรือน</h2>
+            <p class="rb-card-subtitle">ดูรายชื่อสมาชิก ความสัมพันธ์ และผู้เป็นหัวหน้าครัวเรือน</p>
+          </div>
+          <span class="rb-chip">{{ $household->members->count() }} คน</span>
         </div>
 
         @if($household->members->isEmpty())
-          <div class="text-muted text-center py-4">ยังไม่มีสมาชิกในครัวเรือนนี้</div>
+          <div class="rb-empty-state">ยังไม่มีสมาชิกในครัวเรือนนี้</div>
         @else
           <div class="table-responsive">
-            <table class="table table-sm table-striped mb-0" data-sortable-table>
+            <table class="table table-striped align-middle mb-0" data-sortable-table>
               <thead>
                 <tr>
                   <th style="width:50px;" data-sort-type="number">#</th>

@@ -1,23 +1,60 @@
 <x-layouts.admin title="ฝาก/รับซื้อ (Deposit)">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">ฝาก/รับซื้อวัสดุ (Deposit)</h3>
-    <a class="btn btn-outline-dark" href="{{ route('withdraws.create') }}">ไปหน้า “ถอน”</a>
+  <div class="rb-page-header">
+    <div>
+      <div class="rb-page-kicker">Daily Intake</div>
+      <h1 class="rb-page-title">ฝาก/รับซื้อวัสดุ</h1>
+      <p class="rb-page-subtitle">
+        ค้นหาครัวเรือน เพิ่มรายการวัสดุหลายชนิดในครั้งเดียว และตรวจสอบยอดรวมก่อนบันทึกรายการได้จากหน้านี้
+      </p>
+    </div>
+    <div class="rb-page-actions">
+      <a class="btn btn-outline-dark" href="{{ route('withdraws.create') }}">ไปหน้า “ถอน”</a>
+    </div>
   </div>
 
-  <form method="POST" action="{{ route('deposits.store') }}" class="bg-white p-3 rounded" id="depositForm">
+  <div class="rb-stat-grid">
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">วันที่ทำรายการ</div>
+      <div class="rb-stat-value" id="transactionDateDisplay">{{ old('transaction_date', now()->toDateString()) }}</div>
+      <div class="rb-stat-meta">เปลี่ยนค่าได้จากฟอร์มด้านล่าง</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">ยอดรวมประมาณการ</div>
+      <div class="rb-stat-value" id="grandTotalDisplay">0.00</div>
+      <div class="rb-stat-meta">คำนวณอัตโนมัติจากรายการวัสดุ</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">จำนวนรายการ</div>
+      <div class="rb-stat-value" id="itemCountDisplay">0</div>
+      <div class="rb-stat-meta">จำนวนชนิดวัสดุในรายการนี้</div>
+    </div>
+    <div class="rb-stat-card">
+      <div class="rb-stat-label">ครัวเรือนที่เลือก</div>
+      <div class="rb-stat-value rb-stat-value-sm" id="householdNameDisplay">ยังไม่ได้ค้นหา</div>
+      <div class="rb-stat-meta" id="householdMetaDisplay">ค้นหาจากเลขที่ชุมชนและบ้านเลขที่</div>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ route('deposits.store') }}" class="rb-surface p-4 p-lg-4" id="depositForm">
     @csrf
 
+    <div class="rb-section-head">
+      <div>
+        <h2 class="rb-card-title">ค้นหาครัวเรือนและข้อมูลพื้นฐาน</h2>
+        <p class="rb-card-subtitle">ระบุชุมชน บ้านเลขที่ และวันที่ทำรายการก่อนเพิ่มวัสดุลงในบิล</p>
+      </div>
+      <span class="rb-chip">Step 1</span>
+    </div>
+
     <div class="row g-3">
-      <div class="col-md-6">
+      <div class="col-lg-6">
         <label class="form-label">ค้นหาครัวเรือน</label>
         <div class="row g-2">
           <div class="col-md-4">
-            <input class="form-control" id="communityIdInput" name="community_id" value="{{ old('community_id') }}"
-                   placeholder="เลขที่ชุมชน" inputmode="numeric" maxlength="2" required>
+            <input class="form-control" id="communityIdInput" name="community_id" value="{{ old('community_id') }}" placeholder="เลขที่ชุมชน" inputmode="numeric" maxlength="2" required>
           </div>
           <div class="col-md-5">
-            <input class="form-control" id="houseNoInput" name="house_no" value="{{ old('house_no') }}"
-                   placeholder="บ้านเลขที่" required>
+            <input class="form-control" id="houseNoInput" name="house_no" value="{{ old('house_no') }}" placeholder="บ้านเลขที่" required>
           </div>
           <div class="col-md-3 d-grid">
             <button type="button" class="btn btn-outline-primary" id="searchHouseholdBtn">ค้นหา</button>
@@ -26,18 +63,18 @@
         <div class="form-text">ระบบจะค้นหาครัวเรือนจากเลขที่ชุมชน + บ้านเลขที่</div>
       </div>
 
-      <div class="col-md-3">
+      <div class="col-lg-3">
         <label class="form-label">วันที่ทำรายการ</label>
         <input type="date" class="form-control" name="transaction_date" value="{{ old('transaction_date', now()->toDateString()) }}" required>
       </div>
 
-      <div class="col-md-3">
+      <div class="col-lg-3">
         <label class="form-label">ยอดรวม (คำนวณ)</label>
         <input type="text" class="form-control" id="grandTotal" value="0.00" readonly>
       </div>
 
       <div class="col-12">
-        <div id="householdInfo" class="border rounded-3 bg-light p-3 d-none">
+        <div id="householdInfo" class="rb-info-panel d-none">
           <div class="row g-2">
             <div class="col-md-4">
               <label class="form-label small">บัญชี</label>
@@ -65,20 +102,25 @@
             </div>
           </div>
         </div>
-        <div id="householdError" class="alert alert-warning mt-2 d-none" role="alert"></div>
+        <div id="householdError" class="alert alert-warning mt-3 d-none" role="alert"></div>
       </div>
     </div>
 
-    <hr class="my-3">
+    <div class="border-top my-4"></div>
 
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5 class="mb-0">รายการวัสดุ</h5>
-      <button type="button" class="btn btn-sm btn-outline-primary" id="openMaterialModalBtn">+ เพิ่มรายการ</button>
+    <div class="rb-section-head">
+      <div>
+        <h2 class="rb-card-title">รายการวัสดุ</h2>
+        <p class="rb-card-subtitle">เพิ่มวัสดุทีละรายการหรือเลือกหลายรายการพร้อมกันจากตัวเลือกด้านล่าง</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-sm btn-outline-primary" id="openMaterialModalBtn">+ เพิ่มรายการ</button>
+      </div>
     </div>
 
     <div class="table-responsive">
-      <table class="table table-bordered align-middle" id="itemsTable">
-        <thead class="table-light">
+      <table class="table table-striped align-middle mb-0" id="itemsTable">
+        <thead>
           <tr>
             <th style="width:35%;">วัสดุ</th>
             <th style="width:15%;">หน่วย</th>
@@ -92,22 +134,35 @@
       </table>
     </div>
 
-    <button class="btn btn-success">บันทึกฝาก/รับซื้อ</button>
-    <a class="btn btn-secondary" href="{{ route('materials.index') }}">กลับหน้า “วัสดุ”</a>
+    <div class="mt-3 d-flex justify-content-end">
+      <div class="rb-total-summary">
+        <div class="rb-total-summary__label">ยอดรวมรายการนี้</div>
+        <div class="rb-total-summary__value" id="grandTotalFooterDisplay">0.00 บาท</div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <button class="btn btn-success">บันทึกฝาก/รับซื้อ</button>
+      <a class="btn btn-outline-secondary" href="{{ route('materials.index') }}">กลับหน้า “วัสดุ”</a>
+    </div>
+    <div class="form-text mt-2">ระบบจะคำนวณยอดรวมอัตโนมัติจากน้ำหนักและราคาปัจจุบันของวัสดุแต่ละชนิด</div>
   </form>
 
   <div class="modal fade" id="materialPickerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">เลือกวัสดุ</h5>
+        <div class="modal-header border-0 pb-0">
+          <div>
+            <h5 class="modal-title">เลือกวัสดุ</h5>
+            <div class="text-muted small">เลือกหลายรายการได้ในครั้งเดียวแล้วกดยืนยัน</div>
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body pt-3">
           <div class="d-flex flex-wrap gap-2 mb-3" id="materialCategoryFilters"></div>
           <div class="row g-2" id="materialPickerList"></div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer border-0 pt-0">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
           <button type="button" class="btn btn-primary" id="confirmMaterialSelection">ยืนยัน</button>
         </div>
@@ -116,39 +171,74 @@
   </div>
 
   <style>
+    .rb-stat-value-sm {
+      font-size: 1.35rem;
+    }
+
+    .rb-total-summary {
+      min-width: min(100%, 280px);
+      border: 1px solid #d7f0e3;
+      border-radius: 1rem;
+      background: linear-gradient(180deg, #fbfffc 0%, #f1fbf5 100%);
+      box-shadow: 0 10px 24px rgba(15, 109, 74, 0.08);
+      padding: 0.95rem 1.1rem;
+      text-align: right;
+    }
+
+    .rb-total-summary__label {
+      color: #4c6658;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .rb-total-summary__value {
+      margin-top: 0.35rem;
+      color: #0b4d32;
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
     .material-card {
       width: 100%;
       text-align: left;
       border: 1px solid #d0e7dc;
-      border-radius: 0.6rem;
-      padding: 0.75rem 0.9rem;
+      border-radius: 1rem;
+      padding: 0.9rem 1rem;
       background: #ffffff;
       color: #1f2937;
       transition: all 0.15s ease-in-out;
     }
+
     .material-card:hover {
       border-color: #74c7a2;
-      box-shadow: 0 4px 10px rgba(15, 109, 74, 0.08);
+      box-shadow: 0 10px 24px rgba(15, 109, 74, 0.08);
     }
+
     .material-card.is-selected {
       border-color: #198754;
       background: #e9f7ef;
       box-shadow: inset 0 0 0 1px #198754;
     }
+
     .material-card-title {
       font-weight: 600;
     }
+
     .material-card-unit {
       color: #6b7280;
       font-size: 0.85rem;
     }
+
     .material-category-title {
       font-weight: 600;
       color: #0f6d4a;
-      padding: 0.25rem 0.35rem;
+      padding: 0.4rem 0.6rem;
       border-left: 4px solid #0f6d4a;
       background: #f3fbf7;
-      border-radius: 0.35rem;
+      border-radius: 0.6rem;
     }
   </style>
 
@@ -157,6 +247,7 @@
     const currentPrices = @json($currentPrices);
     const lookupUrl = @json(route('deposits.lookup-household'));
 
+    const depositForm = document.getElementById('depositForm');
     const itemsBody = document.getElementById('itemsBody');
     const openMaterialModalBtn = document.getElementById('openMaterialModalBtn');
     const materialCategoryFilters = document.getElementById('materialCategoryFilters');
@@ -164,6 +255,13 @@
     const materialPickerModalEl = document.getElementById('materialPickerModal');
     const confirmMaterialSelection = document.getElementById('confirmMaterialSelection');
     const grandTotalEl = document.getElementById('grandTotal');
+    const grandTotalDisplay = document.getElementById('grandTotalDisplay');
+    const grandTotalFooterDisplay = document.getElementById('grandTotalFooterDisplay');
+    const itemCountDisplay = document.getElementById('itemCountDisplay');
+    const transactionDateDisplay = document.getElementById('transactionDateDisplay');
+    const householdNameDisplay = document.getElementById('householdNameDisplay');
+    const householdMetaDisplay = document.getElementById('householdMetaDisplay');
+    const transactionDateInput = depositForm.elements.namedItem('transaction_date');
     const communityIdInput = document.getElementById('communityIdInput');
     const houseNoInput = document.getElementById('houseNoInput');
     const searchHouseholdBtn = document.getElementById('searchHouseholdBtn');
@@ -176,6 +274,27 @@
     const infoStatus = document.getElementById('infoStatus');
     const infoBalance = document.getElementById('infoBalance');
 
+    function formatDateDisplay(value) {
+      if (!value || typeof value !== 'string') {
+        return '-';
+      }
+
+      const parts = value.split('-');
+
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+
+      return value;
+    }
+
+    function updateHeaderSummary() {
+      const rowCount = getDataRows().length;
+      itemCountDisplay.textContent = rowCount.toString();
+      grandTotalDisplay.textContent = grandTotalEl.value;
+      grandTotalFooterDisplay.textContent = `${grandTotalEl.value} บาท`;
+      transactionDateDisplay.textContent = formatDateDisplay(transactionDateInput.value);
+    }
 
     function materialOptionsHtml(selectedId = '') {
       return materials.map(m => {
@@ -192,10 +311,12 @@
       if (getDataRows().length === 0) {
         itemsBody.innerHTML = `
           <tr class="empty-row">
-            <td colspan="6" class="text-center text-muted">ยังไม่มีรายการวัสดุ</td>
+            <td colspan="6" class="text-center text-muted py-4">ยังไม่มีรายการวัสดุ</td>
           </tr>
         `;
       }
+
+      updateHeaderSummary();
     }
 
     function addRow(prefill = {}) {
@@ -244,6 +365,7 @@
         sum += parseFloat(a.value || '0');
       });
       grandTotalEl.value = sum.toFixed(2);
+      updateHeaderSummary();
     }
 
     itemsBody.addEventListener('change', (e) => {
@@ -269,7 +391,6 @@
     itemsBody.addEventListener('click', (e) => {
       if (e.target.classList.contains('remove')) {
         e.target.closest('tr').remove();
-        // รี index ให้ name ถูก (ง่ายสุด: rebuild name)
         getDataRows().forEach((tr, i) => {
           tr.querySelector('.material-select').name = `items[${i}][material_id]`;
           tr.querySelector('.weight').name = `items[${i}][weight]`;
@@ -287,6 +408,7 @@
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b, 'th'));
     let activeCategory = 'all';
+    let pendingSelectedMaterialIds = new Set();
 
     function renderCategoryFilters() {
       const buttons = ['all', ...categories].map((cat) => {
@@ -324,18 +446,31 @@
       }
     }
 
+    function resetPendingMaterialSelection() {
+      pendingSelectedMaterialIds = new Set(
+        getDataRows().map((tr) => tr.querySelector('.material-select').value)
+      );
+    }
+
     function syncModalSelection() {
-      const selectedIds = new Set(getDataRows().map(tr => tr.querySelector('.material-select').value));
       materialPickerList.querySelectorAll('.material-card').forEach((btn) => {
         const id = btn.getAttribute('data-id');
-        btn.classList.toggle('is-selected', selectedIds.has(id));
+        btn.classList.toggle('is-selected', pendingSelectedMaterialIds.has(id));
       });
     }
 
     materialPickerList.addEventListener('click', (e) => {
       const card = e.target.closest('.material-card');
       if (!card) return;
-      card.classList.toggle('is-selected');
+      const id = card.getAttribute('data-id');
+
+      if (pendingSelectedMaterialIds.has(id)) {
+        pendingSelectedMaterialIds.delete(id);
+      } else {
+        pendingSelectedMaterialIds.add(id);
+      }
+
+      card.classList.toggle('is-selected', pendingSelectedMaterialIds.has(id));
     });
 
     materialCategoryFilters.addEventListener('click', (e) => {
@@ -348,20 +483,25 @@
     });
 
     confirmMaterialSelection.addEventListener('click', () => {
-      const checked = Array.from(materialPickerList.querySelectorAll('.material-card.is-selected'))
-        .map((btn) => btn.getAttribute('data-id'));
       const existingIds = new Set(getDataRows().map(tr => tr.querySelector('.material-select').value));
-      checked.forEach((id) => {
+
+      pendingSelectedMaterialIds.forEach((id) => {
         if (!existingIds.has(id)) addRow({ material_id: id });
       });
+
       bootstrap.Modal.getOrCreateInstance(materialPickerModalEl).hide();
     });
 
     openMaterialModalBtn.addEventListener('click', () => {
+      resetPendingMaterialSelection();
+
       if (!materialPickerList.children.length) {
         renderCategoryFilters();
         renderMaterialPicker();
+      } else {
+        renderMaterialPicker();
       }
+
       syncModalSelection();
       bootstrap.Modal.getOrCreateInstance(materialPickerModalEl).show();
     });
@@ -373,6 +513,8 @@
       infoHouseNo.value = '';
       infoStatus.value = '';
       infoBalance.value = '';
+      householdNameDisplay.textContent = 'ยังไม่ได้ค้นหา';
+      householdMetaDisplay.textContent = 'ค้นหาจากเลขที่ชุมชนและบ้านเลขที่';
     }
 
     async function lookupHousehold() {
@@ -415,6 +557,8 @@
         infoHouseNo.value = h.house_no || '';
         infoStatus.value = h.active_status || '';
         infoBalance.value = Number(h.total_balance || 0).toFixed(2);
+        householdNameDisplay.textContent = h.contact_person || 'พบครัวเรือนแล้ว';
+        householdMetaDisplay.textContent = `${h.account_no || '-'} · คงเหลือ ${Number(h.total_balance || 0).toFixed(2)} บาท`;
         householdInfo.classList.remove('d-none');
       } catch (err) {
         householdError.textContent = 'เกิดข้อผิดพลาดระหว่างค้นหา กรุณาลองใหม่';
@@ -433,8 +577,18 @@
           lookupHousehold();
         }
       });
+
+      el.addEventListener('input', () => {
+        householdInfo.classList.add('d-none');
+        householdError.classList.add('d-none');
+        householdError.textContent = '';
+        clearHouseholdInfo();
+      });
     });
 
+    transactionDateInput.addEventListener('input', updateHeaderSummary);
+
+    updateHeaderSummary();
     ensureEmptyRow();
   </script>
 </x-layouts.admin>

@@ -9,29 +9,53 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     :root {
+      --rb-forest: #0d3f31;
       --rb-green: #0f6d4a;
       --rb-green-2: #17a97a;
-      --rb-green-100: #e9f7ef;
+      --rb-green-3: #34d399;
+      --rb-green-100: #eef9f3;
       --rb-green-200: #d7f0e3;
+      --rb-green-300: #b7e5ce;
       --rb-border: #d7e8df;
       --rb-text: #1f2937;
+      --rb-text-soft: #5f766a;
+      --rb-surface: rgba(255, 255, 255, 0.92);
+      --rb-shadow: 0 22px 55px rgba(15, 109, 74, 0.08);
+      --rb-shadow-soft: 0 12px 28px rgba(15, 109, 74, 0.06);
     }
 
     body {
+      min-height: 100vh;
       font-family: 'Kanit', ui-sans-serif, system-ui, sans-serif;
-      background: #f6fbf8;
+      background:
+        radial-gradient(circle at top left, rgba(52, 211, 153, 0.16), transparent 30%),
+        radial-gradient(circle at top right, rgba(20, 184, 166, 0.14), transparent 26%),
+        linear-gradient(180deg, #f4fbf7 0%, #edf8f3 42%, #f9fcfb 100%);
       color: var(--rb-text);
     }
 
-    .navbar {
-      background: #0d3b2b;
-      border-bottom: 1px solid #0b2f22;
+    a {
+      text-decoration: none;
+    }
+
+    .rb-app-shell {
+      min-height: 100vh;
+    }
+
+    .rb-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      background: rgba(8, 45, 33, 0.85);
+      border-bottom: 1px solid rgba(196, 245, 220, 0.16);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 18px 40px rgba(8, 45, 33, 0.16);
     }
 
     .navbar-brand {
-      color: #d9f5e6;
+      color: #e8fff3;
       font-weight: 600;
-      letter-spacing: 0.2px;
+      letter-spacing: 0.15px;
     }
 
     .navbar-brand:hover {
@@ -39,57 +63,474 @@
     }
 
     .navbar-nav {
-      gap: 0.25rem;
+      gap: 0.35rem;
     }
 
-    .navbar .nav-link {
-      color: #d9f5e6;
+    .rb-topbar .nav-link {
+      color: rgba(232, 255, 243, 0.86);
       font-weight: 500;
-      border-radius: 0.6rem;
-      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      padding: 0.52rem 0.95rem;
+      transition: all 0.16s ease-in-out;
     }
 
-    .navbar .nav-link:hover {
-      background: rgba(255, 255, 255, 0.12);
+    .rb-topbar .nav-link:hover,
+    .rb-topbar .nav-link.active {
+      background: rgba(255, 255, 255, 0.14);
       color: #ffffff;
+      transform: translateY(-1px);
     }
 
     .navbar-toggler {
-      border-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.24);
+      border-radius: 1rem;
+      padding: 0.5rem 0.7rem;
     }
 
     .navbar-toggler:focus {
-      box-shadow: 0 0 0 0.2rem rgba(217, 245, 230, 0.25);
+      box-shadow: 0 0 0 0.25rem rgba(217, 245, 230, 0.18);
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1240px;
+    }
+
+    .rb-main {
+      padding: 2rem 0 3rem;
+    }
+
+    .rb-user-panel {
+      border: 1px solid rgba(217, 245, 230, 0.16);
+      border-radius: 1.2rem;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.55rem 0.65rem 0.55rem 0.9rem;
+      color: #effcf5;
+    }
+
+    .rb-user-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.15;
+    }
+
+    .rb-user-role {
+      color: rgba(232, 255, 243, 0.72);
+      font-size: 0.78rem;
+    }
+
+    .rb-user-panel .btn-outline-light {
+      border-radius: 0.9rem;
+      border-color: rgba(255, 255, 255, 0.24);
+      color: #f2fff7;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .rb-user-panel .btn-outline-light:hover,
+    .rb-user-panel .btn-outline-light:focus {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .rb-flash-stack {
+      display: grid;
+      gap: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .rb-page-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: end;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .rb-page-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-bottom: 0.8rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--rb-green-200);
+      background: rgba(238, 249, 243, 0.9);
+      color: var(--rb-green);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .rb-page-title {
+      margin: 0;
+      font-size: clamp(1.75rem, 2vw + 1rem, 2.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      color: #0d5134;
+    }
+
+    .rb-page-subtitle {
+      margin: 0.45rem 0 0;
+      max-width: 56rem;
+      color: var(--rb-text-soft);
+      font-size: 0.98rem;
+      line-height: 1.7;
+    }
+
+    .rb-page-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .rb-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.35rem;
+    }
+
+    .rb-stat-card {
+      border: 1px solid var(--rb-green-200);
+      border-radius: 1.25rem;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(242, 251, 246, 0.96) 100%);
+      box-shadow: var(--rb-shadow-soft);
+      padding: 1rem 1.1rem;
+    }
+
+    .rb-stat-label {
+      margin-bottom: 0.4rem;
+      color: #4c6658;
+      font-size: 0.79rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .rb-stat-value {
+      color: #0b4d32;
+      font-size: 1.85rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .rb-stat-meta {
+      margin-top: 0.5rem;
+      color: var(--rb-text-soft);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .rb-surface,
+    .card,
+    .modal-content {
+      border: 1px solid var(--rb-green-200);
+      border-radius: 1.25rem;
+      background: var(--rb-surface);
+      box-shadow: var(--rb-shadow);
+    }
+
+    form.bg-white,
+    div.bg-white,
+    table.bg-white {
+      border: 1px solid var(--rb-green-200);
+      border-radius: 1.15rem !important;
+      background: rgba(255, 255, 255, 0.96) !important;
+      box-shadow: var(--rb-shadow-soft);
+    }
+
+    .card {
+      overflow: hidden;
+    }
+
+    .rb-section-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: end;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .rb-card-title {
+      margin: 0;
+      color: #0d5134;
+      font-size: 1.08rem;
+      font-weight: 700;
+    }
+
+    .rb-card-subtitle {
+      margin: 0.28rem 0 0;
+      color: var(--rb-text-soft);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .rb-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border-radius: 999px;
+      border: 1px solid var(--rb-green-200);
+      background: #edf8f2;
+      color: #1a6141;
+      padding: 0.42rem 0.8rem;
+      font-size: 0.82rem;
+      font-weight: 500;
     }
 
     .form-control,
     .form-select {
-      border-radius: 0.6rem;
+      min-height: 48px;
+      border-radius: 0.95rem;
       border-color: var(--rb-border);
+      background: rgba(255, 255, 255, 0.96);
+      padding-inline: 0.95rem;
     }
 
     .form-control:focus,
     .form-select:focus {
-      border-color: #34d399;
-      box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15);
+      border-color: var(--rb-green-3);
+      box-shadow: 0 0 0 0.22rem rgba(16, 185, 129, 0.16);
+    }
+
+    .form-label {
+      margin-bottom: 0.55rem;
+      color: #294539;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .form-text {
+      color: #648072;
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+
+    .input-group > .form-control,
+    .input-group > .form-select,
+    .input-group-text {
+      min-height: 48px;
+      border-radius: 0.95rem;
+    }
+
+    .btn {
+      border-radius: 0.95rem;
+      padding: 0.72rem 1rem;
+      font-weight: 600;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-sm {
+      border-radius: 0.8rem;
+      padding: 0.45rem 0.78rem;
+    }
+
+    .btn-primary,
+    .btn-success {
+      background: linear-gradient(135deg, var(--rb-green-2) 0%, var(--rb-green) 100%);
+      border-color: transparent;
+      box-shadow: 0 14px 24px rgba(15, 109, 74, 0.18);
+    }
+
+    .btn-primary:hover,
+    .btn-success:hover,
+    .btn-primary:focus,
+    .btn-success:focus {
+      background: linear-gradient(135deg, #14976d 0%, #0c5c3f 100%);
+      border-color: transparent;
+    }
+
+    .btn-outline-primary {
+      color: var(--rb-green);
+      border-color: #9fdac3;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .btn-outline-primary:hover,
+    .btn-outline-primary:focus {
+      background: #eaf8f1;
+      border-color: #71c6a4;
+      color: #0b4d32;
+    }
+
+    .btn-outline-dark {
+      color: var(--rb-green);
+      border-color: #9fdac3;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .btn-outline-dark:hover,
+    .btn-outline-dark:focus {
+      background: var(--rb-green);
+      border-color: var(--rb-green);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+      border-color: #6b7280;
+    }
+
+    .btn-outline-secondary {
+      color: #54635b;
+      border-color: #cddbd4;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .btn-outline-secondary:hover,
+    .btn-outline-secondary:focus {
+      background: #f2f6f4;
+      border-color: #b9ccc2;
+      color: #30463b;
+    }
+
+    .btn-outline-warning:hover,
+    .btn-outline-danger:hover {
+      transform: translateY(-1px);
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 0.48rem 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    hr {
+      border-color: rgba(15, 109, 74, 0.12);
+    }
+
+    .alert {
+      border-radius: 1rem;
+      border-width: 1px;
+      box-shadow: var(--rb-shadow-soft);
+      padding: 1rem 1.1rem;
+    }
+
+    .alert-success {
+      background: #edf9f2;
+      border-color: #cdebd9;
+      color: #17553a;
+    }
+
+    .alert-danger {
+      background: #fff6f5;
+      border-color: #f5d2cf;
+      color: #8b2e28;
+    }
+
+    .alert-warning,
+    .alert-info {
+      border-color: #e9e1b7;
+    }
+
+    .table-responsive {
+      border-radius: 1.15rem;
+      border: 1px solid var(--rb-green-200);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--rb-shadow-soft);
+      overflow: hidden;
     }
 
     .table {
+      margin-bottom: 0;
       border-color: var(--rb-border);
+      vertical-align: middle;
+    }
+
+    .table > :not(caption) > * > * {
+      padding: 0.95rem 1rem;
+      background: transparent;
     }
 
     .table thead th {
       background: #f1fbf5;
       color: #166534;
-      font-weight: 600;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .table-striped > tbody > tr:nth-of-type(odd) > * {
+      --bs-table-accent-bg: rgba(246, 251, 248, 0.92);
+    }
+
+    .table tbody tr:hover {
+      background: rgba(241, 251, 245, 0.8);
     }
 
     .table[data-sortable-table] thead th[data-sortable="false"] {
       cursor: default;
+    }
+
+    .pagination {
+      gap: 0.35rem;
+      margin-top: 1rem;
+    }
+
+    .page-link {
+      min-width: 42px;
+      border-radius: 0.85rem;
+      border-color: var(--rb-green-200);
+      color: var(--rb-green);
+      box-shadow: 0 6px 16px rgba(15, 109, 74, 0.05);
+    }
+
+    .page-link:hover {
+      color: #0b4d32;
+      background: #edf8f2;
+      border-color: #a2dcc5;
+    }
+
+    .page-item.active .page-link {
+      background: linear-gradient(135deg, var(--rb-green-2) 0%, var(--rb-green) 100%);
+      border-color: transparent;
+      box-shadow: 0 10px 20px rgba(15, 109, 74, 0.16);
+    }
+
+    .page-item.disabled .page-link {
+      background: rgba(255, 255, 255, 0.72);
+      border-color: var(--rb-green-200);
+    }
+
+    .rb-info-panel {
+      border: 1px dashed var(--rb-green-300);
+      border-radius: 1.1rem;
+      background: linear-gradient(180deg, #fbfffc 0%, #f3fbf7 100%);
+      padding: 1rem;
+    }
+
+    .rb-info-panel .form-control[readonly] {
+      background: rgba(255, 255, 255, 0.98);
+    }
+
+    .rb-empty-state {
+      border: 1px dashed var(--rb-green-300);
+      border-radius: 1rem;
+      background: #f7fcf9;
+      color: var(--rb-text-soft);
+      padding: 1.2rem;
+      text-align: center;
+    }
+
+    .rb-detail-list dt {
+      color: var(--rb-text-soft);
+      font-weight: 500;
+    }
+
+    .rb-detail-list dd {
+      color: #143728;
+      font-weight: 500;
     }
 
     .rb-sort-button {
@@ -131,41 +572,28 @@
       color: #0f6d4a;
     }
 
-    .btn-success {
-      background: var(--rb-green-2);
-      border-color: var(--rb-green-2);
+    @media (max-width: 1199.98px) {
+      .rb-topbar .navbar-collapse {
+        margin-top: 1rem;
+        padding: 1rem;
+        border: 1px solid rgba(217, 245, 230, 0.14);
+        border-radius: 1.25rem;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .rb-user-panel {
+        margin-top: 0.75rem;
+      }
     }
 
-    .btn-success:hover {
-      background: #128e66;
-      border-color: #128e66;
-    }
+    @media (max-width: 991.98px) {
+      .rb-main {
+        padding-top: 1.5rem;
+      }
 
-    .btn-outline-dark {
-      color: var(--rb-green);
-      border-color: #9fdac3;
-    }
-
-    .btn-outline-dark:hover {
-      background: var(--rb-green);
-      border-color: var(--rb-green);
-      color: #fff;
-    }
-
-    .btn-secondary {
-      background: #6b7280;
-      border-color: #6b7280;
-    }
-
-    .alert {
-      border-radius: 0.8rem;
-      border-color: var(--rb-green-200);
-    }
-
-    .bg-white {
-      border-radius: 0.9rem;
-      border: 1px solid var(--rb-green-200);
-      box-shadow: 0 8px 20px rgba(15, 109, 74, 0.06);
+      .rb-page-header {
+        align-items: start;
+      }
     }
   </style>
 </head>
@@ -173,58 +601,84 @@
 @php
   $authUser = auth()->user();
   $isPrivileged = $authUser && in_array($authUser->role, ['admin', 'staff'], true);
+  $navItems = [
+      ['label' => 'สรุปรายงาน', 'route' => 'reports.index', 'patterns' => ['reports.*']],
+      ['label' => 'ประวัติรายการ', 'route' => 'transactions.index', 'patterns' => ['transactions.*']],
+      ['label' => 'ครัวเรือน', 'route' => 'households.index', 'patterns' => ['households.*']],
+      ['label' => 'ฝาก/รับซื้อ', 'route' => 'deposits.create', 'patterns' => ['deposits.*'], 'privileged' => true],
+      ['label' => 'ถอน', 'route' => 'withdraws.create', 'patterns' => ['withdraws.*'], 'privileged' => true],
+      ['label' => 'หมวดวัสดุ', 'route' => 'material-categories.index', 'patterns' => ['material-categories.*'], 'privileged' => true],
+      ['label' => 'วัสดุ', 'route' => 'materials.index', 'patterns' => ['materials.*'], 'privileged' => true],
+      ['label' => 'ราคา', 'route' => 'material-prices.index', 'patterns' => ['material-prices.*'], 'privileged' => true],
+  ];
 @endphp
-<nav class="navbar navbar-expand-lg navbar-light">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('main-menu') }}">
-      <img src="{{ asset('images/recycle-logo.png') }}" alt="โลโก้ธนาคารวัสดุรีไซเคิล" style="height:36px;width:36px;object-fit:contain;background:#ffffff;border-radius:10px;padding:3px;">
-      ธนาคารวัสดุรีไซเคิล
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rbNavbar" aria-controls="rbNavbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="rbNavbar">
-      <div class="navbar-nav ms-auto align-items-lg-center">
-        @if($isPrivileged)
-          <a class="nav-link" href="{{ route('deposits.create') }}">ฝาก/รับซื้อ</a>
-          <a class="nav-link" href="{{ route('withdraws.create') }}">ถอน</a>
-        @endif
-        <a class="nav-link" href="{{ route('reports.index') }}">สรุปรายงาน</a>
-        <a class="nav-link" href="{{ route('transactions.index') }}">ประวัติรายการ</a>
-        <a class="nav-link" href="{{ route('households.index') }}">ครัวเรือน</a>
-        @if($isPrivileged)
-          <a class="nav-link" href="{{ route('material-categories.index') }}">หมวดวัสดุ</a>
-          <a class="nav-link" href="{{ route('materials.index') }}">วัสดุ</a>
-          <a class="nav-link" href="{{ route('material-prices.index') }}">ราคา</a>
+<div class="rb-app-shell">
+  <nav class="navbar navbar-expand-xl navbar-dark rb-topbar">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-3" href="{{ route('main-menu') }}">
+        <img src="{{ asset('images/recycle-logo.png') }}" alt="โลโก้ธนาคารวัสดุรีไซเคิล" style="height:42px;width:42px;object-fit:contain;background:#ffffff;border-radius:14px;padding:4px;box-shadow:0 12px 22px rgba(0,0,0,0.12);">
+        <span>
+          <span class="d-block">ธนาคารวัสดุรีไซเคิล</span>
+          <span class="d-block small fw-normal text-white-50">จัดการข้อมูลรายวันแบบใช้งานจริง</span>
+        </span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rbNavbar" aria-controls="rbNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="rbNavbar">
+        <div class="navbar-nav ms-auto align-items-xl-center">
+          @foreach($navItems as $item)
+            @continue(($item['privileged'] ?? false) && !$isPrivileged)
+            <a
+              @class([
+                  'nav-link',
+                  'active' => request()->routeIs(...$item['patterns']),
+              ])
+              href="{{ route($item['route']) }}"
+            >
+              {{ $item['label'] }}
+            </a>
+          @endforeach
+        </div>
+        @if($authUser)
+          <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 ms-xl-3 mt-3 mt-xl-0">
+            <div class="rb-user-panel d-flex align-items-center justify-content-between gap-3">
+              <div>
+                <div class="rb-user-name">{{ $authUser->username }}</div>
+                <div class="rb-user-role">สิทธิ์ {{ $authUser->role }}</div>
+              </div>
+              <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-outline-light">ออกจากระบบ</button>
+              </form>
+            </div>
+          </div>
         @endif
       </div>
-      @if($authUser)
-        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 ms-lg-3 mt-2 mt-lg-0">
-          <span class="small text-muted">{{ $authUser->username }} ({{ $authUser->role }})</span>
-          <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="btn btn-sm btn-outline-dark">ออกจากระบบ</button>
-          </form>
+    </div>
+  </nav>
+
+  <main class="rb-main">
+    <div class="container">
+      @if (session('success') || $errors->any())
+        <div class="rb-flash-stack">
+          @if (session('success'))
+            <div class="alert alert-success mb-0">{{ session('success') }}</div>
+          @endif
+          @if ($errors->any())
+            <div class="alert alert-danger mb-0">
+              <ul class="mb-0 ps-3">
+                @foreach($errors->all() as $e) <li>{{ $e }}</li> @endforeach
+              </ul>
+            </div>
+          @endif
         </div>
       @endif
-    </div>
-  </div>
-</nav>
 
-<main class="container py-4">
-  @if (session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-  @endif
-  @if ($errors->any())
-    <div class="alert alert-danger">
-      <ul class="mb-0">
-        @foreach($errors->all() as $e) <li>{{ $e }}</li> @endforeach
-      </ul>
+      {{ $slot ?? '' }}
     </div>
-  @endif
-
-  {{ $slot ?? '' }}
-</main>
+  </main>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
