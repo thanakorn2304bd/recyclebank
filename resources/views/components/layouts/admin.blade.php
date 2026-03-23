@@ -56,6 +56,7 @@
       color: #e8fff3;
       font-weight: 600;
       letter-spacing: 0.15px;
+      white-space: nowrap;
     }
 
     .navbar-brand:hover {
@@ -63,20 +64,53 @@
     }
 
     .navbar-nav {
-      gap: 0.35rem;
+      gap: 0.2rem;
+      flex-wrap: nowrap;
     }
 
     .rb-topbar .nav-link {
       color: rgba(232, 255, 243, 0.86);
       font-weight: 500;
       border-radius: 999px;
-      padding: 0.52rem 0.95rem;
+      padding: 0.46rem 0.78rem;
+      font-size: 0.95rem;
+      white-space: nowrap;
       transition: all 0.16s ease-in-out;
     }
 
     .rb-topbar .nav-link:hover,
     .rb-topbar .nav-link.active {
       background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .rb-topbar .nav-link.rb-nav-link--deposit,
+    .rb-topbar .nav-link.rb-nav-link--withdraw {
+      color: #ffffff;
+      box-shadow: 0 12px 22px rgba(0, 0, 0, 0.14);
+    }
+
+    .rb-topbar .nav-link.rb-nav-link--deposit {
+      background: linear-gradient(135deg, #16a34a 0%, #10b981 100%);
+      border: 1px solid rgba(167, 243, 208, 0.3);
+    }
+
+    .rb-topbar .nav-link.rb-nav-link--deposit:hover,
+    .rb-topbar .nav-link.rb-nav-link--deposit.active {
+      background: linear-gradient(135deg, #15803d 0%, #0f9f6e 100%);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .rb-topbar .nav-link.rb-nav-link--withdraw {
+      background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
+      border: 1px solid rgba(253, 186, 116, 0.34);
+    }
+
+    .rb-topbar .nav-link.rb-nav-link--withdraw:hover,
+    .rb-topbar .nav-link.rb-nav-link--withdraw.active {
+      background: linear-gradient(135deg, #c2410c 0%, #d97706 100%);
       color: #ffffff;
       transform: translateY(-1px);
     }
@@ -103,19 +137,28 @@
       border: 1px solid rgba(217, 245, 230, 0.16);
       border-radius: 1.2rem;
       background: rgba(255, 255, 255, 0.08);
-      padding: 0.55rem 0.65rem 0.55rem 0.9rem;
+      padding: 0.5rem 0.65rem 0.5rem 0.85rem;
       color: #effcf5;
+      white-space: nowrap;
+    }
+
+    .rb-user-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+      white-space: nowrap;
     }
 
     .rb-user-name {
       font-size: 0.95rem;
       font-weight: 600;
-      line-height: 1.15;
+      line-height: 1;
     }
 
     .rb-user-role {
       color: rgba(232, 255, 243, 0.72);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
+      line-height: 1;
     }
 
     .rb-user-panel .btn-outline-light {
@@ -601,15 +644,17 @@
 @php
   $authUser = auth()->user();
   $isPrivileged = $authUser && in_array($authUser->role, ['admin', 'staff'], true);
+  $isAdmin = $authUser?->role === 'admin';
   $navItems = [
+      ['label' => 'ฝาก/รับซื้อ', 'route' => 'deposits.create', 'patterns' => ['deposits.*'], 'privileged' => true, 'accent' => 'deposit'],
+      ['label' => 'ถอน', 'route' => 'withdraws.create', 'patterns' => ['withdraws.*'], 'privileged' => true, 'accent' => 'withdraw'],
       ['label' => 'สรุปรายงาน', 'route' => 'reports.index', 'patterns' => ['reports.*']],
       ['label' => 'ประวัติรายการ', 'route' => 'transactions.index', 'patterns' => ['transactions.*']],
       ['label' => 'ครัวเรือน', 'route' => 'households.index', 'patterns' => ['households.*']],
-      ['label' => 'ฝาก/รับซื้อ', 'route' => 'deposits.create', 'patterns' => ['deposits.*'], 'privileged' => true],
-      ['label' => 'ถอน', 'route' => 'withdraws.create', 'patterns' => ['withdraws.*'], 'privileged' => true],
-      ['label' => 'หมวดวัสดุ', 'route' => 'material-categories.index', 'patterns' => ['material-categories.*'], 'privileged' => true],
-      ['label' => 'วัสดุ', 'route' => 'materials.index', 'patterns' => ['materials.*'], 'privileged' => true],
-      ['label' => 'ราคา', 'route' => 'material-prices.index', 'patterns' => ['material-prices.*'], 'privileged' => true],
+      ['label' => 'เจ้าหน้าที่', 'route' => 'admin.staff.index', 'patterns' => ['admin.staff.*'], 'admin_only' => true],
+      ['label' => 'บัญชีผู้ใช้', 'route' => 'admin.users.index', 'patterns' => ['admin.users.*'], 'admin_only' => true],
+      ['label' => 'Activity Log', 'route' => 'admin.activity-logs.index', 'patterns' => ['admin.activity-logs.*'], 'admin_only' => true],
+      ['label' => 'วัสดุ', 'route' => 'materials.index', 'patterns' => ['materials.*', 'material-categories.*', 'material-prices.*'], 'privileged' => true],
   ];
 @endphp
 <div class="rb-app-shell">
@@ -617,10 +662,7 @@
     <div class="container">
       <a class="navbar-brand d-flex align-items-center gap-3" href="{{ route('main-menu') }}">
         <img src="{{ asset('images/recycle-logo.png') }}" alt="โลโก้ธนาคารวัสดุรีไซเคิล" style="height:42px;width:42px;object-fit:contain;background:#ffffff;border-radius:14px;padding:4px;box-shadow:0 12px 22px rgba(0,0,0,0.12);">
-        <span>
-          <span class="d-block">ธนาคารวัสดุรีไซเคิล</span>
-          <span class="d-block small fw-normal text-white-50">จัดการข้อมูลรายวันแบบใช้งานจริง</span>
-        </span>
+        <span>ธนาคารวัสดุรีไซเคิล</span>
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rbNavbar" aria-controls="rbNavbar" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -629,10 +671,13 @@
         <div class="navbar-nav ms-auto align-items-xl-center">
           @foreach($navItems as $item)
             @continue(($item['privileged'] ?? false) && !$isPrivileged)
+            @continue(($item['admin_only'] ?? false) && !$isAdmin)
             <a
               @class([
                   'nav-link',
                   'active' => request()->routeIs(...$item['patterns']),
+                  'rb-nav-link--deposit' => ($item['accent'] ?? null) === 'deposit',
+                  'rb-nav-link--withdraw' => ($item['accent'] ?? null) === 'withdraw',
               ])
               href="{{ route($item['route']) }}"
             >
@@ -643,7 +688,7 @@
         @if($authUser)
           <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 ms-xl-3 mt-3 mt-xl-0">
             <div class="rb-user-panel d-flex align-items-center justify-content-between gap-3">
-              <div>
+              <div class="rb-user-meta">
                 <div class="rb-user-name">{{ $authUser->username }}</div>
                 <div class="rb-user-role">สิทธิ์ {{ $authUser->role }}</div>
               </div>

@@ -1,8 +1,14 @@
-<x-layouts.admin title="รายละเอียดรายการ">
+@php
+  $isDepositSummary = $transaction->transaction_type === 'deposit' && request()->query('source') === 'deposit';
+@endphp
+
+<x-layouts.admin :title="$isDepositSummary ? 'สรุปรายการฝาก/รับซื้อ' : 'รายละเอียดรายการ'">
   <div class="rb-page-header">
     <div>
-      <div class="rb-page-kicker">Transaction Detail</div>
-      <h1 class="rb-page-title">รายละเอียดรายการ #{{ $transaction->transaction_id }}</h1>
+      <div class="rb-page-kicker">{{ $isDepositSummary ? 'Deposit Summary' : 'Transaction Detail' }}</div>
+      <h1 class="rb-page-title">
+        {{ $isDepositSummary ? 'สรุปรายการฝาก/รับซื้อ' : 'รายละเอียดรายการ' }} #{{ $transaction->transaction_id }}
+      </h1>
       <p class="rb-page-subtitle">
         วันที่ {{ $transaction->transaction_date }} |
         ครัวเรือน {{ $transaction->household?->account_no }} - {{ $transaction->household?->contact_person }}
@@ -10,9 +16,13 @@
     </div>
 
     <div class="rb-page-actions">
-      <a class="btn btn-outline-secondary" href="{{ route('transactions.index') }}">กลับ</a>
+      @if($isDepositSummary)
+        <a class="btn btn-outline-secondary" href="{{ route('deposits.create') }}">กลับหน้ารับฝาก</a>
+      @else
+        <a class="btn btn-outline-secondary" href="{{ route('transactions.index') }}">กลับ</a>
+      @endif
       <a class="btn btn-primary" href="{{ route('transactions.receipt', $transaction) }}" target="_blank">
-        {{ $transaction->transaction_type === 'withdraw' ? 'ใบถอนเงิน PDF' : 'ใบเสร็จ PDF (A5)' }}
+        {{ $transaction->transaction_type === 'withdraw' ? 'ใบถอนเงิน PDF' : 'พิมพ์ใบเสร็จ' }}
       </a>
     </div>
   </div>

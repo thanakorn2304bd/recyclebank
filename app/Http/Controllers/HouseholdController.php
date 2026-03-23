@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Community;
 use App\Models\Household;
 use App\Models\UserAccount;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -121,6 +122,11 @@ class HouseholdController extends Controller
             return $household;
         });
 
+        ActivityLogger::forCurrentUser(
+            'households',
+            "สร้างครัวเรือน {$household->account_no} ({$household->contact_person})"
+        );
+
         return redirect()->route('households.credentials.create', $household)
             ->with('success', 'บันทึกข้อมูลครัวเรือนแล้ว กรุณาตั้งรหัสผ่านสำหรับเข้าใช้งาน');
     }
@@ -182,6 +188,11 @@ class HouseholdController extends Controller
             $memberAccount->save();
         }
 
+        ActivityLogger::forCurrentUser(
+            'households',
+            "แก้ไขครัวเรือน {$household->account_no} ({$household->contact_person}) สถานะ {$household->active_status}"
+        );
+
         return redirect()->route('households.index')
             ->with('success', 'แก้ไขครัวเรือนเรียบร้อย');
     }
@@ -232,6 +243,11 @@ class HouseholdController extends Controller
         $memberAccount->last_login ??= null;
         $memberAccount->save();
 
+        ActivityLogger::forCurrentUser(
+            'households',
+            "ตั้งรหัสผ่านบัญชีครัวเรือน {$memberAccount->username}"
+        );
+
         return redirect()->route('households.show', $household)
             ->with('success', 'ตั้งรหัสผ่านครัวเรือนเรียบร้อย ชื่อผู้ใช้คือ ' . $memberAccount->username);
     }
@@ -250,7 +266,15 @@ class HouseholdController extends Controller
             return back()->withErrors('ลบไม่ได้: มีบัญชีผู้ใช้ที่ผูกกับครัวเรือนนี้');
         }
 
+        $accountNo = $household->account_no;
+        $contactPerson = $household->contact_person;
+
         $household->delete();
+
+        ActivityLogger::forCurrentUser(
+            'households',
+            "ลบครัวเรือน {$accountNo} ({$contactPerson})"
+        );
 
         return redirect()->route('households.index')
             ->with('success', 'ลบครัวเรือนเรียบร้อย');

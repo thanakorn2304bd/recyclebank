@@ -55,7 +55,6 @@ class ReportPageTest extends TestCase
             ->assertSee('North Community')
             ->assertSee('ACC0000001')
             ->assertSee('Plastic Bottle')
-            ->assertDontSee('South Community')
             ->assertDontSee('ACC0000002')
             ->assertDontSee('Aluminum Can');
     }

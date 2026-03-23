@@ -3,6 +3,29 @@
     $pageMaterials = $materials->getCollection();
     $activeCount = $pageMaterials->where('is_active', true)->count();
     $inactiveCount = $pageMaterials->where('is_active', false)->count();
+    $sortUrl = function (string $column) use ($sort, $dir) {
+        return route('materials.index', array_merge(
+            request()->except('page'),
+            [
+                'sort' => $column,
+                'dir' => $sort === $column && $dir === 'asc' ? 'desc' : 'asc',
+            ],
+        ));
+    };
+    $sortIndicator = function (string $column) use ($sort, $dir) {
+        if ($sort !== $column) {
+            return '↕';
+        }
+
+        return $dir === 'asc' ? '▲' : '▼';
+    };
+    $sortAria = function (string $column) use ($sort, $dir) {
+        if ($sort !== $column) {
+            return 'none';
+        }
+
+        return $dir === 'asc' ? 'ascending' : 'descending';
+    };
   @endphp
 
   <div class="rb-page-header">
@@ -10,12 +33,13 @@
       <div class="rb-page-kicker">Materials Catalog</div>
       <h1 class="rb-page-title">วัสดุ</h1>
       <p class="rb-page-subtitle">
-        จัดการรายการวัสดุ แยกตามหมวดหมู่ ตรวจสอบสถานะการใช้งาน และเปิดดูประวัติราคาของแต่ละวัสดุได้จากจุดเดียว
+        ศูนย์รวมสำหรับจัดการวัสดุ หมวดหมู่ และดูราคาปัจจุบันของแต่ละรายการได้จากจุดเดียว
       </p>
     </div>
     <div class="rb-page-actions">
       <a class="btn btn-primary" href="{{ route('materials.create') }}">+ เพิ่มวัสดุ</a>
-      <a class="btn btn-outline-secondary" href="{{ route('material-categories.index') }}">ดูหมวดวัสดุ</a>
+      <a class="btn btn-outline-secondary" href="{{ route('material-categories.index') }}">จัดการหมวด</a>
+      <a class="btn btn-outline-secondary" href="{{ route('material-prices.index') }}">จัดการราคา</a>
     </div>
   </div>
 
@@ -79,6 +103,7 @@
             <option value="category" @selected($sort === 'category')>หมวด</option>
             <option value="unit" @selected($sort === 'unit')>หน่วย</option>
             <option value="status" @selected($sort === 'status')>สถานะ</option>
+            <option value="price" @selected($sort === 'price')>ราคา</option>
           </select>
           <select class="form-select" name="dir">
             <option value="asc" @selected($dir === 'asc')>น้อย → มาก</option>
@@ -106,14 +131,45 @@
     </div>
 
     <div class="table-responsive">
-      <table class="table table-striped align-middle" data-sortable-table>
+      <table class="table table-striped align-middle">
         <thead>
           <tr>
-            <th style="width:90px;" data-sort-type="number">ID</th>
-            <th>ชื่อวัสดุ</th>
-            <th>หมวด</th>
-            <th style="width:90px;">หน่วย</th>
-            <th style="width:110px;">สถานะ</th>
+            <th style="width:90px;" @class(['rb-sort-active' => $sort === 'id']) aria-sort="{{ $sortAria('id') }}">
+              <a class="rb-sort-button" href="{{ $sortUrl('id') }}">
+                <span class="rb-sort-label">ID</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('id') }}</span>
+              </a>
+            </th>
+            <th @class(['rb-sort-active' => $sort === 'name']) aria-sort="{{ $sortAria('name') }}">
+              <a class="rb-sort-button" href="{{ $sortUrl('name') }}">
+                <span class="rb-sort-label">ชื่อวัสดุ</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('name') }}</span>
+              </a>
+            </th>
+            <th @class(['rb-sort-active' => $sort === 'category']) aria-sort="{{ $sortAria('category') }}">
+              <a class="rb-sort-button" href="{{ $sortUrl('category') }}">
+                <span class="rb-sort-label">หมวด</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('category') }}</span>
+              </a>
+            </th>
+            <th style="width:90px;" @class(['rb-sort-active' => $sort === 'unit']) aria-sort="{{ $sortAria('unit') }}">
+              <a class="rb-sort-button" href="{{ $sortUrl('unit') }}">
+                <span class="rb-sort-label">หน่วย</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('unit') }}</span>
+              </a>
+            </th>
+            <th style="width:160px;" @class(['text-end', 'rb-sort-active' => $sort === 'price']) aria-sort="{{ $sortAria('price') }}">
+              <a class="rb-sort-button justify-content-end" href="{{ $sortUrl('price') }}">
+                <span class="rb-sort-label">ราคา</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('price') }}</span>
+              </a>
+            </th>
+            <th style="width:110px;" @class(['rb-sort-active' => $sort === 'status']) aria-sort="{{ $sortAria('status') }}">
+              <a class="rb-sort-button" href="{{ $sortUrl('status') }}">
+                <span class="rb-sort-label">สถานะ</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('status') }}</span>
+              </a>
+            </th>
             <th style="width:260px;" data-sortable="false"></th>
           </tr>
         </thead>
@@ -124,6 +180,14 @@
               <td>{{ $m->material_name }}</td>
               <td>{{ $m->category?->category_name }}</td>
               <td>{{ $m->unit }}</td>
+              <td class="text-end">
+                @if($m->current_price !== null)
+                  <div class="fw-semibold">{{ number_format((float) $m->current_price, 2) }}</div>
+                  <div class="text-muted small">บาท/{{ $m->unit }}</div>
+                @else
+                  <span class="text-muted">ยังไม่มีราคา</span>
+                @endif
+              </td>
               <td>
                 @if($m->is_active)
                   <span class="badge bg-success">ใช้งาน</span>
@@ -132,7 +196,7 @@
                 @endif
               </td>
               <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" href="{{ route('materials.prices', $m) }}">ดูราคา</a>
+                <a class="btn btn-sm btn-outline-primary" href="{{ route('material-prices.index', ['material_id' => $m->material_id]) }}">แก้ราคา</a>
                 <a class="btn btn-sm btn-outline-secondary" href="{{ route('materials.edit', $m) }}">แก้ไข</a>
                 <form class="d-inline" method="POST" action="{{ route('materials.destroy', $m) }}" onsubmit="return confirm('ลบวัสดุนี้?')">
                   @csrf
@@ -143,7 +207,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="text-center text-muted py-4">ไม่พบวัสดุตามเงื่อนไขที่เลือก</td>
+              <td colspan="7" class="text-center text-muted py-4">ไม่พบวัสดุตามเงื่อนไขที่เลือก</td>
             </tr>
           @endforelse
         </tbody>

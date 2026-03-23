@@ -142,7 +142,7 @@
     </div>
 
     <div class="d-flex flex-wrap gap-2 mt-4">
-      <button class="btn btn-success">บันทึกฝาก/รับซื้อ</button>
+      <button class="btn btn-success" type="submit" id="saveDepositBtn">บันทึกฝาก/รับซื้อ</button>
       <a class="btn btn-outline-secondary" href="{{ route('materials.index') }}">กลับหน้า “วัสดุ”</a>
     </div>
     <div class="form-text mt-2">ระบบจะคำนวณยอดรวมอัตโนมัติจากน้ำหนักและราคาปัจจุบันของวัสดุแต่ละชนิด</div>
@@ -165,6 +165,47 @@
         <div class="modal-footer border-0 pt-0">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
           <button type="button" class="btn btn-primary" id="confirmMaterialSelection">ยืนยัน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="confirmDepositModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <div>
+            <h5 class="modal-title">ยืนยันการบันทึกฝาก/รับซื้อ</h5>
+            <div class="text-muted small">ตรวจสอบข้อมูลอีกครั้งก่อนบันทึกรายการนี้</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-3">
+          <div class="rb-confirm-summary">
+            <div class="rb-confirm-summary__row">
+              <span>ครัวเรือน</span>
+              <strong id="confirmHouseholdDisplay">-</strong>
+            </div>
+            <div class="rb-confirm-summary__row">
+              <span>วันที่ทำรายการ</span>
+              <strong id="confirmDateDisplay">-</strong>
+            </div>
+            <div class="rb-confirm-summary__row">
+              <span>จำนวนรายการ</span>
+              <strong id="confirmItemCountDisplay">0 รายการ</strong>
+            </div>
+            <div class="rb-confirm-summary__row rb-confirm-summary__row--total">
+              <span>ยอดรวม</span>
+              <strong id="confirmTotalDisplay">0.00 บาท</strong>
+            </div>
+          </div>
+          <div class="alert alert-light border mt-3 mb-0">
+            เมื่อกดยืนยัน ระบบจะบันทึกรายการและพาไปหน้าสรุปรายการทันที
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ตรวจสอบอีกครั้ง</button>
+          <button type="button" class="btn btn-success" id="confirmDepositSubmitBtn">ยืนยันและบันทึก</button>
         </div>
       </div>
     </div>
@@ -240,6 +281,33 @@
       background: #f3fbf7;
       border-radius: 0.6rem;
     }
+
+    .rb-confirm-summary {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem;
+      border: 1px solid #d7f0e3;
+      border-radius: 1rem;
+      background: linear-gradient(180deg, #fbfffc 0%, #f1fbf5 100%);
+    }
+
+    .rb-confirm-summary__row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      color: #496457;
+    }
+
+    .rb-confirm-summary__row strong {
+      color: #0b4d32;
+      text-align: right;
+    }
+
+    .rb-confirm-summary__row--total {
+      padding-top: 0.75rem;
+      border-top: 1px dashed #b7e5ce;
+      font-size: 1.05rem;
+    }
   </style>
 
   <script>
@@ -254,6 +322,8 @@
     const materialPickerList = document.getElementById('materialPickerList');
     const materialPickerModalEl = document.getElementById('materialPickerModal');
     const confirmMaterialSelection = document.getElementById('confirmMaterialSelection');
+    const confirmDepositModalEl = document.getElementById('confirmDepositModal');
+    const confirmDepositSubmitBtn = document.getElementById('confirmDepositSubmitBtn');
     const grandTotalEl = document.getElementById('grandTotal');
     const grandTotalDisplay = document.getElementById('grandTotalDisplay');
     const grandTotalFooterDisplay = document.getElementById('grandTotalFooterDisplay');
@@ -273,6 +343,12 @@
     const infoHouseNo = document.getElementById('infoHouseNo');
     const infoStatus = document.getElementById('infoStatus');
     const infoBalance = document.getElementById('infoBalance');
+    const confirmHouseholdDisplay = document.getElementById('confirmHouseholdDisplay');
+    const confirmDateDisplay = document.getElementById('confirmDateDisplay');
+    const confirmItemCountDisplay = document.getElementById('confirmItemCountDisplay');
+    const confirmTotalDisplay = document.getElementById('confirmTotalDisplay');
+
+    let isDepositSubmissionConfirmed = false;
 
     function formatDateDisplay(value) {
       if (!value || typeof value !== 'string') {
@@ -294,6 +370,30 @@
       grandTotalDisplay.textContent = grandTotalEl.value;
       grandTotalFooterDisplay.textContent = `${grandTotalEl.value} บาท`;
       transactionDateDisplay.textContent = formatDateDisplay(transactionDateInput.value);
+    }
+
+    function buildHouseholdConfirmationText() {
+      const householdName = householdNameDisplay.textContent.trim();
+      const accountNo = infoAccountNo.value.trim();
+      const communityId = communityIdInput.value.trim();
+      const houseNo = houseNoInput.value.trim();
+
+      if (householdName && householdName !== 'ยังไม่ได้ค้นหา') {
+        return accountNo ? `${householdName} (${accountNo})` : householdName;
+      }
+
+      if (communityId || houseNo) {
+        return `ชุมชน ${communityId || '-'} บ้านเลขที่ ${houseNo || '-'}`;
+      }
+
+      return '-';
+    }
+
+    function syncConfirmationModal() {
+      confirmHouseholdDisplay.textContent = buildHouseholdConfirmationText();
+      confirmDateDisplay.textContent = formatDateDisplay(transactionDateInput.value);
+      confirmItemCountDisplay.textContent = `${getDataRows().length} รายการ`;
+      confirmTotalDisplay.textContent = `${grandTotalEl.value} บาท`;
     }
 
     function materialOptionsHtml(selectedId = '') {
@@ -587,6 +687,31 @@
     });
 
     transactionDateInput.addEventListener('input', updateHeaderSummary);
+
+    depositForm.addEventListener('submit', (e) => {
+      if (isDepositSubmissionConfirmed) {
+        return;
+      }
+
+      e.preventDefault();
+      syncConfirmationModal();
+      bootstrap.Modal.getOrCreateInstance(confirmDepositModalEl).show();
+    });
+
+    confirmDepositSubmitBtn.addEventListener('click', () => {
+      isDepositSubmissionConfirmed = true;
+      confirmDepositSubmitBtn.disabled = true;
+      confirmDepositSubmitBtn.textContent = 'กำลังบันทึก...';
+      bootstrap.Modal.getOrCreateInstance(confirmDepositModalEl).hide();
+      depositForm.requestSubmit();
+    });
+
+    confirmDepositModalEl.addEventListener('hidden.bs.modal', () => {
+      if (!isDepositSubmissionConfirmed) {
+        confirmDepositSubmitBtn.disabled = false;
+        confirmDepositSubmitBtn.textContent = 'ยืนยันและบันทึก';
+      }
+    });
 
     updateHeaderSummary();
     ensureEmptyRow();

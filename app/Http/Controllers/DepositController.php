@@ -7,6 +7,7 @@ use App\Models\Material;
 use App\Models\MaterialPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -76,7 +77,7 @@ class DepositController extends Controller
 
         $today = now()->toDateString();
 
-        return DB::transaction(function () use ($householdId, $date, $recordedBy, $data, $today) {
+        return DB::transaction(function () use ($household, $householdId, $date, $recordedBy, $data, $today) {
 
             $totalWeight = 0.0;
             $totalAmount = 0.0;
@@ -137,8 +138,17 @@ class DepositController extends Controller
                 ->where('household_id', $householdId)
                 ->update(['total_balance' => DB::raw('total_balance + ' . round($totalAmount, 2))]);
 
+            ActivityLogger::forCurrentUser(
+                'transactions',
+                "บันทึกฝาก/รับซื้อให้ {$household->account_no} ({$household->contact_person}) น้ำหนักรวม "
+                . number_format($totalWeight, 2) . " กก. เป็นเงิน " . number_format($totalAmount, 2) . ' บาท'
+            );
+
             return redirect()
-                ->route('deposits.create')
+                ->route('transactions.show', [
+                    'transaction' => $tx,
+                    'source' => 'deposit',
+                ])
                 ->with('success', "บันทึกฝาก/รับซื้อสำเร็จ (ยอดรวม " . number_format($totalAmount, 2) . ")");
         });
     }

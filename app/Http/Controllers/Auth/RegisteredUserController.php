@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\Household;
 use App\Models\UserAccount;
+use App\Support\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +71,7 @@ class RegisteredUserController extends Controller
             'username.unique' => 'เลขบัญชีนี้ถูกใช้งานเป็นชื่อผู้ใช้แล้ว กรุณาตรวจสอบข้อมูลอีกครั้ง',
         ])->validate();
 
-        DB::transaction(function () use ($data, $members): void {
+        $memberAccount = DB::transaction(function () use ($data, $members): UserAccount {
             $household = Household::create([
                 'account_no' => $data['account_no'],
                 'house_no' => $data['house_no'],
@@ -85,7 +86,7 @@ class RegisteredUserController extends Controller
                 'created_by' => null,
             ]);
 
-            UserAccount::create([
+            $memberAccount = UserAccount::create([
                 'username' => $household->account_no,
                 'password' => $data['password'],
                 'role' => 'member',
@@ -97,7 +98,15 @@ class RegisteredUserController extends Controller
             ]);
 
             $this->createMembers($household, $members);
+
+            return $memberAccount;
         });
+
+        ActivityLogger::log(
+            $memberAccount,
+            'registration',
+            'สมัครสมาชิกใหม่และส่งคำขออนุมัติบัญชี'
+        );
 
         return redirect()->route('login')->with(
             'status',

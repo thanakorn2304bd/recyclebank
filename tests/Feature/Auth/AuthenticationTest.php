@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\User;
+use App\Models\UserAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,23 +19,23 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserAccount();
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'username' => $user->username,
             'password' => 'password',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('main-menu'));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserAccount();
 
         $this->post('/login', [
-            'email' => $user->email,
+            'username' => $user->username,
             'password' => 'wrong-password',
         ]);
 
@@ -44,11 +44,25 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_logout(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUserAccount();
 
         $response = $this->actingAs($user)->post('/logout');
 
         $this->assertGuest();
         $response->assertRedirect('/');
+    }
+
+    private function createUserAccount(array $overrides = []): UserAccount
+    {
+        return UserAccount::create(array_merge([
+            'username' => 'staff-auth-test',
+            'password' => 'password',
+            'role' => 'staff',
+            'household_id' => null,
+            'staff_id' => null,
+            'created_at' => now(),
+            'last_login' => null,
+            'is_active' => true,
+        ], $overrides));
     }
 }

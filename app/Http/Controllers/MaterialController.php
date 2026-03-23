@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Material;
 use App\Models\MaterialCategory;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MaterialController extends Controller
 {
     public function index(Request $request)
     {
+        $today = now()->toDateString();
         $q = $request->string('q')->toString();
         $categoryId = $request->input('category_id');
         $sort = $request->string('sort')->toString();
@@ -22,18 +25,37 @@ class MaterialController extends Controller
             'category' => 'material_category.category_name',
             'unit' => 'material.unit',
             'status' => 'material.is_active',
+            'price' => 'current_price.price',
         ];
         $sortColumn = $sortMap[$sort] ?? 'material.material_name';
 
-        $materials = Material::query()
+        $materialsQuery = Material::query()
             ->select('material.*')
+            ->selectRaw('current_price.price as current_price')
+            ->selectRaw('current_price.effective_date as current_price_effective_date')
             ->with('category')
+            ->leftJoinSub($this->currentPriceReferenceQuery($today), 'current_price_ref', function ($join) {
+                $join->on('material.material_id', '=', 'current_price_ref.material_id');
+            })
+            ->leftJoin('material_price as current_price', 'current_price.price_id', '=', 'current_price_ref.price_id')
             ->when($q, fn($qb) => $qb->where('material.material_name', 'like', "%{$q}%"))
-            ->when($categoryId, fn($qb) => $qb->where('category_id', $categoryId))
+            ->when($categoryId, fn($qb) => $qb->where('material.category_id', $categoryId))
             ->when($sort === 'category', function ($qb) {
                 $qb->leftJoin('material_category', 'material.category_id', '=', 'material_category.category_id');
-            })
-            ->orderBy($sortColumn, $dir)
+            });
+
+        if ($sort === 'price') {
+            $materialsQuery
+                ->orderByRaw('current_price.price IS NULL')
+                ->orderBy('current_price.price', $dir)
+                ->orderBy('material.material_name');
+        } else {
+            $materialsQuery
+                ->orderBy($sortColumn, $dir)
+                ->orderBy('material.material_id');
+        }
+
+        $materials = $materialsQuery
             ->paginate(15)
             ->withQueryString();
 
@@ -50,15 +72,14 @@ class MaterialController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'category_id'   => ['required','integer','exists:material_category,category_id'],
-            'material_name' => ['required','string','max:150'],
-            'unit'          => ['required','string','max:20'],
-            'description'   => ['nullable','string','max:255'],
-            'is_active'     => ['required','boolean'],
-        ]);
+        $data = $this->validatedMaterialData($request);
 
-        Material::create($data);
+        $material = Material::create($data);
+
+        ActivityLogger::forCurrentUser(
+            'materials',
+            "เพิ่มวัสดุ {$material->material_name}"
+        );
 
         return redirect()->route('materials.index')
             ->with('success', 'เพิ่มวัสดุเรียบร้อย');
@@ -72,15 +93,14 @@ class MaterialController extends Controller
 
     public function update(Request $request, Material $material)
     {
-        $data = $request->validate([
-            'category_id'   => ['required','integer','exists:material_category,category_id'],
-            'material_name' => ['required','string','max:150'],
-            'unit'          => ['required','string','max:20'],
-            'description'   => ['nullable','string','max:255'],
-            'is_active'     => ['required','boolean'],
-        ]);
+        $data = $this->validatedMaterialData($request);
 
         $material->update($data);
+
+        ActivityLogger::forCurrentUser(
+            'materials',
+            "แก้ไขวัสดุ {$material->material_name}"
+        );
 
         return redirect()->route('materials.index')
             ->with('success', 'แก้ไขวัสดุเรียบร้อย');
@@ -97,9 +117,43 @@ class MaterialController extends Controller
             return back()->withErrors('ลบไม่ได้: มีราคาวัสดุที่อ้างถึงวัสดุนี้');
         }
 
+        $materialName = $material->material_name;
+
         $material->delete();
+
+        ActivityLogger::forCurrentUser(
+            'materials',
+            "ลบวัสดุ {$materialName}"
+        );
 
         return redirect()->route('materials.index')
             ->with('success', 'ลบวัสดุเรียบร้อย');
+    }
+
+    private function currentPriceReferenceQuery(string $today)
+    {
+        return DB::table('material_price')
+            ->select('material_id', DB::raw('MAX(price_id) as price_id'))
+            ->where('effective_date', '<=', $today)
+            ->where(function ($query) use ($today) {
+                $query->whereNull('expired_date')
+                    ->orWhere('expired_date', '>=', $today);
+            })
+            ->groupBy('material_id');
+    }
+
+    private function validatedMaterialData(Request $request): array
+    {
+        $data = $request->validate([
+            'category_id'   => ['required', 'integer', 'exists:material_category,category_id'],
+            'material_name' => ['required', 'string', 'max:150'],
+            'unit'          => ['required', 'string', 'max:20'],
+            'description'   => ['nullable', 'string', 'max:255'],
+            'is_active'     => ['required', 'boolean'],
+        ]);
+
+        $data['description'] = $data['description'] ?? '';
+
+        return $data;
     }
 }

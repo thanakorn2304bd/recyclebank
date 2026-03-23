@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Household;
 use App\Models\Transaction;
+use App\Support\ActivityLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -52,7 +53,7 @@ class WithdrawController extends Controller
 
         $recordedBy = Auth::id() ?? DB::table('user_account')->min('user_id') ?? 1;
 
-        return DB::transaction(function () use ($householdId, $date, $amount, $recordedBy) {
+        return DB::transaction(function () use ($household, $householdId, $date, $amount, $recordedBy) {
 
             $balance = (float) DB::table('household')->where('household_id', $householdId)->lockForUpdate()->value('total_balance');
 
@@ -75,6 +76,12 @@ class WithdrawController extends Controller
             DB::table('household')
                 ->where('household_id', $householdId)
                 ->update(['total_balance' => DB::raw('total_balance - ' . $amount)]);
+
+            ActivityLogger::forCurrentUser(
+                'transactions',
+                "บันทึกถอนให้ {$household->account_no} ({$household->contact_person}) เป็นเงิน "
+                . number_format($amount, 2) . ' บาท'
+            );
 
             return redirect()->route('transactions.receipt', $transaction);
         });

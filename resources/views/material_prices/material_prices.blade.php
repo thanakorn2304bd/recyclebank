@@ -1,7 +1,7 @@
 <x-layouts.admin title="ราคาของวัสดุ">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0">ราคาของ: {{ $material->material_name }}</h3>
-    <a class="btn btn-primary" href="{{ route('material-prices.create', ['material_id' => $material->material_id]) }}">+ เพิ่มราคา</a>
+    <a class="btn btn-primary" href="{{ route('material-prices.index', ['material_id' => $material->material_id]) }}">แก้ไขราคา</a>
   </div>
 
   <table class="table table-striped bg-white" data-sortable-table>

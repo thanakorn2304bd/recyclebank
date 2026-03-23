@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AdminStaffController;
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\MaterialCategoryController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MaterialPriceController;
@@ -39,6 +42,14 @@ Route::get('main-menu', function () {
 Route::middleware('auth')->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
+    Route::middleware('role:admin')->group(function () {
+        Route::get('admin/staff', [AdminStaffController::class, 'index'])->name('admin.staff.index');
+        Route::get('admin/staff/{staff}', [AdminStaffController::class, 'show'])->name('admin.staff.show');
+        Route::get('admin/users', [AdminUserController::class, 'index'])->name('admin.users.index');
+        Route::post('admin/users/staff', [AdminUserController::class, 'storeStaff'])->name('admin.users.store-staff');
+        Route::get('admin/activity-logs', [ActivityLogController::class, 'index'])->name('admin.activity-logs.index');
+    });
+
     Route::middleware('role:admin,staff')->group(function () {
         Route::resource('material-categories', MaterialCategoryController::class)->except(['show']);
         Route::resource('materials', MaterialController::class)->except(['show']);
@@ -47,6 +58,7 @@ Route::middleware('auth')->group(function () {
         Route::post('households/{household}/credentials', [HouseholdController::class, 'storeCredentials'])->name('households.credentials.store');
 
         // ราคา: ใช้ resource + เพิ่ม route ดู “ราคาปัจจุบัน” ต่อวัสดุ
+        Route::post('material-prices/bulk-update', [MaterialPriceController::class, 'bulkUpdate'])->name('material-prices.bulk-update');
         Route::resource('material-prices', MaterialPriceController::class)->except(['show', 'edit', 'update']);
         Route::get('materials/{material}/prices', [MaterialPriceController::class, 'materialPrices'])->name('materials.prices');
 

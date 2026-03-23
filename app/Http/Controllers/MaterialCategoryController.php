@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MaterialCategory;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 
 class MaterialCategoryController extends Controller
@@ -29,6 +30,11 @@ class MaterialCategoryController extends Controller
 
         MaterialCategory::create($data);
 
+        ActivityLogger::forCurrentUser(
+            'material_categories',
+            "เพิ่มหมวดวัสดุ {$data['category_name']}"
+        );
+
         return redirect()->route('material-categories.index')
             ->with('success', 'เพิ่มหมวดวัสดุเรียบร้อย');
     }
@@ -46,6 +52,11 @@ class MaterialCategoryController extends Controller
 
         $material_category->update($data);
 
+        ActivityLogger::forCurrentUser(
+            'material_categories',
+            "แก้ไขหมวดวัสดุเป็น {$material_category->category_name}"
+        );
+
         return redirect()->route('material-categories.index')
             ->with('success', 'แก้ไขหมวดวัสดุเรียบร้อย');
     }
@@ -57,7 +68,14 @@ class MaterialCategoryController extends Controller
             return back()->withErrors('ลบไม่ได้: มีวัสดุผูกอยู่ในหมวดนี้');
         }
 
+        $categoryName = $material_category->category_name;
+
         $material_category->delete();
+
+        ActivityLogger::forCurrentUser(
+            'material_categories',
+            "ลบหมวดวัสดุ {$categoryName}"
+        );
 
         return redirect()->route('material-categories.index')
             ->with('success', 'ลบหมวดวัสดุเรียบร้อย');

@@ -6,8 +6,6 @@
 
   $fmt = fn($n) => number_format((float)$n, 2);
 
-  $bookNo    = '01';
-  $receiptNo = str_pad((string)$tx->transaction_id, 6, '0', STR_PAD_LEFT);
   $dateText  = $todayText ?? \Carbon\Carbon::parse($tx->transaction_date)->format('d/m/Y');
 
   $household = $tx->household;
@@ -222,7 +220,7 @@
     $amountText = ThaiBaht::text($pageSum);
   @endphp
   <div class="page">
-    <div class="top-line">เล่มที่ {{ $bookNo }} เลขที่ {{ $receiptNo }}/......</div>
+    <div class="top-line">เล่มที่ .................... เลขที่ .................... / ......</div>
     <div class="org">{{ $orgName }}</div>
 
     <div class="box">

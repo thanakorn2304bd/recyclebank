@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Support\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +34,7 @@ class AuthenticatedSessionController extends Controller
 
         $user->last_login = now();
         $user->save();
+        ActivityLogger::log($user, 'auth', 'เข้าสู่ระบบ');
 
         $householdId = $user->household_id ?: $user->household?->household_id;
         $defaultRoute = $user->role === 'member'
@@ -49,6 +51,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
+        if ($user) {
+            ActivityLogger::log($user, 'auth', 'ออกจากระบบ');
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

@@ -6,6 +6,7 @@ use App\Models\Community;
 use App\Models\Household;
 use App\Models\MaterialCategory;
 use App\Models\Transaction;
+use App\Support\ActivityLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -34,6 +35,8 @@ class ReportController extends Controller
     {
         $data = $this->buildReportData($request);
 
+        ActivityLogger::forCurrentUser('reports', 'ส่งออกรายงานสรุปเป็น PDF');
+
         $pdf = Pdf::loadView('pdf.report_summary', $data)
             ->setPaper('a4', 'landscape');
 
@@ -43,6 +46,9 @@ class ReportController extends Controller
     public function exportExcel(Request $request)
     {
         $data = $this->buildReportData($request);
+
+        ActivityLogger::forCurrentUser('reports', 'ส่งออกรายงานสรุปเป็น Excel');
+
         $spreadsheet = $this->buildSpreadsheet($data);
         $tempFile = tempnam(sys_get_temp_dir(), 'recyclebank-report-');
 
