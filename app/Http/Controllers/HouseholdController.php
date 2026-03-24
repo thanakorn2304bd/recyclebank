@@ -10,12 +10,13 @@ use App\Models\Household;
 use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserIdResolver;
 use App\Support\Households\HouseholdService;
+use App\Support\Households\HouseholdViewDataFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class HouseholdController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, HouseholdService $householdService)
     {
         if ($this->isMember()) {
             $memberHouseholdId = $this->memberHouseholdId();
@@ -51,15 +52,32 @@ class HouseholdController extends Controller
             ->withQueryString();
 
         $communities = Community::orderBy('community_id')->get();
+        [
+            'activeCount' => $activeCount,
+            'pendingCount' => $pendingCount,
+            'inactiveCount' => $inactiveCount,
+        ] = $householdService->indexViewMetrics($households);
+        $isPrivileged = ! $this->isMember();
 
-        return view('households.index', compact('households', 'communities', 'q', 'communityId', 'status'));
+        return view('households.index', compact(
+            'households',
+            'communities',
+            'q',
+            'communityId',
+            'status',
+            'activeCount',
+            'pendingCount',
+            'inactiveCount',
+            'isPrivileged'
+        ));
     }
 
-    public function create()
+    public function create(Request $request, HouseholdViewDataFactory $householdViewDataFactory)
     {
         $communities = Community::orderBy('community_id')->get();
+        $oldMembers = $householdViewDataFactory->oldMembers($request->old('members', []));
 
-        return view('households.create', compact('communities'));
+        return view('households.create', compact('communities', 'oldMembers'));
     }
 
     public function store(
@@ -95,8 +113,9 @@ class HouseholdController extends Controller
         $this->authorize('view', $household);
         $household = $householdService->loadDetails($household);
         $memberAccount = $householdService->memberAccountFor($household);
+        $isPrivileged = ! $this->isMember();
 
-        return view('households.show', compact('household', 'memberAccount'));
+        return view('households.show', compact('household', 'memberAccount', 'isPrivileged'));
     }
 
     public function update(
@@ -116,11 +135,18 @@ class HouseholdController extends Controller
             ->with('success', 'แก้ไขครัวเรือนเรียบร้อย');
     }
 
-    public function createCredentials(Household $household, HouseholdService $householdService)
-    {
+    public function createCredentials(
+        Household $household,
+        HouseholdService $householdService,
+        HouseholdViewDataFactory $householdViewDataFactory
+    ) {
         $memberAccount = $householdService->syncExistingMemberAccount($household);
+        $viewData = $householdViewDataFactory->credentialsPage($household, $memberAccount);
 
-        return view('households.credentials', compact('household', 'memberAccount'));
+        return view('households.credentials', array_merge(
+            compact('household', 'memberAccount'),
+            $viewData
+        ));
     }
 
     public function storeCredentials(

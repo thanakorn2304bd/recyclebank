@@ -1,9 +1,4 @@
 <x-layouts.admin title="เพิ่มครัวเรือน">
-  @php
-    $oldMembers = old('members', []);
-    $oldMembers = is_array($oldMembers) ? array_values($oldMembers) : [];
-  @endphp
-
   <div class="mb-3">
     <h3 class="mb-0">เพิ่มครัวเรือน</h3>
     <div class="text-muted">ขั้นตอน 1 จาก 2: กรอกข้อมูลครัวเรือน ก่อนตั้งรหัสผ่านสำหรับเข้าใช้งาน</div>
@@ -320,7 +315,7 @@
       }
 
       syncMemberRowState();
-	      updateAccountNo();
-	    });
-	  </script>
+      updateAccountNo();
+    });
+  </script>
 </x-layouts.admin>

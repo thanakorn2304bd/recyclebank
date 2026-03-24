@@ -1,8 +1,4 @@
 <x-layouts.admin title="รายละเอียดครัวเรือน">
-  @php
-    $isPrivileged = in_array(auth()->user()->role, ['admin', 'staff'], true);
-  @endphp
-
   <div class="rb-page-header">
     <div>
       <div class="rb-page-kicker">Household Profile</div>
@@ -26,7 +22,7 @@
   <div class="rb-stat-grid">
     <div class="rb-stat-card">
       <div class="rb-stat-label">ยอดคงเหลือ</div>
-      <div class="rb-stat-value">{{ number_format((float)$household->total_balance, 2) }}</div>
+      <div class="rb-stat-value">{{ number_format((float) $household->total_balance, 2) }}</div>
       <div class="rb-stat-meta">ยอดเงินสะสมล่าสุดของครัวเรือนนี้</div>
     </div>
     <div class="rb-stat-card">

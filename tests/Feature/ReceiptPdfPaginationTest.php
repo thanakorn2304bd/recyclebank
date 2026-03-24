@@ -34,25 +34,38 @@ class ReceiptPdfPaginationTest extends TestCase
             ->once()
             ->with('pdf.receipt_a5_landscape', Mockery::on(function (array $data) use ($transaction) {
                 $this->assertSame($transaction->transaction_id, $data['tx']->transaction_id);
+                $this->assertSame('กองทุนธนาคารวัสดุรีไซเคิลเทศบาลตำบลหนองไผ่', $data['orgName']);
+                $this->assertSame('ใบนำฝาก', $data['title']);
+                $this->assertSame('22', $data['houseNo']);
+                $this->assertSame('1', $data['villageNo']);
+                $this->assertSame('01', $data['community']);
+                $this->assertSame('ACC0000002', $data['accountNo']);
+                $this->assertSame('20/03/2026', $data['dateText']);
                 $this->assertSame(7, $data['rowsPerPage']);
 
                 $pages = $data['pages'];
                 $this->assertCount(2, $pages);
 
                 $firstPage = $pages->get(0);
-                $this->assertFalse($firstPage['show_carry_in']);
+                $this->assertFalse($firstPage['showCarryIn']);
                 $this->assertCount(7, $firstPage['items']);
-                $this->assertSame('ยอดยกไป', $firstPage['footer_label']);
-                $this->assertSame(70.0, $firstPage['footer_total']);
-                $this->assertSame(0, $firstPage['blank_rows']);
+                $this->assertSame('ขวดพลาสติกใส', $firstPage['items']->first()['materialName']);
+                $this->assertSame('1.00', $firstPage['items']->first()['weightText']);
+                $this->assertSame('ยอดยกไป', $firstPage['footerLabel']);
+                $this->assertSame(70.0, $firstPage['footerTotal']);
+                $this->assertSame('70.00', $firstPage['footerTotalText']);
+                $this->assertSame(0, $firstPage['blankRows']);
 
                 $secondPage = $pages->get(1);
-                $this->assertTrue($secondPage['show_carry_in']);
+                $this->assertTrue($secondPage['showCarryIn']);
                 $this->assertCount(1, $secondPage['items']);
-                $this->assertSame(70.0, $secondPage['carry_in']);
-                $this->assertSame('รวมเป็นเงิน', $secondPage['footer_label']);
-                $this->assertSame(80.0, $secondPage['footer_total']);
-                $this->assertSame(5, $secondPage['blank_rows']);
+                $this->assertSame(70.0, $secondPage['carryIn']);
+                $this->assertSame('70.00', $secondPage['carryInText']);
+                $this->assertSame('รวมเป็นเงิน', $secondPage['footerLabel']);
+                $this->assertSame(80.0, $secondPage['footerTotal']);
+                $this->assertSame('80.00', $secondPage['footerTotalText']);
+                $this->assertSame(5, $secondPage['blankRows']);
+                $this->assertNotEmpty($secondPage['amountText']);
 
                 return true;
             }))

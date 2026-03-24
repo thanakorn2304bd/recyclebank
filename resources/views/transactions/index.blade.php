@@ -1,13 +1,4 @@
 <x-layouts.admin title="ประวัติรายการ">
-  @php
-    $isPrivileged = in_array(auth()->user()->role, ['admin', 'staff'], true);
-    $pageTransactions = $txs->getCollection();
-    $depositCount = $pageTransactions->where('transaction_type', 'deposit')->count();
-    $withdrawCount = $pageTransactions->where('transaction_type', 'withdraw')->count();
-    $pageAmount = $pageTransactions->sum('total_amount');
-    $pageWeight = $pageTransactions->sum('total_weight');
-  @endphp
-
   <div class="rb-page-header">
     <div>
       <div class="rb-page-kicker">Transaction History</div>
@@ -42,8 +33,8 @@
     </div>
     <div class="rb-stat-card">
       <div class="rb-stat-label">ยอดรวมในหน้า</div>
-      <div class="rb-stat-value">{{ number_format((float)$pageAmount, 2) }}</div>
-      <div class="rb-stat-meta">น้ำหนักรวม {{ number_format((float)$pageWeight, 2) }} กก.</div>
+      <div class="rb-stat-value">{{ number_format((float) $pageAmount, 2) }}</div>
+      <div class="rb-stat-meta">น้ำหนักรวม {{ number_format((float) $pageWeight, 2) }} กก.</div>
     </div>
   </div>
 
@@ -64,7 +55,7 @@
         <select class="form-select" name="household_id">
           <option value="">ทั้งหมด</option>
           @foreach($households as $h)
-            <option value="{{ $h->household_id }}" @selected((string)$householdId === (string)$h->household_id)>
+            <option value="{{ $h->household_id }}" @selected((string) $householdId === (string) $h->household_id)>
               {{ $h->account_no }} - {{ $h->contact_person }}
             </option>
           @endforeach
@@ -136,8 +127,8 @@
                   <a href="{{ route('transactions.household', $t->household_id) }}">ดู statement</a>
                 </div>
               </td>
-              <td class="text-end">{{ number_format((float)$t->total_weight, 2) }}</td>
-              <td class="text-end">{{ number_format((float)$t->total_amount, 2) }}</td>
+              <td class="text-end">{{ number_format((float) $t->total_weight, 2) }}</td>
+              <td class="text-end">{{ number_format((float) $t->total_amount, 2) }}</td>
               <td class="text-end">
                 <a class="btn btn-sm btn-outline-primary" href="{{ route('transactions.show', $t) }}">ดูรายละเอียด</a>
               </td>

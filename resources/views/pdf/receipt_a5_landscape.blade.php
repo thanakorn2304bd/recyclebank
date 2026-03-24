@@ -1,20 +1,3 @@
-@php
-  use App\Support\ThaiBaht;
-
-  $orgName = 'กองทุนธนาคารวัสดุรีไซเคิลเทศบาลตำบลหนองไผ่';
-  $title   = 'ใบนำฝาก';
-
-  $fmt = fn($n) => number_format((float)$n, 2);
-
-  $dateText  = $todayText ?? \Carbon\Carbon::parse($tx->transaction_date)->format('d/m/Y');
-
-  $household = $tx->household;
-  $houseNo   = $household?->house_no ?? '..........';
-  $villageNo = $household?->village_no ?? '..........';
-  $community = $household?->community_id ?? '..........';
-  $accountNo = $household?->account_no ?? '................................';
-@endphp
-
 <!doctype html>
 <html lang="th">
 <head>
@@ -216,15 +199,6 @@
 </head>
 <body>
 @foreach($pages as $pageIndex => $page)
-  @php
-    $items = $page['items'];
-    $carryIn = (float) $page['carry_in'];
-    $footerTotal = (float) $page['footer_total'];
-    $footerLabel = $page['footer_label'];
-    $showCarryIn = $page['show_carry_in'];
-    $blankRows = (int) $page['blank_rows'];
-    $amountText = ThaiBaht::text($footerTotal);
-  @endphp
   <div class="page">
     <div class="top-line">เล่มที่ .................... เลขที่ .................... / ......</div>
     <div class="org">{{ $orgName }}</div>
@@ -266,23 +240,23 @@
           </tr>
         </thead>
         <tbody>
-          @if($showCarryIn)
+          @if($page['showCarryIn'])
             <tr class="carry-row">
               <td colspan="3" class="num">ยอดยกมา</td>
-              <td class="num">{{ $fmt($carryIn) }}</td>
+              <td class="num">{{ $page['carryInText'] }}</td>
             </tr>
           @endif
 
-          @foreach($items as $d)
+          @foreach($page['items'] as $item)
             <tr>
-              <td>{{ $d->material?->material_name }}</td>
-              <td class="center">{{ $fmt($d->weight) }}</td>
-              <td class="num">{{ $fmt($d->price_per_unit) }}</td>
-              <td class="num">{{ $fmt($d->amount) }}</td>
+              <td>{{ $item['materialName'] }}</td>
+              <td class="center">{{ $item['weightText'] }}</td>
+              <td class="num">{{ $item['pricePerUnitText'] }}</td>
+              <td class="num">{{ $item['amountText'] }}</td>
             </tr>
           @endforeach
 
-          @for($i = 0; $i < $blankRows; $i++)
+          @for($i = 0; $i < $page['blankRows']; $i++)
             <tr>
               <td>&nbsp;</td>
               <td class="center"></td>
@@ -293,13 +267,13 @@
         </tbody>
         <tfoot>
           <tr class="total-row">
-            <td colspan="3" class="num">{{ $footerLabel }}</td>
-            <td class="num">{{ $fmt($footerTotal) }}</td>
+            <td colspan="3" class="num">{{ $page['footerLabel'] }}</td>
+            <td class="num">{{ $page['footerTotalText'] }}</td>
           </tr>
         </tfoot>
       </table>
 
-      <div class="amount-text">ยอดเงินเป็นตัวอักษร {{ $amountText }}</div>
+      <div class="amount-text">ยอดเงินเป็นตัวอักษร {{ $page['amountText'] }}</div>
 
       <div class="footer-box">
         <table class="sign-table">

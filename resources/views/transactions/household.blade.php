@@ -1,18 +1,11 @@
 <x-layouts.admin title="Statement ครัวเรือน">
-  @php
-    $isPrivileged = in_array(auth()->user()->role, ['admin', 'staff'], true);
-    $pageTransactions = $txs->getCollection();
-    $depositCount = $pageTransactions->where('transaction_type', 'deposit')->count();
-    $withdrawCount = $pageTransactions->where('transaction_type', 'withdraw')->count();
-  @endphp
-
   <div class="rb-page-header">
     <div>
       <div class="rb-page-kicker">Household Statement</div>
       <h1 class="rb-page-title">Statement ครัวเรือน</h1>
       <p class="rb-page-subtitle">
         {{ $household->account_no }} - {{ $household->contact_person }}
-        พร้อมยอดคงเหลือปัจจุบัน {{ number_format((float)$household->total_balance, 2) }} บาท
+        พร้อมยอดคงเหลือปัจจุบัน {{ number_format((float) $household->total_balance, 2) }} บาท
       </p>
     </div>
     <div class="rb-page-actions">
@@ -27,7 +20,7 @@
   <div class="rb-stat-grid">
     <div class="rb-stat-card">
       <div class="rb-stat-label">ยอดคงเหลือ</div>
-      <div class="rb-stat-value">{{ number_format((float)$household->total_balance, 2) }}</div>
+      <div class="rb-stat-value">{{ number_format((float) $household->total_balance, 2) }}</div>
       <div class="rb-stat-meta">ยอดคงเหลือปัจจุบันของบัญชีนี้</div>
     </div>
     <div class="rb-stat-card">
@@ -110,8 +103,8 @@
                   <span class="badge bg-warning text-dark">ถอน</span>
                 @endif
               </td>
-              <td class="text-end">{{ number_format((float)$t->total_weight, 2) }}</td>
-              <td class="text-end">{{ number_format((float)$t->total_amount, 2) }}</td>
+              <td class="text-end">{{ number_format((float) $t->total_weight, 2) }}</td>
+              <td class="text-end">{{ number_format((float) $t->total_amount, 2) }}</td>
               <td class="text-end">
                 <a class="btn btn-sm btn-outline-primary" href="{{ route('transactions.show', $t) }}">ดูรายละเอียด</a>
               </td>

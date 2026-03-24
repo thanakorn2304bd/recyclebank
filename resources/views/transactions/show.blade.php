@@ -1,7 +1,3 @@
-@php
-  $isDepositSummary = $transaction->transaction_type === 'deposit' && request()->query('source') === 'deposit';
-@endphp
-
 <x-layouts.admin :title="$isDepositSummary ? 'สรุปรายการฝาก/รับซื้อ' : 'รายละเอียดรายการ'">
   <div class="rb-page-header">
     <div>
@@ -41,17 +37,17 @@
     </div>
     <div class="rb-stat-card">
       <div class="rb-stat-label">น้ำหนักรวม</div>
-      <div class="rb-stat-value">{{ number_format((float)$transaction->total_weight, 2) }}</div>
+      <div class="rb-stat-value">{{ number_format((float) $transaction->total_weight, 2) }}</div>
       <div class="rb-stat-meta">กิโลกรัมรวมของรายการนี้</div>
     </div>
     <div class="rb-stat-card">
       <div class="rb-stat-label">จำนวนเงินรวม</div>
-      <div class="rb-stat-value">{{ number_format((float)$transaction->total_amount, 2) }}</div>
+      <div class="rb-stat-value">{{ number_format((float) $transaction->total_amount, 2) }}</div>
       <div class="rb-stat-meta">มูลค่ารวมที่บันทึกในธุรกรรมนี้</div>
     </div>
     <div class="rb-stat-card">
       <div class="rb-stat-label">ยอดคงเหลือปัจจุบัน</div>
-      <div class="rb-stat-value">{{ number_format((float)($transaction->household?->total_balance ?? 0), 2) }}</div>
+      <div class="rb-stat-value">{{ number_format((float) ($transaction->household?->total_balance ?? 0), 2) }}</div>
       <div class="rb-stat-meta">ยอดล่าสุดของครัวเรือนเจ้าของรายการ</div>
     </div>
   </div>
@@ -84,16 +80,16 @@
             @foreach($transaction->details as $d)
               <tr>
                 <td>{{ $d->material?->material_name }}</td>
-                <td class="text-end">{{ number_format((float)$d->weight, 2) }}</td>
-                <td class="text-end">{{ number_format((float)$d->price_per_unit, 2) }}</td>
-                <td class="text-end">{{ number_format((float)$d->amount, 2) }}</td>
+                <td class="text-end">{{ number_format((float) $d->weight, 2) }}</td>
+                <td class="text-end">{{ number_format((float) $d->price_per_unit, 2) }}</td>
+                <td class="text-end">{{ number_format((float) $d->amount, 2) }}</td>
               </tr>
             @endforeach
           </tbody>
           <tfoot>
             <tr>
               <th class="text-end" colspan="3">รวม</th>
-              <th class="text-end">{{ number_format((float)$transaction->total_amount, 2) }}</th>
+              <th class="text-end">{{ number_format((float) $transaction->total_amount, 2) }}</th>
             </tr>
           </tfoot>
         </table>

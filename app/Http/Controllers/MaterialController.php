@@ -6,11 +6,12 @@ use App\Http\Requests\SaveMaterialRequest;
 use App\Models\Material;
 use App\Models\MaterialCategory;
 use App\Support\ActivityLogger;
+use App\Support\Materials\MaterialIndexViewDataFactory;
 use Illuminate\Http\Request;
 
 class MaterialController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, MaterialIndexViewDataFactory $materialIndexViewDataFactory)
     {
         $today = now()->toDateString();
         $q = $request->string('q')->toString();
@@ -57,8 +58,23 @@ class MaterialController extends Controller
             ->withQueryString();
 
         $categories = MaterialCategory::orderBy('category_name')->get();
+        [
+            'activeCount' => $activeCount,
+            'inactiveCount' => $inactiveCount,
+        ] = $materialIndexViewDataFactory->metrics($materials);
+        $sortColumns = $materialIndexViewDataFactory->sortColumns($request->except('page'), $sort, $dir);
 
-        return view('materials.index', compact('materials', 'categories', 'q', 'categoryId', 'sort', 'dir'));
+        return view('materials.index', compact(
+            'materials',
+            'categories',
+            'q',
+            'categoryId',
+            'sort',
+            'dir',
+            'activeCount',
+            'inactiveCount',
+            'sortColumns'
+        ));
     }
 
     public function create()

@@ -8,7 +8,9 @@ use App\Models\Community;
 use App\Models\Household;
 use App\Models\UserAccount;
 use App\Support\ActivityLogger;
+use App\Support\Households\HouseholdViewDataFactory;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -17,11 +19,12 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request, HouseholdViewDataFactory $householdViewDataFactory): View
     {
         $communities = Community::orderBy('community_id')->get();
+        $oldMembers = $householdViewDataFactory->oldMembers($request->old('members', []));
 
-        return view('auth.register', compact('communities'));
+        return view('auth.register', compact('communities', 'oldMembers'));
     }
 
     /**

@@ -53,7 +53,14 @@ class MaterialIndexSortTest extends TestCase
             ->get(route('materials.index'))
             ->assertOk()
             ->assertSee('125.50')
-            ->assertSee('บาท/kg');
+            ->assertSee('บาท/kg')
+            ->assertViewHas('activeCount', 1)
+            ->assertViewHas('inactiveCount', 0)
+            ->assertViewHas('sortColumns', function (array $sortColumns) {
+                return isset($sortColumns['id']['url'], $sortColumns['price']['url'])
+                    && $sortColumns['id']['indicator'] === '↕'
+                    && $sortColumns['price']['aria'] === 'none';
+            });
     }
 
     public function test_material_index_prefers_latest_effective_price_even_when_older_price_was_inserted_later(): void

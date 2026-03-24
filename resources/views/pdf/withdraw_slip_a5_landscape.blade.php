@@ -1,21 +1,3 @@
-@php
-  use App\Support\ThaiBaht;
-  use Carbon\Carbon;
-
-  $orgName = 'กองทุนธนาคารวัสดุรีไซเคิลเทศบาลตำบลหนองไผ่';
-  $title = 'ใบถอนเงิน';
-
-  $transactionDate = Carbon::parse($tx->transaction_date);
-
-  $household = $tx->household;
-  $accountNo = $household?->account_no ?? '-';
-  $accountName = $household?->contact_person ?? '-';
-  $amount = (float) $tx->total_amount;
-  $amountText = ThaiBaht::text($amount);
-  $dateText = $transactionDate->format('d/m/Y');
-  $officerName = $tx->recordedByUser?->staff?->full_name ?? $tx->recordedByUser?->username ?? '';
-@endphp
-
 <!doctype html>
 <html lang="th">
 <head>

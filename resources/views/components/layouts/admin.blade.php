@@ -641,22 +641,6 @@
   </style>
 </head>
 <body>
-@php
-  $authUser = auth()->user();
-  $isPrivileged = $authUser && in_array($authUser->role, ['admin', 'staff'], true);
-  $isAdmin = $authUser?->role === 'admin';
-  $navItems = [
-      ['label' => 'ฝาก/รับซื้อ', 'route' => 'deposits.create', 'patterns' => ['deposits.*'], 'privileged' => true, 'accent' => 'deposit'],
-      ['label' => 'ถอน', 'route' => 'withdraws.create', 'patterns' => ['withdraws.*'], 'privileged' => true, 'accent' => 'withdraw'],
-      ['label' => 'สรุปรายงาน', 'route' => 'reports.index', 'patterns' => ['reports.*']],
-      ['label' => 'ประวัติรายการ', 'route' => 'transactions.index', 'patterns' => ['transactions.*']],
-      ['label' => 'ครัวเรือน', 'route' => 'households.index', 'patterns' => ['households.*']],
-      ['label' => 'เจ้าหน้าที่', 'route' => 'admin.staff.index', 'patterns' => ['admin.staff.*'], 'admin_only' => true],
-      ['label' => 'บัญชีผู้ใช้', 'route' => 'admin.users.index', 'patterns' => ['admin.users.*'], 'admin_only' => true],
-      ['label' => 'Activity Log', 'route' => 'admin.activity-logs.index', 'patterns' => ['admin.activity-logs.*'], 'admin_only' => true],
-      ['label' => 'วัสดุ', 'route' => 'materials.index', 'patterns' => ['materials.*', 'material-categories.*', 'material-prices.*'], 'privileged' => true],
-  ];
-@endphp
 <div class="rb-app-shell">
   <nav class="navbar navbar-expand-xl navbar-dark rb-topbar">
     <div class="container">

@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserIdResolver;
 use App\Support\Transactions\HouseholdTransactionService;
+use App\Support\Transactions\TransactionPdfViewDataFactory;
 use App\Support\Transactions\WithdrawService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -21,7 +22,8 @@ class WithdrawController extends Controller
         SaveWithdrawRequest $request,
         CurrentUserIdResolver $currentUserIdResolver,
         HouseholdTransactionService $householdTransactionService,
-        WithdrawService $withdrawService
+        WithdrawService $withdrawService,
+        TransactionPdfViewDataFactory $transactionPdfViewDataFactory
     ) {
         [
             'household' => $household,
@@ -46,9 +48,10 @@ class WithdrawController extends Controller
             $previewTransaction->setRelation('recordedByUser', $user);
         }
 
-        $pdf = Pdf::loadView('pdf.withdraw_slip_a5_landscape', [
-            'tx' => $previewTransaction,
-        ])->setPaper('a5', 'landscape');
+        $pdf = Pdf::loadView(
+            'pdf.withdraw_slip_a5_landscape',
+            $transactionPdfViewDataFactory->withdrawSlip($previewTransaction)
+        )->setPaper('a5', 'landscape');
 
         return $pdf->stream('withdraw-slip-preview.pdf');
     }

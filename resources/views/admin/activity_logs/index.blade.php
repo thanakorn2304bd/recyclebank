@@ -1,23 +1,4 @@
 <x-layouts.admin title="Activity Log">
-  @php
-    $roleLabel = fn (string $role) => match ($role) {
-        'admin' => 'ผู้ดูแลระบบ',
-        'staff' => 'เจ้าหน้าที่',
-        default => 'สมาชิก',
-    };
-    $moduleLabel = fn (string $module) => match ($module) {
-        'auth' => 'การเข้าสู่ระบบ',
-        'registration' => 'สมัครสมาชิก',
-        'households' => 'ครัวเรือน',
-        'material_categories' => 'หมวดวัสดุ',
-        'materials' => 'วัสดุ',
-        'material_prices' => 'ราคาวัสดุ',
-        'transactions' => 'ธุรกรรม',
-        'reports' => 'รายงาน',
-        default => $module,
-    };
-  @endphp
-
   <div class="rb-page-header">
     <div>
       <div class="rb-page-kicker">Audit Trail</div>
@@ -78,7 +59,7 @@
         <select class="form-select" name="module">
           <option value="">ทุกโมดูล</option>
           @foreach($modules as $moduleOption)
-            <option value="{{ $moduleOption }}" @selected($module === $moduleOption)>{{ $moduleLabel($moduleOption) }}</option>
+            <option value="{{ $moduleOption }}" @selected($module === $moduleOption)>{{ $moduleLabels[$moduleOption] ?? $moduleOption }}</option>
           @endforeach
         </select>
       </div>
@@ -148,18 +129,18 @@
               <td>
                 @if($log->user)
                   @if($log->user->role === 'admin')
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ $roleLabel($log->user->role) }}</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ $roleLabels[$log->user->role] ?? $roleLabels['member'] }}</span>
                   @elseif($log->user->role === 'staff')
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $roleLabel($log->user->role) }}</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $roleLabels[$log->user->role] ?? $roleLabels['member'] }}</span>
                   @else
-                    <span class="badge bg-success-subtle text-success border border-success-subtle">{{ $roleLabel($log->user->role) }}</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">{{ $roleLabels[$log->user->role] ?? $roleLabels['member'] }}</span>
                   @endif
                 @else
                   <span class="badge bg-secondary">ไม่ทราบสิทธิ์</span>
                 @endif
               </td>
               <td>
-                <span class="badge bg-light text-dark border">{{ $moduleLabel($log->module) }}</span>
+                <span class="badge bg-light text-dark border">{{ $moduleLabels[$log->module] ?? $log->module }}</span>
               </td>
               <td>{{ $log->action }}</td>
               <td class="text-end">

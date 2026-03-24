@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ActivityLogFiltersRequest;
 use App\Models\LogActivity;
 use App\Models\UserAccount;
+use App\Support\ActivityLogs\ActivityLogViewDataFactory;
 
 class ActivityLogController extends Controller
 {
-    public function index(ActivityLogFiltersRequest $request)
-    {
+    public function index(
+        ActivityLogFiltersRequest $request,
+        ActivityLogViewDataFactory $activityLogViewDataFactory
+    ) {
         [
             'q' => $q,
             'module' => $module,
@@ -77,12 +80,16 @@ class ActivityLogController extends Controller
         $selectedUser = $userId
             ? UserAccount::query()->with(['household.community', 'staff'])->find($userId)
             : null;
+        $roleLabels = $activityLogViewDataFactory->roleLabels();
+        $moduleLabels = $activityLogViewDataFactory->moduleLabels();
 
         return view('admin.activity_logs.index', compact(
             'logs',
             'modules',
             'summary',
             'selectedUser',
+            'roleLabels',
+            'moduleLabels',
             'q',
             'module',
             'role',

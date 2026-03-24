@@ -6,20 +6,25 @@ use App\Http\Requests\AdminUserFiltersRequest;
 use App\Http\Requests\StoreStaffAccountRequest;
 use App\Support\ActivityLogger;
 use App\Support\AdminUsers\AdminUserService;
+use App\Support\AdminUsers\AdminUserViewDataFactory;
 use Illuminate\Http\RedirectResponse;
 
 class AdminUserController extends Controller
 {
-    public function index(AdminUserFiltersRequest $request, AdminUserService $adminUserService)
-    {
+    public function index(
+        AdminUserFiltersRequest $request,
+        AdminUserService $adminUserService,
+        AdminUserViewDataFactory $adminUserViewDataFactory
+    ) {
         ['q' => $q, 'role' => $role, 'status' => $status] = $request->filters();
         ['users' => $users, 'summary' => $summary] = $adminUserService->indexData([
             'q' => $q,
             'role' => $role,
             'status' => $status,
         ]);
+        $roleLabels = $adminUserViewDataFactory->roleLabels();
 
-        return view('admin.users.index', compact('users', 'summary', 'q', 'role', 'status'));
+        return view('admin.users.index', compact('users', 'summary', 'q', 'role', 'status', 'roleLabels'));
     }
 
     public function storeStaff(

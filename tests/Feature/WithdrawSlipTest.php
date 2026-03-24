@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Transaction;
 use App\Models\UserAccount;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdfWrapper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Mockery;
 use Tests\TestCase;
 
 class WithdrawSlipTest extends TestCase
@@ -16,6 +19,43 @@ class WithdrawSlipTest extends TestCase
     public function test_staff_can_stream_withdraw_slip_pdf(): void
     {
         ['staff' => $staffUser, 'withdrawTransaction' => $withdrawTransaction] = $this->seedWithdrawFixtures();
+
+        $this->actingAs($staffUser)
+            ->get(route('transactions.receipt', $withdrawTransaction))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_withdraw_slip_receipt_passes_prepared_view_data_to_pdf(): void
+    {
+        ['staff' => $staffUser, 'withdrawTransaction' => $withdrawTransaction] = $this->seedWithdrawFixtures();
+
+        $pdf = Mockery::mock(DomPdfWrapper::class);
+        $pdf->shouldReceive('setPaper')
+            ->once()
+            ->with('a5', 'landscape')
+            ->andReturnSelf();
+        $pdf->shouldReceive('stream')
+            ->once()
+            ->with('withdraw-slip_'.$withdrawTransaction->transaction_id.'.pdf')
+            ->andReturn(response('pdf', 200, ['content-type' => 'application/pdf']));
+
+        Pdf::shouldReceive('loadView')
+            ->once()
+            ->with('pdf.withdraw_slip_a5_landscape', Mockery::on(function (array $data) use ($withdrawTransaction) {
+                $this->assertSame($withdrawTransaction->transaction_id, $data['tx']->transaction_id);
+                $this->assertSame('กองทุนธนาคารวัสดุรีไซเคิลเทศบาลตำบลหนองไผ่', $data['orgName']);
+                $this->assertSame('ใบถอนเงิน', $data['title']);
+                $this->assertSame('ACC0000001', $data['accountNo']);
+                $this->assertSame('สมชาย ใจดี', $data['accountName']);
+                $this->assertSame(20.0, $data['amount']);
+                $this->assertSame('03/03/2026', $data['dateText']);
+                $this->assertSame('เจ้าหน้าที่ทดสอบ', $data['officerName']);
+                $this->assertNotEmpty($data['amountText']);
+
+                return true;
+            }))
+            ->andReturn($pdf);
 
         $this->actingAs($staffUser)
             ->get(route('transactions.receipt', $withdrawTransaction))

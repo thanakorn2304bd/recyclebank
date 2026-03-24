@@ -1,9 +1,4 @@
 <x-app-layout>
-    @php
-        $user = auth()->user();
-        $isPrivileged = $user && in_array($user->role, ['admin', 'staff'], true);
-    @endphp
-
     <x-slot name="header">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>

@@ -70,6 +70,13 @@ class TransactionHistoryService
         return $transaction;
     }
 
+    public function detailViewData(Transaction $transaction, string $source): array
+    {
+        return [
+            'isDepositSummary' => $transaction->transaction_type === 'deposit' && $source === 'deposit',
+        ];
+    }
+
     public function indexViewMetrics(LengthAwarePaginator $transactions): array
     {
         $pageTransactions = $transactions->getCollection();

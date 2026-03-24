@@ -1,9 +1,4 @@
 <x-guest-layout>
-    @php
-        $oldMembers = old('members', []);
-        $oldMembers = is_array($oldMembers) ? array_values($oldMembers) : [];
-    @endphp
-
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-emerald-900">สมัครสมาชิกครัวเรือน</h1>
         <p class="mt-2 text-sm text-gray-600">

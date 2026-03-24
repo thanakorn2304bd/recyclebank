@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminStaffController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\MainMenuController;
@@ -22,7 +23,7 @@ Route::get('/', function () {
 Route::get('main-menu', MainMenuController::class)->name('main-menu');
 
 Route::middleware(['auth', 'active'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::middleware('role:admin')->group(function () {
         Route::get('admin/staff', [AdminStaffController::class, 'index'])->name('admin.staff.index');

@@ -1,12 +1,4 @@
 <x-layouts.admin title="ครัวเรือน">
-  @php
-    $isPrivileged = in_array(auth()->user()->role, ['admin', 'staff'], true);
-    $pageHouseholds = $households->getCollection();
-    $activeCount = $pageHouseholds->where('active_status', 'active')->count();
-    $pendingCount = $pageHouseholds->where('active_status', 'pending')->count();
-    $inactiveCount = $pageHouseholds->where('active_status', 'inactive')->count();
-  @endphp
-
   <div class="rb-page-header">
     <div>
       <div class="rb-page-kicker">Member Directory</div>
@@ -136,7 +128,7 @@
                   <span class="badge bg-secondary">ปิด</span>
                 @endif
               </td>
-              <td class="text-end">{{ number_format((float)$h->total_balance, 2) }}</td>
+              <td class="text-end">{{ number_format((float) $h->total_balance, 2) }}</td>
               <td class="text-end">
                 <a class="btn btn-sm btn-outline-primary me-1" href="{{ route('households.show', $h) }}">ดูรายละเอียด</a>
                 @if($isPrivileged)

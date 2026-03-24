@@ -1,33 +1,4 @@
 <x-layouts.admin title="วัสดุ">
-  @php
-    $pageMaterials = $materials->getCollection();
-    $activeCount = $pageMaterials->where('is_active', true)->count();
-    $inactiveCount = $pageMaterials->where('is_active', false)->count();
-    $sortUrl = function (string $column) use ($sort, $dir) {
-        return route('materials.index', array_merge(
-            request()->except('page'),
-            [
-                'sort' => $column,
-                'dir' => $sort === $column && $dir === 'asc' ? 'desc' : 'asc',
-            ],
-        ));
-    };
-    $sortIndicator = function (string $column) use ($sort, $dir) {
-        if ($sort !== $column) {
-            return '↕';
-        }
-
-        return $dir === 'asc' ? '▲' : '▼';
-    };
-    $sortAria = function (string $column) use ($sort, $dir) {
-        if ($sort !== $column) {
-            return 'none';
-        }
-
-        return $dir === 'asc' ? 'ascending' : 'descending';
-    };
-  @endphp
-
   <div class="rb-page-header">
     <div>
       <div class="rb-page-kicker">Materials Catalog</div>
@@ -134,40 +105,40 @@
       <table class="table table-striped align-middle">
         <thead>
           <tr>
-            <th style="width:90px;" @class(['rb-sort-active' => $sort === 'id']) aria-sort="{{ $sortAria('id') }}">
-              <a class="rb-sort-button" href="{{ $sortUrl('id') }}">
+            <th style="width:90px;" @class(['rb-sort-active' => $sortColumns['id']['active']]) aria-sort="{{ $sortColumns['id']['aria'] }}">
+              <a class="rb-sort-button" href="{{ $sortColumns['id']['url'] }}">
                 <span class="rb-sort-label">ID</span>
-                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('id') }}</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortColumns['id']['indicator'] }}</span>
               </a>
             </th>
-            <th @class(['rb-sort-active' => $sort === 'name']) aria-sort="{{ $sortAria('name') }}">
-              <a class="rb-sort-button" href="{{ $sortUrl('name') }}">
+            <th @class(['rb-sort-active' => $sortColumns['name']['active']]) aria-sort="{{ $sortColumns['name']['aria'] }}">
+              <a class="rb-sort-button" href="{{ $sortColumns['name']['url'] }}">
                 <span class="rb-sort-label">ชื่อวัสดุ</span>
-                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('name') }}</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortColumns['name']['indicator'] }}</span>
               </a>
             </th>
-            <th @class(['rb-sort-active' => $sort === 'category']) aria-sort="{{ $sortAria('category') }}">
-              <a class="rb-sort-button" href="{{ $sortUrl('category') }}">
+            <th @class(['rb-sort-active' => $sortColumns['category']['active']]) aria-sort="{{ $sortColumns['category']['aria'] }}">
+              <a class="rb-sort-button" href="{{ $sortColumns['category']['url'] }}">
                 <span class="rb-sort-label">หมวด</span>
-                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('category') }}</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortColumns['category']['indicator'] }}</span>
               </a>
             </th>
-            <th style="width:90px;" @class(['rb-sort-active' => $sort === 'unit']) aria-sort="{{ $sortAria('unit') }}">
-              <a class="rb-sort-button" href="{{ $sortUrl('unit') }}">
+            <th style="width:90px;" @class(['rb-sort-active' => $sortColumns['unit']['active']]) aria-sort="{{ $sortColumns['unit']['aria'] }}">
+              <a class="rb-sort-button" href="{{ $sortColumns['unit']['url'] }}">
                 <span class="rb-sort-label">หน่วย</span>
-                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('unit') }}</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortColumns['unit']['indicator'] }}</span>
               </a>
             </th>
-            <th style="width:160px;" @class(['text-end', 'rb-sort-active' => $sort === 'price']) aria-sort="{{ $sortAria('price') }}">
-              <a class="rb-sort-button justify-content-end" href="{{ $sortUrl('price') }}">
+            <th style="width:160px;" @class(['text-end', 'rb-sort-active' => $sortColumns['price']['active']]) aria-sort="{{ $sortColumns['price']['aria'] }}">
+              <a class="rb-sort-button justify-content-end" href="{{ $sortColumns['price']['url'] }}">
                 <span class="rb-sort-label">ราคา</span>
-                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('price') }}</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortColumns['price']['indicator'] }}</span>
               </a>
             </th>
-            <th style="width:110px;" @class(['rb-sort-active' => $sort === 'status']) aria-sort="{{ $sortAria('status') }}">
-              <a class="rb-sort-button" href="{{ $sortUrl('status') }}">
+            <th style="width:110px;" @class(['rb-sort-active' => $sortColumns['status']['active']]) aria-sort="{{ $sortColumns['status']['aria'] }}">
+              <a class="rb-sort-button" href="{{ $sortColumns['status']['url'] }}">
                 <span class="rb-sort-label">สถานะ</span>
-                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortIndicator('status') }}</span>
+                <span class="rb-sort-indicator" aria-hidden="true">{{ $sortColumns['status']['indicator'] }}</span>
               </a>
             </th>
             <th style="width:260px;" data-sortable="false"></th>

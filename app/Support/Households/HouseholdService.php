@@ -4,6 +4,7 @@ namespace App\Support\Households;
 
 use App\Models\Household;
 use App\Models\UserAccount;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class HouseholdService
@@ -27,6 +28,17 @@ class HouseholdService
         ]);
 
         return $household;
+    }
+
+    public function indexViewMetrics(LengthAwarePaginator $households): array
+    {
+        $pageHouseholds = $households->getCollection();
+
+        return [
+            'activeCount' => $pageHouseholds->where('active_status', 'active')->count(),
+            'pendingCount' => $pageHouseholds->where('active_status', 'pending')->count(),
+            'inactiveCount' => $pageHouseholds->where('active_status', 'inactive')->count(),
+        ];
     }
 
     public function update(Household $household, array $attributes): ?UserAccount
