@@ -3,43 +3,25 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminStaffController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\DepositController;
+use App\Http\Controllers\HouseholdController;
+use App\Http\Controllers\MainMenuController;
 use App\Http\Controllers\MaterialCategoryController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MaterialPriceController;
-use App\Http\Controllers\DepositController;
-use App\Http\Controllers\HouseholdController;
-use App\Http\Controllers\WithdrawController;
-use App\Http\Controllers\TransactionHistoryController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ReportController;
-use App\Models\Material;
+use App\Http\Controllers\TransactionHistoryController;
+use App\Http\Controllers\WithdrawController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('main-menu');
 });
 
-Route::get('main-menu', function () {
-    $today = now()->toDateString();
+Route::get('main-menu', MainMenuController::class)->name('main-menu');
 
-    $materials = Material::query()
-        ->with('category')
-        ->with(['prices' => function ($query) use ($today) {
-            $query->where('effective_date', '<=', $today)
-                ->where(function ($sub) use ($today) {
-                    $sub->whereNull('expired_date')
-                        ->orWhere('expired_date', '>=', $today);
-                })
-                ->orderByDesc('effective_date')
-                ->orderByDesc('price_id');
-        }])
-        ->orderBy('material_name')
-        ->get();
-
-    return view('main_menu', compact('materials'));
-})->name('main-menu');
-
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
     Route::middleware('role:admin')->group(function () {
@@ -71,7 +53,7 @@ Route::middleware('auth')->group(function () {
         Route::post('withdraws', [WithdrawController::class, 'store'])->name('withdraws.store');
     });
 
-    // สมาชิกดูได้เฉพาะข้อมูลของตนเอง (กรองใน controller)
+    // สมาชิกดูได้เฉพาะข้อมูลของตนเอง (บังคับด้วย policy และ query scope)
     Route::resource('households', HouseholdController::class)->only(['index', 'show']);
     Route::get('reports/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
     Route::get('reports/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export.excel');

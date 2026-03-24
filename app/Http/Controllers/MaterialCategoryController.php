@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SaveMaterialCategoryRequest;
 use App\Models\MaterialCategory;
 use App\Support\ActivityLogger;
-use Illuminate\Http\Request;
 
 class MaterialCategoryController extends Controller
 {
@@ -22,11 +22,9 @@ class MaterialCategoryController extends Controller
         return view('material_categories.create');
     }
 
-    public function store(Request $request)
+    public function store(SaveMaterialCategoryRequest $request)
     {
-        $data = $request->validate([
-            'category_name' => ['required','string','max:100'],
-        ]);
+        $data = $request->validated();
 
         MaterialCategory::create($data);
 
@@ -44,11 +42,9 @@ class MaterialCategoryController extends Controller
         return view('material_categories.edit', ['category' => $material_category]);
     }
 
-    public function update(Request $request, MaterialCategory $material_category)
+    public function update(SaveMaterialCategoryRequest $request, MaterialCategory $material_category)
     {
-        $data = $request->validate([
-            'category_name' => ['required','string','max:100'],
-        ]);
+        $data = $request->validated();
 
         $material_category->update($data);
 

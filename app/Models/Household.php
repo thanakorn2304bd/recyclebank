@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Household extends Model
 {
     protected $table = 'household';
+
     protected $primaryKey = 'household_id';
 
     // timestamps = true (เพราะคุณเพิ่ม created_at/updated_at แล้ว)
@@ -55,6 +56,4 @@ class Household extends Model
     {
         return $this->hasMany(UserAccount::class, 'household_id', 'household_id');
     }
-    
-
 }

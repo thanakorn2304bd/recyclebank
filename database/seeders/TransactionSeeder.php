@@ -13,12 +13,12 @@ class TransactionSeeder extends Seeder
         $householdId = DB::table('household')->where('account_no', '2026010123')->value('household_id');
 
         // หา "ราคาล่าสุด" ของวัสดุ (effective_date ล่าสุด และ expired_date เป็น null หรือยังไม่หมดอายุ)
-        $getCurrentPrice = function(int $materialId): float {
+        $getCurrentPrice = function (int $materialId): float {
             $row = DB::table('material_price')
                 ->where('material_id', $materialId)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNull('expired_date')
-                      ->orWhere('expired_date', '>=', now()->toDateString());
+                        ->orWhere('expired_date', '>=', now()->toDateString());
                 })
                 ->orderByDesc('effective_date')
                 ->first();
@@ -73,10 +73,10 @@ class TransactionSeeder extends Seeder
 
         // อัปเดตยอดคงเหลือใน household (เพราะ schema ไม่มี trigger)
         DB::table('household')->where('household_id', $householdId)->update([
-            'total_balance' => DB::raw('total_balance + ' . round($totalAmount, 2))
+            'total_balance' => DB::raw('total_balance + '.round($totalAmount, 2)),
         ]);
 
-                // ====== 2) WITHDRAW ตัวอย่าง (ถอนเงิน) ======
+        // ====== 2) WITHDRAW ตัวอย่าง (ถอนเงิน) ======
         $withdrawAmount = 50.00;
 
         DB::table('transaction')->insert([
@@ -89,7 +89,7 @@ class TransactionSeeder extends Seeder
         ]);
 
         DB::table('household')->where('household_id', $householdId)->update([
-            'total_balance' => DB::raw('total_balance - ' . $withdrawAmount)
+            'total_balance' => DB::raw('total_balance - '.$withdrawAmount),
         ]);
 
     }

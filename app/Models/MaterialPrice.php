@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class MaterialPrice extends Model
 {
     protected $table = 'material_price';
+
     protected $primaryKey = 'price_id';
 
     // มี created_at แต่ไม่มี updated_at -> ปิด timestamps

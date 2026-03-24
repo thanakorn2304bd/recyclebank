@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Household;
+use App\Http\Requests\SaveWithdrawRequest;
 use App\Models\Transaction;
 use App\Support\ActivityLogger;
+use App\Support\Auth\CurrentUserIdResolver;
+use App\Support\Transactions\HouseholdTransactionService;
+use App\Support\Transactions\WithdrawService;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class WithdrawController extends Controller
 {
@@ -18,9 +17,18 @@ class WithdrawController extends Controller
         return view('withdraws.create');
     }
 
-    public function preview(Request $request)
-    {
-        ['household' => $household, 'date' => $date, 'amount' => $amount] = $this->prepareWithdrawData($request);
+    public function preview(
+        SaveWithdrawRequest $request,
+        CurrentUserIdResolver $currentUserIdResolver,
+        HouseholdTransactionService $householdTransactionService,
+        WithdrawService $withdrawService
+    ) {
+        [
+            'household' => $household,
+            'date' => $date,
+            'amount' => $amount,
+        ] = $this->withdrawPayload($request, $householdTransactionService, $withdrawService);
+        $recordedBy = $currentUserIdResolver->resolve($request);
 
         $previewTransaction = new Transaction([
             'household_id' => $household->household_id,
@@ -28,12 +36,12 @@ class WithdrawController extends Controller
             'transaction_type' => 'withdraw',
             'total_weight' => 0.00,
             'total_amount' => $amount,
-            'recorded_by' => Auth::id() ?? DB::table('user_account')->min('user_id') ?? 1,
+            'recorded_by' => $recordedBy,
         ]);
 
         $previewTransaction->setRelation('household', $household);
 
-        if ($user = Auth::user()) {
+        if ($user = $request->user()) {
             $user->loadMissing('staff');
             $previewTransaction->setRelation('recordedByUser', $user);
         }
@@ -45,70 +53,40 @@ class WithdrawController extends Controller
         return $pdf->stream('withdraw-slip-preview.pdf');
     }
 
-    public function store(Request $request)
-    {
-        ['household' => $household, 'date' => $date, 'amount' => $amount] = $this->prepareWithdrawData($request);
-
+    public function store(
+        SaveWithdrawRequest $request,
+        CurrentUserIdResolver $currentUserIdResolver,
+        HouseholdTransactionService $householdTransactionService,
+        WithdrawService $withdrawService
+    ) {
+        [
+            'household' => $household,
+            'date' => $date,
+            'amount' => $amount,
+        ] = $this->withdrawPayload($request, $householdTransactionService, $withdrawService);
         $householdId = (int) $household->household_id;
+        $recordedBy = $currentUserIdResolver->resolve($request);
+        $transaction = $withdrawService->record($householdId, $date, $amount, $recordedBy);
 
-        $recordedBy = Auth::id() ?? DB::table('user_account')->min('user_id') ?? 1;
+        ActivityLogger::forCurrentUser(
+            'transactions',
+            "บันทึกถอนให้ {$household->account_no} ({$household->contact_person}) เป็นเงิน "
+            .number_format($amount, 2).' บาท'
+        );
 
-        return DB::transaction(function () use ($household, $householdId, $date, $amount, $recordedBy) {
-
-            $balance = (float) DB::table('household')->where('household_id', $householdId)->lockForUpdate()->value('total_balance');
-
-            // กันถอนเกิน (ถ้าอยากให้ติดลบได้ ให้เอา if นี้ออก)
-            if ($amount > $balance) {
-                return back()
-                    ->withErrors("ยอดเงินไม่พอ (คงเหลือ " . number_format($balance, 2) . ")")
-                    ->withInput();
-            }
-
-            $transaction = Transaction::create([
-                'household_id' => $householdId,
-                'transaction_date' => $date,
-                'transaction_type' => 'withdraw',
-                'total_weight' => 0.00, // สำคัญ: ใน DB คุณห้าม null
-                'total_amount' => $amount,
-                'recorded_by' => $recordedBy,
-            ]);
-
-            DB::table('household')
-                ->where('household_id', $householdId)
-                ->update(['total_balance' => DB::raw('total_balance - ' . $amount)]);
-
-            ActivityLogger::forCurrentUser(
-                'transactions',
-                "บันทึกถอนให้ {$household->account_no} ({$household->contact_person}) เป็นเงิน "
-                . number_format($amount, 2) . ' บาท'
-            );
-
-            return redirect()->route('transactions.receipt', $transaction);
-        });
+        return redirect()->route('transactions.receipt', $transaction);
     }
 
-    private function prepareWithdrawData(Request $request): array
-    {
-        $data = $request->validate([
-            'community_id' => ['required', 'string', 'max:2'],
-            'house_no' => ['required', 'string', 'max:20'],
-            'transaction_date' => ['required', 'date'],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-        ]);
-
-        $communityId = trim($data['community_id']);
-        if (ctype_digit($communityId)) {
-            $communityId = str_pad($communityId, 2, '0', STR_PAD_LEFT);
-        }
-
-        $houseNo = trim($data['house_no']);
-        $date = $data['transaction_date'];
-        $amount = round((float) $data['amount'], 2);
-
-        $household = Household::query()
-            ->where('community_id', $communityId)
-            ->where('house_no', $houseNo)
-            ->first([
+    private function withdrawPayload(
+        SaveWithdrawRequest $request,
+        HouseholdTransactionService $householdTransactionService,
+        WithdrawService $withdrawService
+    ): array {
+        $data = $request->validated();
+        $household = $householdTransactionService->findForTransaction(
+            $data['community_id'],
+            $data['house_no'],
+            [
                 'household_id',
                 'account_no',
                 'contact_person',
@@ -116,49 +94,18 @@ class WithdrawController extends Controller
                 'house_no',
                 'active_status',
                 'total_balance',
-            ]);
+            ]
+        );
 
-        if (! $household) {
-            throw ValidationException::withMessages([
-                'house_no' => "ไม่พบครัวเรือนสำหรับเลขที่ชุมชน {$communityId} และบ้านเลขที่ {$houseNo}",
-            ]);
-        }
-
-        $this->ensureHouseholdIsActive($household);
-
-        $balance = (float) $household->total_balance;
-        if ($amount > $balance) {
-            throw ValidationException::withMessages([
-                'amount' => "ยอดเงินไม่พอ (คงเหลือ " . number_format($balance, 2) . ")",
-            ]);
-        }
+        $householdTransactionService->ensureActive($household);
+        $date = $data['transaction_date'];
+        $amount = $withdrawService->normalizeAmount($data['amount']);
+        $withdrawService->ensureSufficientBalance((float) $household->total_balance, $amount);
 
         return [
             'household' => $household,
             'date' => $date,
             'amount' => $amount,
         ];
-    }
-
-    private function ensureHouseholdIsActive(Household $household): void
-    {
-        if ($household->active_status === 'active') {
-            return;
-        }
-
-        throw ValidationException::withMessages([
-            'house_no' => 'ครัวเรือนนี้ยังไม่พร้อมทำรายการ (สถานะ: '
-                . $this->householdStatusLabel($household->active_status)
-                . ')',
-        ]);
-    }
-
-    private function householdStatusLabel(string $status): string
-    {
-        return match ($status) {
-            'active' => 'ใช้งาน',
-            'pending' => 'รออนุมัติ',
-            default => 'ปิดใช้งาน',
-        };
     }
 }

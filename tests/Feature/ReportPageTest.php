@@ -93,6 +93,43 @@ class ReportPageTest extends TestCase
             ->assertHeader('content-type', 'application/pdf');
     }
 
+    public function test_member_without_household_is_redirected_from_report_index(): void
+    {
+        $memberUser = UserAccount::create([
+            'username' => 'member-without-household-report',
+            'password' => Hash::make('password'),
+            'role' => 'member',
+            'household_id' => null,
+            'staff_id' => null,
+            'created_at' => now(),
+            'last_login' => null,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($memberUser)
+            ->get(route('reports.index'))
+            ->assertRedirect(route('main-menu'))
+            ->assertSessionHasErrors();
+    }
+
+    public function test_member_without_household_gets_not_found_on_report_export(): void
+    {
+        $memberUser = UserAccount::create([
+            'username' => 'member-without-household-export',
+            'password' => Hash::make('password'),
+            'role' => 'member',
+            'household_id' => null,
+            'staff_id' => null,
+            'created_at' => now(),
+            'last_login' => null,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($memberUser)
+            ->get(route('reports.export.pdf'))
+            ->assertNotFound();
+    }
+
     private function seedReportFixtures(): array
     {
         DB::table('community')->insert([

@@ -84,7 +84,7 @@ class MaterialPriceSeeder extends Seeder
 
         foreach ($prices as $p) {
             $materialId = DB::table('material')->where('material_name', $p['material_name'])->value('material_id');
-            if (!$materialId) {
+            if (! $materialId) {
                 throw new \RuntimeException("ไม่พบวัสดุสำหรับตั้งราคา: {$p['material_name']}");
             }
 
@@ -97,7 +97,9 @@ class MaterialPriceSeeder extends Seeder
             ];
 
             // เอกสารกำหนด material_price มี created_at (DATETIME) :contentReference[oaicite:2]{index=2}
-            if (Schema::hasColumn('material_price', 'created_at')) $row['created_at'] = now();
+            if (Schema::hasColumn('material_price', 'created_at')) {
+                $row['created_at'] = now();
+            }
 
             // กันซ้ำแบบง่าย: 1 วัสดุ 1 ราคา ณ เดือนเริ่มต้น
             DB::table('material_price')->updateOrInsert(

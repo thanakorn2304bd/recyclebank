@@ -40,4 +40,3 @@ class MemberUserAccountSeeder extends Seeder
         DB::table('user_account')->updateOrInsert(['username' => 'member'], $member);
     }
 }
-

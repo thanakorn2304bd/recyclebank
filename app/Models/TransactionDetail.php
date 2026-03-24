@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class TransactionDetail extends Model
 {
     protected $table = 'transaction_detail';
+
     protected $primaryKey = 'detail_id';
 
     public $timestamps = true;
@@ -30,10 +31,8 @@ class TransactionDetail extends Model
         return $this->belongsTo(Transaction::class, 'transaction_id', 'transaction_id');
     }
 
-    
     public function material()
     {
         return $this->belongsTo(\App\Models\Material::class, 'material_id', 'material_id');
     }
-
 }

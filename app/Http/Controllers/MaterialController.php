@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SaveMaterialRequest;
 use App\Models\Material;
 use App\Models\MaterialCategory;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class MaterialController extends Controller
 {
@@ -34,12 +34,9 @@ class MaterialController extends Controller
             ->selectRaw('current_price.price as current_price')
             ->selectRaw('current_price.effective_date as current_price_effective_date')
             ->with('category')
-            ->leftJoinSub($this->currentPriceReferenceQuery($today), 'current_price_ref', function ($join) {
-                $join->on('material.material_id', '=', 'current_price_ref.material_id');
-            })
-            ->leftJoin('material_price as current_price', 'current_price.price_id', '=', 'current_price_ref.price_id')
-            ->when($q, fn($qb) => $qb->where('material.material_name', 'like', "%{$q}%"))
-            ->when($categoryId, fn($qb) => $qb->where('material.category_id', $categoryId))
+            ->joinCurrentPriceAt($today)
+            ->when($q, fn ($qb) => $qb->where('material.material_name', 'like', "%{$q}%"))
+            ->when($categoryId, fn ($qb) => $qb->where('material.category_id', $categoryId))
             ->when($sort === 'category', function ($qb) {
                 $qb->leftJoin('material_category', 'material.category_id', '=', 'material_category.category_id');
             });
@@ -67,12 +64,13 @@ class MaterialController extends Controller
     public function create()
     {
         $categories = MaterialCategory::orderBy('category_name')->get();
+
         return view('materials.create', compact('categories'));
     }
 
-    public function store(Request $request)
+    public function store(SaveMaterialRequest $request)
     {
-        $data = $this->validatedMaterialData($request);
+        $data = $request->validated();
 
         $material = Material::create($data);
 
@@ -88,12 +86,13 @@ class MaterialController extends Controller
     public function edit(Material $material)
     {
         $categories = MaterialCategory::orderBy('category_name')->get();
+
         return view('materials.edit', compact('material', 'categories'));
     }
 
-    public function update(Request $request, Material $material)
+    public function update(SaveMaterialRequest $request, Material $material)
     {
-        $data = $this->validatedMaterialData($request);
+        $data = $request->validated();
 
         $material->update($data);
 
@@ -128,48 +127,5 @@ class MaterialController extends Controller
 
         return redirect()->route('materials.index')
             ->with('success', 'ลบวัสดุเรียบร้อย');
-    }
-
-    private function currentPriceReferenceQuery(string $today)
-    {
-        return DB::table('material_price as current_price')
-            ->select('current_price.material_id', 'current_price.price_id')
-            ->where('current_price.effective_date', '<=', $today)
-            ->where(function ($query) use ($today) {
-                $query->whereNull('current_price.expired_date')
-                    ->orWhere('current_price.expired_date', '>=', $today);
-            })
-            ->whereNotExists(function ($query) use ($today) {
-                $query->select(DB::raw(1))
-                    ->from('material_price as newer_price')
-                    ->whereColumn('newer_price.material_id', 'current_price.material_id')
-                    ->where('newer_price.effective_date', '<=', $today)
-                    ->where(function ($subQuery) use ($today) {
-                        $subQuery->whereNull('newer_price.expired_date')
-                            ->orWhere('newer_price.expired_date', '>=', $today);
-                    })
-                    ->where(function ($subQuery) {
-                        $subQuery->whereColumn('newer_price.effective_date', '>', 'current_price.effective_date')
-                            ->orWhere(function ($tieQuery) {
-                                $tieQuery->whereColumn('newer_price.effective_date', 'current_price.effective_date')
-                                    ->whereColumn('newer_price.price_id', '>', 'current_price.price_id');
-                            });
-                    });
-            });
-    }
-
-    private function validatedMaterialData(Request $request): array
-    {
-        $data = $request->validate([
-            'category_id'   => ['required', 'integer', 'exists:material_category,category_id'],
-            'material_name' => ['required', 'string', 'max:150'],
-            'unit'          => ['required', 'string', 'max:20'],
-            'description'   => ['nullable', 'string', 'max:255'],
-            'is_active'     => ['required', 'boolean'],
-        ]);
-
-        $data['description'] = $data['description'] ?? '';
-
-        return $data;
     }
 }

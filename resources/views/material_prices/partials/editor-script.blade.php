@@ -1,0 +1,76 @@
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('rbBulkPriceForm');
+
+    if (! form) {
+      return;
+    }
+
+    const rows = Array.from(form.querySelectorAll('[data-material-row]'));
+    const summary = document.getElementById('rbDirtyPriceSummary');
+    const submitButton = document.getElementById('rbSubmitPriceEditor');
+    const resetButtons = [
+      document.getElementById('rbResetPriceEditor'),
+      document.getElementById('rbResetPriceEditorBottom'),
+    ].filter(Boolean);
+
+    function rowInputs(row) {
+      return Array.from(row.querySelectorAll('input[type="number"], input[type="date"]'));
+    }
+
+    function isDirty(row) {
+      return rowInputs(row).some(function (input) {
+        return String(input.value ?? '') !== String(input.dataset.initialValue ?? '');
+      });
+    }
+
+    function refreshDirtyState() {
+      let dirtyCount = 0;
+
+      rows.forEach(function (row) {
+        const dirty = isDirty(row);
+
+        row.classList.toggle('rb-price-editor-row-dirty', dirty);
+
+        if (dirty) {
+          dirtyCount += 1;
+        }
+      });
+
+      if (summary) {
+        summary.textContent = dirtyCount > 0
+          ? 'แก้ไขแล้ว ' + dirtyCount + ' รายการ'
+          : 'ยังไม่มีรายการแก้ไข';
+      }
+
+      if (submitButton) {
+        submitButton.textContent = dirtyCount > 0
+          ? 'บันทึก ' + dirtyCount + ' รายการ'
+          : 'บันทึกการแก้ไข';
+      }
+    }
+
+    function resetChanges() {
+      rows.forEach(function (row) {
+        rowInputs(row).forEach(function (input) {
+          input.value = input.dataset.initialValue ?? '';
+        });
+      });
+
+      refreshDirtyState();
+    }
+
+    rows.forEach(function (row) {
+      rowInputs(row).forEach(function (input) {
+        input.addEventListener('input', refreshDirtyState);
+        input.addEventListener('change', refreshDirtyState);
+      });
+    });
+
+    resetButtons.forEach(function (button) {
+      button.addEventListener('click', resetChanges);
+    });
+
+    refreshDirtyState();
+  });
+</script>

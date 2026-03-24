@@ -7,8 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Community extends Model
 {
     protected $table = 'community';
+
     protected $primaryKey = 'community_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     public $timestamps = false;

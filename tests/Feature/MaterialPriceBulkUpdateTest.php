@@ -11,6 +11,52 @@ class MaterialPriceBulkUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_staff_can_view_bulk_price_editor_page(): void
+    {
+        $staffUser = UserAccount::create([
+            'username' => 'staff-price-page',
+            'password' => 'password',
+            'role' => 'staff',
+            'household_id' => null,
+            'staff_id' => null,
+            'created_at' => now(),
+            'last_login' => null,
+            'is_active' => true,
+        ]);
+
+        $categoryId = DB::table('material_category')->insertGetId([
+            'category_name' => 'โลหะ',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $materialId = DB::table('material')->insertGetId([
+            'category_id' => $categoryId,
+            'material_name' => 'ทองแดง',
+            'unit' => 'kg',
+            'description' => '',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('material_price')->insert([
+            'material_id' => $materialId,
+            'price' => 10.00,
+            'effective_date' => '2026-03-01',
+            'expired_date' => null,
+            'created_by' => $staffUser->user_id,
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($staffUser)
+            ->get(route('material-prices.index'))
+            ->assertOk()
+            ->assertSee('แก้ไขราคาวัสดุ')
+            ->assertSee('มีราคาปัจจุบัน')
+            ->assertSee('ทองแดง');
+    }
+
     public function test_staff_can_bulk_update_material_prices(): void
     {
         $staffUser = UserAccount::create([

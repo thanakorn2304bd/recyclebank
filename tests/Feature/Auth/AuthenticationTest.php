@@ -67,6 +67,25 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect('/');
     }
 
+    public function test_inactive_users_are_logged_out_on_the_next_protected_request(): void
+    {
+        $user = $this->createUserAccount([
+            'username' => 'deactivated-during-session',
+        ]);
+
+        $this->actingAs($user);
+
+        $user->forceFill([
+            'is_active' => false,
+        ])->save();
+
+        $this->get(route('dashboard'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('username');
+
+        $this->assertGuest();
+    }
+
     private function createUserAccount(array $overrides = []): UserAccount
     {
         return UserAccount::create(array_merge([

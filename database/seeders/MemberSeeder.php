@@ -30,8 +30,12 @@ class MemberSeeder extends Seeder
         ];
 
         foreach ($rows as $r) {
-            if (Schema::hasColumn('member', 'created_at')) $r['created_at'] = now();
-            if (Schema::hasColumn('member', 'updated_at')) $r['updated_at'] = now();
+            if (Schema::hasColumn('member', 'created_at')) {
+                $r['created_at'] = now();
+            }
+            if (Schema::hasColumn('member', 'updated_at')) {
+                $r['updated_at'] = now();
+            }
 
             DB::table('member')->updateOrInsert(
                 ['household_id' => $r['household_id'], 'id_card' => $r['id_card']],

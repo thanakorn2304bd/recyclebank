@@ -2,33 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ActivityLogFiltersRequest;
 use App\Models\LogActivity;
 use App\Models\UserAccount;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class ActivityLogController extends Controller
 {
-    public function index(Request $request)
+    public function index(ActivityLogFiltersRequest $request)
     {
-        $validated = $request->validate([
-            'q' => ['nullable', 'string', 'max:100'],
-            'module' => ['nullable', 'string', 'max:50'],
-            'role' => ['nullable', Rule::in(['admin', 'staff', 'member'])],
-            'user_id' => ['nullable', 'integer', 'exists:user_account,user_id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-        ], [
-            'to.after_or_equal' => 'วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น',
-            'user_id.exists' => 'ไม่พบบัญชีผู้ใช้ที่เลือก',
-        ]);
-
-        $q = trim((string) ($validated['q'] ?? ''));
-        $module = (string) ($validated['module'] ?? '');
-        $role = (string) ($validated['role'] ?? '');
-        $userId = isset($validated['user_id']) ? (int) $validated['user_id'] : null;
-        $from = $validated['from'] ?? null;
-        $to = $validated['to'] ?? null;
+        [
+            'q' => $q,
+            'module' => $module,
+            'role' => $role,
+            'user_id' => $userId,
+            'from' => $from,
+            'to' => $to,
+        ] = $request->filters();
 
         $logsQuery = LogActivity::query()
             ->with(['user.household.community', 'user.staff'])

@@ -132,7 +132,7 @@ class MaterialIndexSortTest extends TestCase
         foreach (range(1, 16) as $index) {
             DB::table('material')->insert([
                 'category_id' => $categoryId,
-                'material_name' => 'วัสดุ ' . str_pad((string) $index, 2, '0', STR_PAD_LEFT),
+                'material_name' => 'วัสดุ '.str_pad((string) $index, 2, '0', STR_PAD_LEFT),
                 'unit' => 'kg',
                 'description' => '',
                 'is_active' => true,

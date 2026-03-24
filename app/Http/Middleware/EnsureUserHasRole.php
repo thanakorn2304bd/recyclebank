@@ -26,4 +26,3 @@ class EnsureUserHasRole
         abort(403, 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
     }
 }
-

@@ -10,6 +10,7 @@ class UserAccount extends Authenticatable
     use Notifiable;
 
     protected $table = 'user_account';
+
     protected $primaryKey = 'user_id';
 
     // ตารางนี้มี created_at/last_login แต่ไม่ใช่ created_at/updated_at คู่มาตรฐาน Laravel
@@ -29,7 +30,7 @@ class UserAccount extends Authenticatable
     protected $casts = [
         'created_at' => 'datetime',
         'last_login' => 'datetime',
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'password' => 'hashed',
     ];
 

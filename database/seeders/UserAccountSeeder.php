@@ -24,8 +24,12 @@ class UserAccountSeeder extends Seeder
             'staff_id' => $adminStaffId,
             'is_active' => 1,
         ];
-        if (Schema::hasColumn('user_account', 'created_at')) $admin['created_at'] = $now;
-        if (Schema::hasColumn('user_account', 'last_login')) $admin['last_login'] = null;
+        if (Schema::hasColumn('user_account', 'created_at')) {
+            $admin['created_at'] = $now;
+        }
+        if (Schema::hasColumn('user_account', 'last_login')) {
+            $admin['last_login'] = null;
+        }
 
         DB::table('user_account')->updateOrInsert(['username' => 'admin'], $admin);
 
@@ -37,8 +41,12 @@ class UserAccountSeeder extends Seeder
             'staff_id' => $staffId,
             'is_active' => 1,
         ];
-        if (Schema::hasColumn('user_account', 'created_at')) $staff['created_at'] = $now;
-        if (Schema::hasColumn('user_account', 'last_login')) $staff['last_login'] = null;
+        if (Schema::hasColumn('user_account', 'created_at')) {
+            $staff['created_at'] = $now;
+        }
+        if (Schema::hasColumn('user_account', 'last_login')) {
+            $staff['last_login'] = null;
+        }
 
         DB::table('user_account')->updateOrInsert(['username' => 'staff'], $staff);
     }

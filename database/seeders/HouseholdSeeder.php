@@ -29,8 +29,12 @@ class HouseholdSeeder extends Seeder
         ];
 
         // ถ้าคุณเปิด timestamps ใน household แบบ Level B ก็จะมี created_at/updated_at
-        if (Schema::hasColumn('household', 'created_at')) $data['created_at'] = now();
-        if (Schema::hasColumn('household', 'updated_at')) $data['updated_at'] = now();
+        if (Schema::hasColumn('household', 'created_at')) {
+            $data['created_at'] = now();
+        }
+        if (Schema::hasColumn('household', 'updated_at')) {
+            $data['updated_at'] = now();
+        }
 
         DB::table('household')->updateOrInsert(['account_no' => '2026010123'], $data);
     }

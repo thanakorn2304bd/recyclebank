@@ -85,7 +85,7 @@ class MaterialSeeder extends Seeder
 
         foreach ($items as $item) {
             $categoryId = $categoryMap[$item['category']] ?? null;
-            if (!$categoryId) {
+            if (! $categoryId) {
                 throw new \RuntimeException("ไม่พบหมวดวัสดุ: {$item['category']}");
             }
 
@@ -97,8 +97,12 @@ class MaterialSeeder extends Seeder
                 'is_active' => $item['is_active'],
             ];
 
-            if (Schema::hasColumn('material', 'created_at')) $m['created_at'] = now();
-            if (Schema::hasColumn('material', 'updated_at')) $m['updated_at'] = now();
+            if (Schema::hasColumn('material', 'created_at')) {
+                $m['created_at'] = now();
+            }
+            if (Schema::hasColumn('material', 'updated_at')) {
+                $m['updated_at'] = now();
+            }
 
             DB::table('material')->updateOrInsert(
                 ['material_name' => $m['material_name']],

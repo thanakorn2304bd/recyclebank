@@ -2,120 +2,57 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TransactionDateRangeRequest;
+use App\Http\Requests\TransactionHistoryIndexRequest;
 use App\Models\Household;
 use App\Models\Transaction;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Support\Auth\CurrentUserHouseholdResolver;
+use App\Support\Transactions\TransactionHistoryService;
 
 class TransactionHistoryController extends Controller
 {
     // 1) รายการทั้งหมด + filter
-    public function index(Request $request)
-    {
-        $isMember = $this->isMember();
-        $memberHouseholdId = $this->memberHouseholdId();
+    public function index(
+        TransactionHistoryIndexRequest $request,
+        CurrentUserHouseholdResolver $currentUserHouseholdResolver,
+        TransactionHistoryService $transactionHistoryService
+    ) {
+        $filters = $request->filters();
+        $isMember = $currentUserHouseholdResolver->isMember($request);
+        $memberHouseholdId = $currentUserHouseholdResolver->householdId($request);
+        [
+            'txs' => $txs,
+            'households' => $households,
+            'householdId' => $householdId,
+        ] = $transactionHistoryService->indexData($filters, $isMember, $memberHouseholdId);
+        [
+            'type' => $type,
+            'from' => $from,
+            'to' => $to,
+        ] = $filters;
 
-        $type = $request->input('type'); // deposit|withdraw|null
-        $from = $request->input('from');
-        $to   = $request->input('to');
-        $householdId = $isMember ? $memberHouseholdId : $request->input('household_id');
-
-        $households = Household::query()
-            ->when($isMember, function ($query) use ($memberHouseholdId) {
-                if ($memberHouseholdId) {
-                    $query->where('household_id', $memberHouseholdId);
-                } else {
-                    $query->whereRaw('1 = 0');
-                }
-            })
-            ->orderBy('account_no')
-            ->get(['household_id','account_no','contact_person']);
-
-        $txs = Transaction::query()
-            ->with('household')
-            ->when($isMember, function ($query) use ($memberHouseholdId) {
-                if ($memberHouseholdId) {
-                    $query->where('household_id', $memberHouseholdId);
-                } else {
-                    $query->whereRaw('1 = 0');
-                }
-            })
-            ->when($type, fn($q) => $q->where('transaction_type', $type))
-            ->when($from, fn($q) => $q->whereDate('transaction_date', '>=', $from))
-            ->when($to, fn($q) => $q->whereDate('transaction_date', '<=', $to))
-            ->when($householdId, fn($q) => $q->where('household_id', $householdId))
-            ->orderByDesc('transaction_date')
-            ->orderByDesc('transaction_id')
-            ->paginate(20)
-            ->withQueryString();
-
-        return view('transactions.index', compact('txs','households','type','from','to','householdId'));
+        return view('transactions.index', compact('txs', 'households', 'type', 'from', 'to', 'householdId'));
     }
 
     // 2) รายการตามครัวเรือน (statement)
-    public function household(Household $household, Request $request)
-    {
-        $this->ensureCanViewHousehold($household);
+    public function household(
+        Household $household,
+        TransactionDateRangeRequest $request,
+        TransactionHistoryService $transactionHistoryService
+    ) {
+        $this->authorize('view', $household);
+        ['from' => $from, 'to' => $to] = $request->range();
+        $txs = $transactionHistoryService->householdTransactions($household, $from, $to);
 
-        $from = $request->input('from');
-        $to   = $request->input('to');
-
-        $txs = Transaction::query()
-            ->where('household_id', $household->household_id)
-            ->when($from, fn($q) => $q->whereDate('transaction_date', '>=', $from))
-            ->when($to, fn($q) => $q->whereDate('transaction_date', '<=', $to))
-            ->orderByDesc('transaction_date')
-            ->orderByDesc('transaction_id')
-            ->paginate(25)
-            ->withQueryString();
-
-        return view('transactions.household', compact('household','txs','from','to'));
+        return view('transactions.household', compact('household', 'txs', 'from', 'to'));
     }
 
     // 3) รายละเอียด (ใบเสร็จ)
-    public function show(Transaction $transaction)
+    public function show(Transaction $transaction, TransactionHistoryService $transactionHistoryService)
     {
-        $this->ensureCanViewTransaction($transaction);
-
-        $transaction->load([
-            'household',
-            'details.material',
-        ]);
+        $this->authorize('view', $transaction);
+        $transaction = $transactionHistoryService->loadDetails($transaction);
 
         return view('transactions.show', compact('transaction'));
-    }
-
-    private function isMember(): bool
-    {
-        return Auth::check() && Auth::user()->role === 'member';
-    }
-
-    private function memberHouseholdId(): ?int
-    {
-        $householdId = Auth::user()?->household_id;
-
-        return $householdId ? (int) $householdId : null;
-    }
-
-    private function ensureCanViewHousehold(Household $household): void
-    {
-        if (! $this->isMember()) {
-            return;
-        }
-
-        if ((int) $household->household_id !== (int) $this->memberHouseholdId()) {
-            abort(403, 'ผู้ใช้ทั่วไปสามารถดูได้เฉพาะข้อมูลของตนเอง');
-        }
-    }
-
-    private function ensureCanViewTransaction(Transaction $transaction): void
-    {
-        if (! $this->isMember()) {
-            return;
-        }
-
-        if ((int) $transaction->household_id !== (int) $this->memberHouseholdId()) {
-            abort(403, 'ผู้ใช้ทั่วไปสามารถดูได้เฉพาะข้อมูลของตนเอง');
-        }
     }
 }

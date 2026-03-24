@@ -5,8 +5,8 @@ namespace Tests\Feature;
 use App\Models\Transaction;
 use App\Models\UserAccount;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdfWrapper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Mockery;
@@ -19,6 +19,16 @@ class ReceiptPdfPaginationTest extends TestCase
     public function test_deposit_receipt_builds_carry_forward_pages_when_details_span_multiple_pages(): void
     {
         ['staff' => $staffUser, 'transaction' => $transaction] = $this->seedDepositReceiptFixtures(detailCount: 8);
+
+        $pdf = Mockery::mock(DomPdfWrapper::class);
+        $pdf->shouldReceive('setPaper')
+            ->once()
+            ->with('a5', 'landscape')
+            ->andReturnSelf();
+        $pdf->shouldReceive('stream')
+            ->once()
+            ->with('receipt_'.$transaction->transaction_id.'.pdf')
+            ->andReturn(response('pdf', 200, ['content-type' => 'application/pdf']));
 
         Pdf::shouldReceive('loadView')
             ->once()
@@ -46,18 +56,7 @@ class ReceiptPdfPaginationTest extends TestCase
 
                 return true;
             }))
-            ->andReturn(new class
-            {
-                public function setPaper(string $size, string $orientation): self
-                {
-                    return $this;
-                }
-
-                public function stream(string $filename): Response
-                {
-                    return response('pdf', 200, ['content-type' => 'application/pdf']);
-                }
-            });
+            ->andReturn($pdf);
 
         $this->actingAs($staffUser)
             ->get(route('transactions.receipt', $transaction))
