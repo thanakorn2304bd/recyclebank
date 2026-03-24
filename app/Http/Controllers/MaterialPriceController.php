@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Material;
 use App\Models\MaterialCategory;
 use App\Models\MaterialPrice;
@@ -101,27 +102,24 @@ class MaterialPriceController extends Controller
         $createdBy = Auth::id() ?? 1;
 
         DB::transaction(function () use ($data, $createdBy) {
-            // ถ้ามี “ราคาที่ active อยู่” (expired_date null) ของวัสดุเดียวกัน
-            // และกำลังใส่ราคาตัวใหม่ ให้ปิดของเก่าด้วย expired_date = วันก่อน effective_date ใหม่
-            $effective = $data['effective_date'];
+            $effectiveDate = $data['effective_date'];
+            $expiredDate = $data['expired_date'] ?? null;
 
-            $active = MaterialPrice::query()
-                ->where('material_id', $data['material_id'])
-                ->whereNull('expired_date')
-                ->orderByDesc('effective_date')
-                ->first();
+            if ($expiredDate === null) {
+                $this->closePreviousOpenEndedPriceIfNeeded($data['material_id'], $effectiveDate);
+            }
 
-            if ($active) {
-                // ปิดราคาเก่าถ้าวันเริ่มใหม่ >= วันเริ่มเก่า
-                $active->expired_date = date('Y-m-d', strtotime($effective . ' -1 day'));
-                $active->save();
+            if ($overlapMessage = $this->pricePeriodOverlapMessage($data['material_id'], $effectiveDate, $expiredDate)) {
+                throw ValidationException::withMessages([
+                    'effective_date' => $overlapMessage,
+                ]);
             }
 
             MaterialPrice::create([
                 'material_id'    => $data['material_id'],
                 'price'          => $data['price'],
-                'effective_date' => $data['effective_date'],
-                'expired_date'   => $data['expired_date'] ?? null,
+                'effective_date' => $effectiveDate,
+                'expired_date'   => $expiredDate,
                 'created_by'     => $createdBy,
                 'created_at'     => now(),
             ]);
@@ -226,6 +224,16 @@ class MaterialPriceController extends Controller
 
             $normalizedPrice = number_format((float) $price, 2, '.', '');
             $normalizedExpiredDate = $expiredDate !== '' ? $expiredDate : null;
+
+            if ($overlapMessage = $this->pricePeriodOverlapMessage(
+                $materialId,
+                $effectiveDate,
+                $normalizedExpiredDate,
+                $priceId
+            )) {
+                $errors["rows.$materialId.effective_date"] = $overlapMessage;
+                continue;
+            }
 
             if ($existingPrice) {
                 $hasChanged = number_format((float) $existingPrice->price, 2, '.', '') !== $normalizedPrice
@@ -335,14 +343,30 @@ class MaterialPriceController extends Controller
 
     private function currentPriceReferenceQuery(string $today)
     {
-        return DB::table('material_price')
-            ->select('material_id', DB::raw('MAX(price_id) as price_id'))
-            ->where('effective_date', '<=', $today)
+        return DB::table('material_price as current_price')
+            ->select('current_price.material_id', 'current_price.price_id')
+            ->where('current_price.effective_date', '<=', $today)
             ->where(function ($query) use ($today) {
-                $query->whereNull('expired_date')
-                    ->orWhere('expired_date', '>=', $today);
+                $query->whereNull('current_price.expired_date')
+                    ->orWhere('current_price.expired_date', '>=', $today);
             })
-            ->groupBy('material_id');
+            ->whereNotExists(function ($query) use ($today) {
+                $query->select(DB::raw(1))
+                    ->from('material_price as newer_price')
+                    ->whereColumn('newer_price.material_id', 'current_price.material_id')
+                    ->where('newer_price.effective_date', '<=', $today)
+                    ->where(function ($subQuery) use ($today) {
+                        $subQuery->whereNull('newer_price.expired_date')
+                            ->orWhere('newer_price.expired_date', '>=', $today);
+                    })
+                    ->where(function ($subQuery) {
+                        $subQuery->whereColumn('newer_price.effective_date', '>', 'current_price.effective_date')
+                            ->orWhere(function ($tieQuery) {
+                                $tieQuery->whereColumn('newer_price.effective_date', 'current_price.effective_date')
+                                    ->whereColumn('newer_price.price_id', '>', 'current_price.price_id');
+                            });
+                    });
+            });
     }
 
     private function priceEditorFilters(Request $request): array
@@ -352,5 +376,46 @@ class MaterialPriceController extends Controller
             'category_id' => $request->integer('category_id') ?: null,
             'material_id' => $request->integer('material_id') ?: null,
         ], fn ($value) => $value !== null && $value !== '');
+    }
+
+    private function pricePeriodOverlapMessage(
+        int $materialId,
+        string $effectiveDate,
+        ?string $expiredDate,
+        ?int $ignorePriceId = null
+    ): ?string {
+        $overlapQuery = MaterialPrice::query()
+            ->where('material_id', $materialId)
+            ->when($ignorePriceId, fn ($query) => $query->where('price_id', '!=', $ignorePriceId))
+            ->when($expiredDate !== null, fn ($query) => $query->whereDate('effective_date', '<=', $expiredDate))
+            ->where(function ($query) use ($effectiveDate) {
+                $query->whereNull('expired_date')
+                    ->orWhereDate('expired_date', '>=', $effectiveDate);
+            });
+
+        if (! $overlapQuery->exists()) {
+            return null;
+        }
+
+        return 'ช่วงวันที่ราคาซ้อนทับกับรายการเดิมของวัสดุนี้ กรุณาปรับวันที่เริ่มใช้หรือวันหมดอายุ';
+    }
+
+    private function closePreviousOpenEndedPriceIfNeeded(int $materialId, string $effectiveDate): void
+    {
+        $previousPrice = MaterialPrice::query()
+            ->where('material_id', $materialId)
+            ->whereNull('expired_date')
+            ->orderByDesc('effective_date')
+            ->orderByDesc('price_id')
+            ->first();
+
+        $previousEffectiveDate = $previousPrice?->effective_date?->format('Y-m-d');
+
+        if (! $previousPrice || $previousEffectiveDate === null || $previousEffectiveDate >= $effectiveDate) {
+            return;
+        }
+
+        $previousPrice->expired_date = Carbon::parse($effectiveDate)->subDay()->toDateString();
+        $previousPrice->save();
     }
 }

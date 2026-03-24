@@ -132,14 +132,30 @@ class MaterialController extends Controller
 
     private function currentPriceReferenceQuery(string $today)
     {
-        return DB::table('material_price')
-            ->select('material_id', DB::raw('MAX(price_id) as price_id'))
-            ->where('effective_date', '<=', $today)
+        return DB::table('material_price as current_price')
+            ->select('current_price.material_id', 'current_price.price_id')
+            ->where('current_price.effective_date', '<=', $today)
             ->where(function ($query) use ($today) {
-                $query->whereNull('expired_date')
-                    ->orWhere('expired_date', '>=', $today);
+                $query->whereNull('current_price.expired_date')
+                    ->orWhere('current_price.expired_date', '>=', $today);
             })
-            ->groupBy('material_id');
+            ->whereNotExists(function ($query) use ($today) {
+                $query->select(DB::raw(1))
+                    ->from('material_price as newer_price')
+                    ->whereColumn('newer_price.material_id', 'current_price.material_id')
+                    ->where('newer_price.effective_date', '<=', $today)
+                    ->where(function ($subQuery) use ($today) {
+                        $subQuery->whereNull('newer_price.expired_date')
+                            ->orWhere('newer_price.expired_date', '>=', $today);
+                    })
+                    ->where(function ($subQuery) {
+                        $subQuery->whereColumn('newer_price.effective_date', '>', 'current_price.effective_date')
+                            ->orWhere(function ($tieQuery) {
+                                $tieQuery->whereColumn('newer_price.effective_date', 'current_price.effective_date')
+                                    ->whereColumn('newer_price.price_id', '>', 'current_price.price_id');
+                            });
+                    });
+            });
     }
 
     private function validatedMaterialData(Request $request): array

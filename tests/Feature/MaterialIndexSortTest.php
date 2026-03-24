@@ -56,6 +56,60 @@ class MaterialIndexSortTest extends TestCase
             ->assertSee('บาท/kg');
     }
 
+    public function test_material_index_prefers_latest_effective_price_even_when_older_price_was_inserted_later(): void
+    {
+        $staffUser = UserAccount::create([
+            'username' => 'staff-material-effective-price',
+            'password' => 'password',
+            'role' => 'staff',
+            'household_id' => null,
+            'staff_id' => null,
+            'created_at' => now(),
+            'last_login' => null,
+            'is_active' => true,
+        ]);
+
+        $categoryId = DB::table('material_category')->insertGetId([
+            'category_name' => 'โลหะ',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $materialId = DB::table('material')->insertGetId([
+            'category_id' => $categoryId,
+            'material_name' => 'ทองแดง',
+            'unit' => 'kg',
+            'description' => '',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('material_price')->insert([
+            'material_id' => $materialId,
+            'price' => 130.00,
+            'effective_date' => '2026-03-10',
+            'expired_date' => null,
+            'created_by' => $staffUser->user_id,
+            'created_at' => now(),
+        ]);
+
+        DB::table('material_price')->insert([
+            'material_id' => $materialId,
+            'price' => 120.00,
+            'effective_date' => '2026-03-01',
+            'expired_date' => null,
+            'created_by' => $staffUser->user_id,
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($staffUser)
+            ->get(route('materials.index'))
+            ->assertOk()
+            ->assertSee('130.00')
+            ->assertDontSee('120.00 บาท/kg');
+    }
+
     public function test_material_index_sorts_across_all_pages_by_id_descending(): void
     {
         $staffUser = UserAccount::create([

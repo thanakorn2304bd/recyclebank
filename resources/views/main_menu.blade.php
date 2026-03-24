@@ -150,11 +150,9 @@
                                             <div class="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-amber-300/25 blur-2xl"></div>
                                             <div class="absolute -bottom-5 left-3 h-24 w-24 rounded-full bg-emerald-200/20 blur-2xl"></div>
 
-                                            <div class="relative flex min-h-[220px] items-center justify-center">
-                                                <div class="flex h-28 w-28 shrink-0 items-center justify-center rounded-[30px] border border-white/25 bg-white/18 shadow-[0_18px_35px_rgba(4,120,87,0.28)] ring-1 ring-white/15 sm:h-32 sm:w-32">
-                                                    <div class="flex h-24 w-24 items-center justify-center rounded-[26px] bg-white/92 shadow-inner shadow-emerald-200/70 sm:h-28 sm:w-28">
-                                                        <img src="{{ asset('images/recycle-logo.png') }}" alt="โลโก้กองทุนธนาคารวัสดุรีไซเคิ้ล" class="h-20 w-20 object-contain drop-shadow-[0_6px_10px_rgba(16,185,129,0.25)] sm:h-24 sm:w-24">
-                                                    </div>
+                                            <div class="relative flex min-h-[260px] items-center justify-center sm:min-h-[300px]">
+                                                <div class="flex h-36 w-36 shrink-0 items-center justify-center rounded-[34px] border border-white/30 bg-white/12 shadow-[0_18px_35px_rgba(4,120,87,0.24)] sm:h-44 sm:w-44">
+                                                    <img src="{{ asset('images/recycle-logo.png') }}" alt="โลโก้กองทุนธนาคารวัสดุรีไซเคิ้ล" class="h-28 w-28 object-contain drop-shadow-[0_8px_14px_rgba(16,185,129,0.22)] sm:h-32 sm:w-32">
                                                 </div>
                                             </div>
                                         </div>
@@ -546,7 +544,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="mt-4 flex flex-wrap gap-2">
+                                        <div class="mt-4 flex flex-wrap items-start gap-2">
                                             <button
                                                 type="button"
                                                 @click='activeCategory = "all"'
@@ -554,16 +552,16 @@
                                                 :class='activeCategory === "all"
                                                     ? "border-emerald-600 bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                                                     : "border-white/80 bg-white/90 text-emerald-800 hover:border-emerald-200 hover:bg-white"'
-                                                class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition"
+                                                class="inline-flex max-w-full flex-wrap items-start gap-2 rounded-full border px-3 py-2 text-left text-sm font-semibold leading-5 transition sm:flex-nowrap sm:items-center"
                                             >
                                                 <span
                                                     :class='activeCategory === "all" ? "bg-white" : "bg-emerald-500"'
-                                                    class="h-2 w-2 rounded-full"
+                                                    class="mt-1 h-2 w-2 shrink-0 rounded-full sm:mt-0"
                                                 ></span>
-                                                <span>ทั้งหมด</span>
+                                                <span class="min-w-0 break-words">ทั้งหมด</span>
                                                 <span
                                                     :class='activeCategory === "all" ? "bg-white/15 text-white" : "bg-emerald-50 text-emerald-700"'
-                                                    class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                                                    class="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold"
                                                 >
                                                     {{ $totalMaterials }}
                                                 </span>
@@ -577,16 +575,16 @@
                                                     :class='activeCategory === @json($filter["name"])
                                                         ? "border-emerald-600 bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                                                         : "border-white/80 bg-white/90 text-emerald-800 hover:border-emerald-200 hover:bg-white"'
-                                                    class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition"
+                                                    class="inline-flex max-w-full flex-wrap items-start gap-2 rounded-full border px-3 py-2 text-left text-sm font-semibold leading-5 transition sm:flex-nowrap sm:items-center"
                                                 >
                                                     <span
                                                         :class='activeCategory === @json($filter["name"]) ? "bg-white" : "bg-emerald-500"'
-                                                        class="h-2 w-2 rounded-full"
+                                                        class="mt-1 h-2 w-2 shrink-0 rounded-full sm:mt-0"
                                                     ></span>
-                                                    <span>{{ $filter['name'] }}</span>
+                                                    <span class="min-w-0 break-words">{{ $filter['name'] }}</span>
                                                     <span
                                                         :class='activeCategory === @json($filter["name"]) ? "bg-white/15 text-white" : "bg-emerald-50 text-emerald-700"'
-                                                        class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                                                        class="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold"
                                                     >
                                                         {{ $filter['count'] }}
                                                     </span>
@@ -609,7 +607,7 @@
                                     >
                                         <div class="flex items-center gap-2">
                                             <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                                            <h3 class="text-lg font-semibold text-emerald-900">{{ $categoryName }}</h3>
+                                            <h3 class="text-lg font-semibold break-words text-emerald-900">{{ $categoryName }}</h3>
                                             <span class="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
                                                 {{ $items->count() }} รายการ
                                             </span>
@@ -622,7 +620,7 @@
                                                         $currentPrice = $m->prices->first();
                                                     @endphp
                                                     <div class="bg-white p-4">
-                                                        <div class="text-base font-semibold text-emerald-900">{{ $m->material_name }}</div>
+                                                        <div class="text-base font-semibold break-words text-emerald-900">{{ $m->material_name }}</div>
                                                         <div class="mt-1 text-sm text-emerald-700">
                                                             ราคา/หน่วย:
                                                             @if($currentPrice)

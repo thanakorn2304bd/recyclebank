@@ -71,7 +71,64 @@ class DepositSummaryFlowTest extends TestCase
             ->assertSee('กลับหน้ารับฝาก');
     }
 
-    private function seedDepositFixtures(): array
+    public function test_deposit_uses_price_effective_on_transaction_date(): void
+    {
+        ['staff' => $staffUser, 'householdId' => $householdId, 'materialId' => $materialId] = $this->seedDepositFixtures();
+
+        DB::table('material_price')->insert([
+            'material_id' => $materialId,
+            'price' => 4.50,
+            'effective_date' => '2026-03-15',
+            'expired_date' => null,
+            'created_by' => $staffUser->user_id,
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($staffUser)->post(route('deposits.store'), [
+            'community_id' => '01',
+            'house_no' => '11',
+            'transaction_date' => '2026-03-10',
+            'items' => [
+                [
+                    'material_id' => $materialId,
+                    'weight' => '5.00',
+                ],
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $transaction = Transaction::query()
+            ->where('household_id', $householdId)
+            ->where('transaction_type', 'deposit')
+            ->latest('transaction_id')
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('transaction_detail', [
+            'transaction_id' => $transaction->transaction_id,
+            'price_per_unit' => '3.40',
+            'amount' => '17.00',
+        ]);
+    }
+
+    public function test_staff_can_not_save_deposit_for_pending_household(): void
+    {
+        ['staff' => $staffUser, 'materialId' => $materialId] = $this->seedDepositFixtures(householdStatus: 'pending');
+
+        $this->actingAs($staffUser)->post(route('deposits.store'), [
+            'community_id' => '01',
+            'house_no' => '11',
+            'transaction_date' => '2026-03-10',
+            'items' => [
+                [
+                    'material_id' => $materialId,
+                    'weight' => '5.00',
+                ],
+            ],
+        ])->assertSessionHasErrors('house_no');
+
+        $this->assertDatabaseCount('transaction', 0);
+    }
+
+    private function seedDepositFixtures(string $householdStatus = 'active'): array
     {
         DB::table('community')->insert([
             'community_id' => '01',
@@ -103,7 +160,7 @@ class DepositSummaryFlowTest extends TestCase
             'phone' => '0810000001',
             'contact_person' => 'สมชาย ใจดี',
             'register_date' => '2026-01-05',
-            'active_status' => 'active',
+            'active_status' => $householdStatus,
             'accumulated_months' => 3,
             'total_balance' => 100.00,
             'created_by' => null,

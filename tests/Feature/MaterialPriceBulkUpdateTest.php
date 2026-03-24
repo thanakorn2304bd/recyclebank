@@ -116,4 +116,63 @@ class MaterialPriceBulkUpdateTest extends TestCase
             ->get(route('material-prices.create', ['material_id' => 5]))
             ->assertRedirect(route('material-prices.index', ['material_id' => 5]));
     }
+
+    public function test_bulk_update_rejects_overlapping_price_periods(): void
+    {
+        $staffUser = UserAccount::create([
+            'username' => 'staff-price-overlap',
+            'password' => 'password',
+            'role' => 'staff',
+            'household_id' => null,
+            'staff_id' => null,
+            'created_at' => now(),
+            'last_login' => null,
+            'is_active' => true,
+        ]);
+
+        $categoryId = DB::table('material_category')->insertGetId([
+            'category_name' => 'พลาสติก',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $materialId = DB::table('material')->insertGetId([
+            'category_id' => $categoryId,
+            'material_name' => 'ขวดน้ำพลาสติก',
+            'unit' => 'kg',
+            'description' => '',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $currentPriceId = DB::table('material_price')->insertGetId([
+            'material_id' => $materialId,
+            'price' => 4.00,
+            'effective_date' => '2026-03-01',
+            'expired_date' => '2026-03-19',
+            'created_by' => $staffUser->user_id,
+            'created_at' => now(),
+        ]);
+
+        DB::table('material_price')->insert([
+            'material_id' => $materialId,
+            'price' => 4.50,
+            'effective_date' => '2026-03-20',
+            'expired_date' => null,
+            'created_by' => $staffUser->user_id,
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($staffUser)->post(route('material-prices.bulk-update'), [
+            'rows' => [
+                $materialId => [
+                    'price_id' => $currentPriceId,
+                    'price' => '4.25',
+                    'effective_date' => '2026-03-15',
+                    'expired_date' => '',
+                ],
+            ],
+        ])->assertSessionHasErrors("rows.$materialId.effective_date");
+    }
 }

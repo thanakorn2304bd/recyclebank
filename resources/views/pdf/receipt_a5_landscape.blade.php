@@ -173,6 +173,7 @@
       height: 3.9mm;
     }
 
+    .carry-row td,
     .total-row td {
       font-weight: bold;
     }
@@ -214,10 +215,15 @@
   </style>
 </head>
 <body>
-@foreach($pages as $pageIndex => $items)
+@foreach($pages as $pageIndex => $page)
   @php
-    $pageSum = (float) ($items->count() ? $items->sum('amount') : $tx->total_amount);
-    $amountText = ThaiBaht::text($pageSum);
+    $items = $page['items'];
+    $carryIn = (float) $page['carry_in'];
+    $footerTotal = (float) $page['footer_total'];
+    $footerLabel = $page['footer_label'];
+    $showCarryIn = $page['show_carry_in'];
+    $blankRows = (int) $page['blank_rows'];
+    $amountText = ThaiBaht::text($footerTotal);
   @endphp
   <div class="page">
     <div class="top-line">เล่มที่ .................... เลขที่ .................... / ......</div>
@@ -260,44 +266,35 @@
           </tr>
         </thead>
         <tbody>
-          @if($items->count() === 0)
-            <tr>
-              <td>ถอนเงิน</td>
-              <td class="center">-</td>
-              <td class="num">-</td>
-              <td class="num">{{ $fmt($tx->total_amount) }}</td>
+          @if($showCarryIn)
+            <tr class="carry-row">
+              <td colspan="3" class="num">ยอดยกมา</td>
+              <td class="num">{{ $fmt($carryIn) }}</td>
             </tr>
-            @for($i = 1; $i < $rowsPerPage; $i++)
-              <tr>
-                <td>&nbsp;</td>
-                <td class="center"></td>
-                <td class="num"></td>
-                <td class="num"></td>
-              </tr>
-            @endfor
-          @else
-            @foreach($items as $d)
-              <tr>
-                <td>{{ $d->material?->material_name }}</td>
-                <td class="center">{{ $fmt($d->weight) }}</td>
-                <td class="num">{{ $fmt($d->price_per_unit) }}</td>
-                <td class="num">{{ $fmt($d->amount) }}</td>
-              </tr>
-            @endforeach
-            @for($i = $items->count(); $i < $rowsPerPage; $i++)
-              <tr>
-                <td>&nbsp;</td>
-                <td class="center"></td>
-                <td class="num"></td>
-                <td class="num"></td>
-              </tr>
-            @endfor
           @endif
+
+          @foreach($items as $d)
+            <tr>
+              <td>{{ $d->material?->material_name }}</td>
+              <td class="center">{{ $fmt($d->weight) }}</td>
+              <td class="num">{{ $fmt($d->price_per_unit) }}</td>
+              <td class="num">{{ $fmt($d->amount) }}</td>
+            </tr>
+          @endforeach
+
+          @for($i = 0; $i < $blankRows; $i++)
+            <tr>
+              <td>&nbsp;</td>
+              <td class="center"></td>
+              <td class="num"></td>
+              <td class="num"></td>
+            </tr>
+          @endfor
         </tbody>
         <tfoot>
           <tr class="total-row">
-            <td colspan="3" class="num">รวมเป็นเงิน</td>
-            <td class="num">{{ $fmt($pageSum) }}</td>
+            <td colspan="3" class="num">{{ $footerLabel }}</td>
+            <td class="num">{{ $fmt($footerTotal) }}</td>
           </tr>
         </tfoot>
       </table>

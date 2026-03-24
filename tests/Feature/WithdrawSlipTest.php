@@ -71,7 +71,21 @@ class WithdrawSlipTest extends TestCase
         );
     }
 
-    private function seedWithdrawFixtures(bool $createWithdraw = true): array
+    public function test_staff_can_not_save_withdraw_for_pending_household(): void
+    {
+        ['staff' => $staffUser] = $this->seedWithdrawFixtures(createWithdraw: false, householdStatus: 'pending');
+
+        $this->actingAs($staffUser)->post(route('withdraws.store'), [
+            'community_id' => '01',
+            'house_no' => '11',
+            'transaction_date' => '2026-03-10',
+            'amount' => '25.50',
+        ])->assertSessionHasErrors('house_no');
+
+        $this->assertDatabaseCount('transaction', 0);
+    }
+
+    private function seedWithdrawFixtures(bool $createWithdraw = true, string $householdStatus = 'active'): array
     {
         DB::table('community')->insert([
             'community_id' => '01',
@@ -92,7 +106,7 @@ class WithdrawSlipTest extends TestCase
             'phone' => '0810000001',
             'contact_person' => 'สมชาย ใจดี',
             'register_date' => '2026-01-05',
-            'active_status' => 'active',
+            'active_status' => $householdStatus,
             'accumulated_months' => 3,
             'total_balance' => 100.00,
             'created_by' => null,

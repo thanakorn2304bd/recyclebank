@@ -42,6 +42,21 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_inactive_users_can_not_authenticate_even_with_correct_password(): void
+    {
+        $user = $this->createUserAccount([
+            'username' => 'inactive-auth-test',
+            'is_active' => false,
+        ]);
+
+        $this->post('/login', [
+            'username' => $user->username,
+            'password' => 'password',
+        ])->assertSessionHasErrors('username');
+
+        $this->assertGuest();
+    }
+
     public function test_users_can_logout(): void
     {
         $user = $this->createUserAccount();

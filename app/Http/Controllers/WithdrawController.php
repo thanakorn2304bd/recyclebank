@@ -124,6 +124,8 @@ class WithdrawController extends Controller
             ]);
         }
 
+        $this->ensureHouseholdIsActive($household);
+
         $balance = (float) $household->total_balance;
         if ($amount > $balance) {
             throw ValidationException::withMessages([
@@ -136,5 +138,27 @@ class WithdrawController extends Controller
             'date' => $date,
             'amount' => $amount,
         ];
+    }
+
+    private function ensureHouseholdIsActive(Household $household): void
+    {
+        if ($household->active_status === 'active') {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'house_no' => 'ครัวเรือนนี้ยังไม่พร้อมทำรายการ (สถานะ: '
+                . $this->householdStatusLabel($household->active_status)
+                . ')',
+        ]);
+    }
+
+    private function householdStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'active' => 'ใช้งาน',
+            'pending' => 'รออนุมัติ',
+            default => 'ปิดใช้งาน',
+        };
     }
 }

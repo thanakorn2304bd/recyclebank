@@ -331,7 +331,7 @@ class HouseholdController extends Controller
         $memberAccount->role = 'member';
         $memberAccount->household_id = $household->household_id;
         $memberAccount->staff_id = null;
-        $memberAccount->is_active = $household->active_status !== 'inactive';
+        $memberAccount->is_active = $household->active_status === 'active';
     }
 
     private function validatedMembers(array $members): array

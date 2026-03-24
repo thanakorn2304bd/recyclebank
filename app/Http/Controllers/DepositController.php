@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class DepositController extends Controller
 {
@@ -33,6 +34,7 @@ class DepositController extends Controller
             })
             ->where('effective_date', '<=', $today)
             ->orderByDesc('effective_date')
+            ->orderByDesc('price_id')
             ->get()
             ->groupBy('material_id')
             ->map(fn($rows) => (float) $rows->first()->price)
@@ -62,7 +64,7 @@ class DepositController extends Controller
 
         $household = Household::where('community_id', $communityId)
             ->where('house_no', $houseNo)
-            ->first(['household_id','account_no','contact_person']);
+            ->first(['household_id','account_no','contact_person', 'active_status']);
 
         if (!$household) {
             return back()
@@ -70,14 +72,14 @@ class DepositController extends Controller
                 ->withInput();
         }
 
+        $this->ensureHouseholdIsActive($household);
+
         $householdId = (int)$household->household_id;
         $date = $data['transaction_date'];
 
         $recordedBy = Auth::id() ?? DB::table('user_account')->min('user_id') ?? 1;
 
-        $today = now()->toDateString();
-
-        return DB::transaction(function () use ($household, $householdId, $date, $recordedBy, $data, $today) {
+        return DB::transaction(function () use ($household, $householdId, $date, $recordedBy, $data) {
 
             $totalWeight = 0.0;
             $totalAmount = 0.0;
@@ -96,21 +98,18 @@ class DepositController extends Controller
                 $materialId = (int)$item['material_id'];
                 $weight = (float)$item['weight'];
 
-                // หา “ราคาปัจจุบัน” ของ material นี้
-                $priceRow = MaterialPrice::query()
-                    ->where('material_id', $materialId)
-                    ->where('effective_date', '<=', $today)
-                    ->where(function($q) use ($today){
-                        $q->whereNull('expired_date')->orWhere('expired_date', '>=', $today);
-                    })
-                    ->orderByDesc('effective_date')
-                    ->first();
+                $priceRow = $this->currentPriceOnDate($materialId, $date);
 
                 $ppu = (float)($priceRow?->price ?? 0);
 
-                // ถ้าไม่มีราคา -> กันพัง (ไม่ให้ฝากได้)
                 if ($ppu <= 0) {
-                    throw new \RuntimeException("ไม่พบราคาปัจจุบันสำหรับ material_id={$materialId}");
+                    $materialName = Material::query()
+                        ->where('material_id', $materialId)
+                        ->value('material_name') ?? ('#' . $materialId);
+
+                    throw ValidationException::withMessages([
+                        'items' => "ไม่พบราคาวัสดุ {$materialName} ณ วันที่ {$date}",
+                    ]);
                 }
 
                 $amount = round($weight * $ppu, 2);
@@ -196,7 +195,52 @@ class DepositController extends Controller
                 'community_name' => $household->community?->community_name,
                 'house_no' => $household->house_no,
                 'active_status' => $household->active_status,
+                'can_transact' => $household->active_status === 'active',
             ],
+            'message' => $household->active_status === 'active'
+                ? null
+                : $this->householdUnavailableMessage($household),
         ]);
+    }
+
+    private function currentPriceOnDate(int $materialId, string $onDate): ?MaterialPrice
+    {
+        return MaterialPrice::query()
+            ->where('material_id', $materialId)
+            ->where('effective_date', '<=', $onDate)
+            ->where(function ($query) use ($onDate) {
+                $query->whereNull('expired_date')
+                    ->orWhere('expired_date', '>=', $onDate);
+            })
+            ->orderByDesc('effective_date')
+            ->orderByDesc('price_id')
+            ->first();
+    }
+
+    private function ensureHouseholdIsActive(Household $household): void
+    {
+        if ($household->active_status === 'active') {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'house_no' => $this->householdUnavailableMessage($household),
+        ]);
+    }
+
+    private function householdUnavailableMessage(Household $household): string
+    {
+        return 'ครัวเรือนนี้ยังไม่พร้อมทำรายการ (สถานะ: '
+            . $this->householdStatusLabel($household->active_status)
+            . ')';
+    }
+
+    private function householdStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'active' => 'ใช้งาน',
+            'pending' => 'รออนุมัติ',
+            default => 'ปิดใช้งาน',
+        };
     }
 }
