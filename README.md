@@ -10,7 +10,7 @@ Laravel 12 application for managing a community recycling bank. The system suppo
 
 ## Stack
 
-- PHP 8.2+
+- PHP 8.4+
 - Laravel 12
 - MySQL 8 via Laravel Sail
 - Redis
