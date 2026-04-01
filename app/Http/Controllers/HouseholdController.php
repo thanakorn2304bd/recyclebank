@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ReviewHouseholdRequest;
 use App\Http\Requests\StoreHouseholdCredentialsRequest;
 use App\Http\Requests\StoreHouseholdRequest;
-use App\Http\Requests\ReviewHouseholdRequest;
 use App\Http\Requests\UpdateHouseholdRequest;
 use App\Models\Community;
 use App\Models\Household;
