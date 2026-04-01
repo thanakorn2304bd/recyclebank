@@ -41,7 +41,13 @@
           ปิด
         @endif
       </div>
-      <div class="rb-stat-meta">สถานะการใช้งานของบัญชีครัวเรือน</div>
+      <div class="rb-stat-meta">
+        @if($household->reviewed_at)
+          พิจารณาล่าสุด {{ $household->reviewed_at->format('d/m/Y H:i') }}
+        @else
+          สถานะการใช้งานของบัญชีครัวเรือน
+        @endif
+      </div>
     </div>
     <div class="rb-stat-card">
       <div class="rb-stat-label">บัญชีเข้าใช้</div>
@@ -95,6 +101,21 @@
             @endif
           </dd>
 
+          <dt class="col-sm-5 mb-3">ผู้พิจารณา</dt>
+          <dd class="col-sm-7 mb-3">
+            @if($household->reviewedByUser)
+              {{ $household->reviewedByUser->staff?->full_name ?? $household->reviewedByUser->username }} ({{ $household->reviewedByUser->username }})
+            @else
+              -
+            @endif
+          </dd>
+
+          <dt class="col-sm-5 mb-3">เวลาพิจารณา</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->reviewed_at?->format('d/m/Y H:i') ?? '-' }}</dd>
+
+          <dt class="col-sm-5 mb-3">หมายเหตุพิจารณา</dt>
+          <dd class="col-sm-7 mb-3">{{ $household->review_notes ?: '-' }}</dd>
+
           <dt class="col-sm-5 mb-3">สะสม (เดือน)</dt>
           <dd class="col-sm-7 mb-3">{{ $household->accumulated_months }}</dd>
 
@@ -133,49 +154,115 @@
     </div>
 
     <div class="col-lg-7">
-      <div class="rb-surface p-4 h-100">
-        <div class="rb-section-head">
-          <div>
-            <h2 class="rb-card-title">สมาชิกในครัวเรือน</h2>
-            <p class="rb-card-subtitle">ดูรายชื่อสมาชิก ความสัมพันธ์ และผู้เป็นหัวหน้าครัวเรือน</p>
-          </div>
-          <span class="rb-chip">{{ $household->members->count() }} คน</span>
-        </div>
+      <div class="d-grid gap-4">
+        @if($isPrivileged)
+          <div class="rb-surface p-4">
+            <div class="rb-section-head">
+              <div>
+                <h2 class="rb-card-title">Approval และ Audit</h2>
+                <p class="rb-card-subtitle">บันทึกผลการพิจารณาเพื่อเปิดใช้งานหรือปิดใช้งานครัวเรือน พร้อมเก็บผู้พิจารณา เวลา และหมายเหตุไว้ตรวจสอบย้อนหลัง</p>
+              </div>
+              <span class="rb-chip">
+                @if($household->active_status === 'pending')
+                  รอพิจารณา
+                @elseif($household->active_status === 'active')
+                  ใช้งานอยู่
+                @else
+                  ปิดใช้งาน
+                @endif
+              </span>
+            </div>
 
-        @if($household->members->isEmpty())
-          <div class="rb-empty-state">ยังไม่มีสมาชิกในครัวเรือนนี้</div>
-        @else
-          <div class="table-responsive">
-            <table class="table table-striped align-middle mb-0" data-sortable-table>
-              <thead>
-                <tr>
-                  <th style="width:50px;" data-sort-type="number">#</th>
-                  <th>ชื่อ-นามสกุล</th>
-                  <th style="width:160px;">เลขบัตรประชาชน</th>
-                  <th style="width:140px;">ความสัมพันธ์</th>
-                  <th style="width:90px;">หัวหน้า</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach($household->members as $index => $member)
-                  <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $member->full_name }}</td>
-                    <td>{{ $member->id_card ?? '-' }}</td>
-                    <td>{{ $member->relation ?? '-' }}</td>
-                    <td>
-                      @if($member->is_head)
-                        <span class="badge bg-success">หัวหน้า</span>
-                      @else
-                        <span class="text-muted">-</span>
-                      @endif
-                    </td>
-                  </tr>
-                @endforeach
-              </tbody>
-            </table>
+            <div class="row g-4">
+              <div class="col-lg-5">
+                <div class="border rounded-4 p-3 h-100 bg-light-subtle">
+                  <div class="small text-uppercase text-muted fw-semibold mb-2">ผลล่าสุด</div>
+                  <div class="fw-semibold mb-2">
+                    @if($household->active_status === 'pending')
+                      ยังไม่ผ่านการพิจารณา
+                    @elseif($household->active_status === 'active')
+                      อนุมัติให้ใช้งานแล้ว
+                    @else
+                      ปิดการใช้งานแล้ว
+                    @endif
+                  </div>
+                  <div class="text-muted small mb-2">ผู้พิจารณา: {{ $household->reviewedByUser?->staff?->full_name ?? $household->reviewedByUser?->username ?? '-' }}</div>
+                  <div class="text-muted small mb-2">เวลา: {{ $household->reviewed_at?->format('d/m/Y H:i') ?? '-' }}</div>
+                  <div class="text-muted small">หมายเหตุ: {{ $household->review_notes ?: 'ยังไม่มีบันทึกผลการพิจารณา' }}</div>
+                </div>
+              </div>
+
+              <div class="col-lg-7">
+                <form method="POST" action="{{ route('households.review', $household) }}">
+                  @csrf
+                  @method('PATCH')
+
+                  <div class="mb-3">
+                    <label class="form-label">ผลการพิจารณา</label>
+                    <select class="form-select" name="status" required>
+                      <option value="active" @selected(old('status', $household->active_status === 'pending' ? 'active' : $household->active_status) === 'active')>อนุมัติให้ใช้งาน</option>
+                      <option value="inactive" @selected(old('status', $household->active_status) === 'inactive')>ปิดการใช้งาน</option>
+                    </select>
+                    <div class="form-text">เมื่ออนุมัติแล้ว บัญชีสมาชิกของครัวเรือนนี้จะถูกเปิดใช้งานอัตโนมัติถ้ามีการตั้งรหัสผ่านไว้แล้ว</div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label">หมายเหตุการพิจารณา</label>
+                    <textarea class="form-control" name="review_notes" rows="4" required>{{ old('review_notes', $household->review_notes) }}</textarea>
+                    <div class="form-text">ระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา เช่น เอกสารครบถ้วน ตรวจสอบข้อมูลแล้ว หรือปิดใช้งานตามคำร้อง</div>
+                  </div>
+
+                  <button class="btn btn-primary">บันทึกผลการพิจารณา</button>
+                </form>
+              </div>
+            </div>
           </div>
         @endif
+
+        <div class="rb-surface p-4">
+          <div class="rb-section-head">
+            <div>
+              <h2 class="rb-card-title">สมาชิกในครัวเรือน</h2>
+              <p class="rb-card-subtitle">ดูรายชื่อสมาชิก ความสัมพันธ์ และผู้เป็นหัวหน้าครัวเรือน</p>
+            </div>
+            <span class="rb-chip">{{ $household->members->count() }} คน</span>
+          </div>
+
+          @if($household->members->isEmpty())
+            <div class="rb-empty-state">ยังไม่มีสมาชิกในครัวเรือนนี้</div>
+          @else
+            <div class="table-responsive">
+              <table class="table table-striped align-middle mb-0" data-sortable-table>
+                <thead>
+                  <tr>
+                    <th style="width:50px;" data-sort-type="number">#</th>
+                    <th>ชื่อ-นามสกุล</th>
+                    <th style="width:160px;">เลขบัตรประชาชน</th>
+                    <th style="width:140px;">ความสัมพันธ์</th>
+                    <th style="width:90px;">หัวหน้า</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($household->members as $index => $member)
+                    <tr>
+                      <td>{{ $index + 1 }}</td>
+                      <td>{{ $member->full_name }}</td>
+                      <td>{{ $member->id_card ?? '-' }}</td>
+                      <td>{{ $member->relation ?? '-' }}</td>
+                      <td>
+                        @if($member->is_head)
+                          <span class="badge bg-success">หัวหน้า</span>
+                        @else
+                          <span class="text-muted">-</span>
+                        @endif
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          @endif
+        </div>
       </div>
     </div>
   </div>

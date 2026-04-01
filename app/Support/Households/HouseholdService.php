@@ -6,6 +6,7 @@ use App\Models\Household;
 use App\Models\UserAccount;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class HouseholdService
 {
@@ -24,6 +25,7 @@ class HouseholdService
         $household->load([
             'community',
             'createdByUser',
+            'reviewedByUser.staff',
             'members' => fn ($query) => $query->orderByDesc('is_head')->orderBy('full_name'),
         ]);
 
@@ -46,6 +48,33 @@ class HouseholdService
         $household->update($attributes);
 
         return $this->syncExistingMemberAccount($household);
+    }
+
+    public function review(Household $household, string $status, string $notes, int $reviewedBy): array
+    {
+        if (! in_array($status, ['active', 'inactive'], true)) {
+            throw ValidationException::withMessages([
+                'status' => 'สถานะสำหรับการพิจารณาไม่ถูกต้อง',
+            ]);
+        }
+
+        $before = $this->reviewSnapshot($household);
+
+        $household->update([
+            'active_status' => $status,
+            'reviewed_by' => $reviewedBy,
+            'reviewed_at' => now(),
+            'review_notes' => $notes,
+        ]);
+
+        $memberAccount = $this->syncExistingMemberAccount($household);
+
+        return [
+            'household' => $household->fresh(['community', 'createdByUser', 'reviewedByUser']),
+            'memberAccount' => $memberAccount?->fresh(),
+            'before' => $before,
+            'after' => $this->reviewSnapshot($household->fresh()),
+        ];
     }
 
     public function syncExistingMemberAccount(Household $household): ?UserAccount
@@ -120,5 +149,17 @@ class HouseholdService
         $memberAccount->household_id = $household->household_id;
         $memberAccount->staff_id = null;
         $memberAccount->is_active = $household->active_status === 'active';
+    }
+
+    private function reviewSnapshot(Household $household): array
+    {
+        return [
+            'household_id' => (int) $household->household_id,
+            'account_no' => (string) $household->account_no,
+            'active_status' => (string) $household->active_status,
+            'reviewed_by' => $household->reviewed_by !== null ? (int) $household->reviewed_by : null,
+            'reviewed_at' => $household->reviewed_at?->format('Y-m-d H:i:s'),
+            'review_notes' => $household->review_notes,
+        ];
     }
 }

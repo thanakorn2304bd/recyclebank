@@ -19,12 +19,19 @@ class Transaction extends Model
         'total_weight',
         'total_amount',
         'recorded_by',
+        'is_reversal',
+        'reversal_of_transaction_id',
+        'reversed_by',
+        'reversed_at',
+        'reversal_reason',
     ];
 
     protected $casts = [
         'transaction_date' => 'date',
         'total_weight' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'is_reversal' => 'boolean',
+        'reversed_at' => 'datetime',
     ];
 
     public function household()
@@ -35,6 +42,21 @@ class Transaction extends Model
     public function recordedByUser()
     {
         return $this->belongsTo(UserAccount::class, 'recorded_by', 'user_id');
+    }
+
+    public function reversedByUser()
+    {
+        return $this->belongsTo(UserAccount::class, 'reversed_by', 'user_id');
+    }
+
+    public function reversalOf()
+    {
+        return $this->belongsTo(self::class, 'reversal_of_transaction_id', 'transaction_id');
+    }
+
+    public function reversalTransaction()
+    {
+        return $this->hasOne(self::class, 'reversal_of_transaction_id', 'transaction_id');
     }
 
     public function details()

@@ -39,6 +39,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::resource('households', HouseholdController::class)->except(['index', 'show']);
         Route::get('households/{household}/credentials', [HouseholdController::class, 'createCredentials'])->name('households.credentials.create');
         Route::post('households/{household}/credentials', [HouseholdController::class, 'storeCredentials'])->name('households.credentials.store');
+        Route::patch('households/{household}/review', [HouseholdController::class, 'review'])->name('households.review');
 
         // ราคา: ใช้ resource + เพิ่ม route ดู “ราคาปัจจุบัน” ต่อวัสดุ
         Route::post('material-prices/bulk-update', [MaterialPriceController::class, 'bulkUpdate'])->name('material-prices.bulk-update');
@@ -52,6 +53,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('withdraws/preview', [WithdrawController::class, 'preview'])->name('withdraws.preview');
         Route::get('withdraws/create', [WithdrawController::class, 'create'])->name('withdraws.create');
         Route::post('withdraws', [WithdrawController::class, 'store'])->name('withdraws.store');
+        Route::post('transactions/{transaction}/reverse', [TransactionHistoryController::class, 'reverse'])->name('transactions.reverse');
     });
 
     // สมาชิกดูได้เฉพาะข้อมูลของตนเอง (บังคับด้วย policy และ query scope)

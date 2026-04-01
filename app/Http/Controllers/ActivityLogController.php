@@ -28,6 +28,9 @@ class ActivityLogController extends Controller
                 $query->where(function ($subQuery) use ($q) {
                     $subQuery->where('action', 'like', "%{$q}%")
                         ->orWhere('module', 'like', "%{$q}%")
+                        ->orWhere('entity_type', 'like', "%{$q}%")
+                        ->orWhere('entity_id', 'like', "%{$q}%")
+                        ->orWhere('ip_address', 'like', "%{$q}%")
                         ->orWhereHas('user', function ($userQuery) use ($q) {
                             $userQuery->where('username', 'like', "%{$q}%")
                                 ->orWhereHas('household', function ($householdQuery) use ($q) {
@@ -82,6 +85,7 @@ class ActivityLogController extends Controller
             : null;
         $roleLabels = $activityLogViewDataFactory->roleLabels();
         $moduleLabels = $activityLogViewDataFactory->moduleLabels();
+        $entityLabels = $activityLogViewDataFactory->entityLabels();
 
         return view('admin.activity_logs.index', compact(
             'logs',
@@ -90,6 +94,7 @@ class ActivityLogController extends Controller
             'selectedUser',
             'roleLabels',
             'moduleLabels',
+            'entityLabels',
             'q',
             'module',
             'role',

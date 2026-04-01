@@ -24,7 +24,7 @@ class TransactionHistoryService
             ->get(['household_id', 'account_no', 'contact_person']);
 
         $transactions = Transaction::query()
-            ->with('household')
+            ->with(['household', 'reversalTransaction'])
             ->when($isMember, function ($query) use ($memberHouseholdId) {
                 if ($memberHouseholdId) {
                     $query->where('household_id', $memberHouseholdId);
@@ -51,6 +51,7 @@ class TransactionHistoryService
     public function householdTransactions(Household $household, ?string $from, ?string $to): LengthAwarePaginator
     {
         return Transaction::query()
+            ->with('reversalTransaction')
             ->where('household_id', $household->household_id)
             ->when($from, fn ($query) => $query->whereDate('transaction_date', '>=', $from))
             ->when($to, fn ($query) => $query->whereDate('transaction_date', '<=', $to))
@@ -65,6 +66,12 @@ class TransactionHistoryService
         $transaction->load([
             'household',
             'details.material',
+            'recordedByUser.staff',
+            'reversedByUser.staff',
+            'reversalOf.recordedByUser.staff',
+            'reversalOf.reversedByUser.staff',
+            'reversalTransaction.recordedByUser.staff',
+            'reversalTransaction.reversedByUser.staff',
         ]);
 
         return $transaction;

@@ -25,11 +25,15 @@ class Household extends Model
         'accumulated_months',
         'total_balance',
         'created_by',
+        'reviewed_by',
+        'reviewed_at',
+        'review_notes',
     ];
 
     protected $casts = [
         'register_date' => 'date',
         'total_balance' => 'decimal:2',
+        'reviewed_at' => 'datetime',
     ];
 
     public function community()
@@ -50,6 +54,11 @@ class Household extends Model
     public function createdByUser()
     {
         return $this->belongsTo(UserAccount::class, 'created_by', 'user_id');
+    }
+
+    public function reviewedByUser()
+    {
+        return $this->belongsTo(UserAccount::class, 'reviewed_by', 'user_id');
     }
 
     public function userAccounts()

@@ -18,12 +18,25 @@ class ActivityLogViewDataFactory
         return [
             'auth' => 'การเข้าสู่ระบบ',
             'registration' => 'สมัครสมาชิก',
+            'admin.users' => 'บัญชีผู้ใช้',
             'households' => 'ครัวเรือน',
+            'households.review' => 'อนุมัติครัวเรือน',
             'material_categories' => 'หมวดวัสดุ',
             'materials' => 'วัสดุ',
             'material_prices' => 'ราคาวัสดุ',
             'transactions' => 'ธุรกรรม',
+            'transactions.reverse' => 'กลับรายการธุรกรรม',
             'reports' => 'รายงาน',
+        ];
+    }
+
+    public function entityLabels(): array
+    {
+        return [
+            'household' => 'ครัวเรือน',
+            'transaction' => 'ธุรกรรม',
+            'user_account' => 'บัญชีผู้ใช้',
+            'material' => 'วัสดุ',
         ];
     }
 }

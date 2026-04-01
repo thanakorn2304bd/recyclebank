@@ -10,6 +10,7 @@ use App\Support\Transactions\HouseholdTransactionService;
 use App\Support\Transactions\TransactionPdfViewDataFactory;
 use App\Support\Transactions\WithdrawService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class WithdrawController extends Controller
 {
@@ -74,7 +75,23 @@ class WithdrawController extends Controller
         ActivityLogger::forCurrentUser(
             'transactions',
             "บันทึกถอนให้ {$household->account_no} ({$household->contact_person}) เป็นเงิน "
-            .number_format($amount, 2).' บาท'
+            .number_format($amount, 2).' บาท',
+            [
+                'entity_type' => 'transaction',
+                'entity_id' => (string) $transaction->transaction_id,
+                'after' => [
+                    'transaction_id' => (int) $transaction->transaction_id,
+                    'transaction_type' => 'withdraw',
+                    'household_id' => $householdId,
+                    'account_no' => (string) $household->account_no,
+                    'transaction_date' => $date,
+                    'total_weight' => 0.00,
+                    'total_amount' => $amount,
+                    'household_balance' => (float) DB::table('household')
+                        ->where('household_id', $householdId)
+                        ->value('total_balance'),
+                ],
+            ]
         );
 
         return redirect()->route('transactions.receipt', $transaction);

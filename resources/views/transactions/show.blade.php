@@ -17,9 +17,13 @@
       @else
         <a class="btn btn-outline-secondary" href="{{ route('transactions.index') }}">กลับ</a>
       @endif
-      <a class="btn btn-primary" href="{{ route('transactions.receipt', $transaction) }}" target="_blank">
-        {{ $transaction->transaction_type === 'withdraw' ? 'ใบถอนเงิน PDF' : 'พิมพ์ใบเสร็จ' }}
-      </a>
+      @if(! $transaction->is_reversal)
+        <a class="btn btn-primary" href="{{ route('transactions.receipt', $transaction) }}" target="_blank">
+          {{ $transaction->transaction_type === 'withdraw' ? 'ใบถอนเงิน PDF' : 'พิมพ์ใบเสร็จ' }}
+        </a>
+      @elseif($transaction->reversalOf)
+        <a class="btn btn-primary" href="{{ route('transactions.show', $transaction->reversalOf) }}">ดูรายการต้นฉบับ</a>
+      @endif
     </div>
   </div>
 
@@ -28,7 +32,9 @@
       <div class="rb-stat-label">ประเภท</div>
       <div class="rb-stat-value">{{ $transaction->transaction_type === 'deposit' ? 'ฝาก' : 'ถอน' }}</div>
       <div class="rb-stat-meta">
-        @if($transaction->transaction_type === 'deposit')
+        @if($transaction->is_reversal)
+          รายการชดเชยเพื่อลบผลของธุรกรรมเดิม
+        @elseif($transaction->transaction_type === 'deposit')
           รายการรับซื้อวัสดุจากครัวเรือน
         @else
           รายการถอนเงินจากยอดคงเหลือ
@@ -51,6 +57,103 @@
       <div class="rb-stat-meta">ยอดล่าสุดของครัวเรือนเจ้าของรายการ</div>
     </div>
   </div>
+
+  @if($transaction->is_reversal && $transaction->reversalOf)
+    <div class="alert alert-warning">
+      รายการนี้เป็นธุรกรรมชดเชยของรายการเดิม
+      <a href="{{ route('transactions.show', $transaction->reversalOf) }}">#{{ $transaction->reversalOf->transaction_id }}</a>
+      และจะไม่สามารถกลับรายการซ้ำได้
+    </div>
+  @elseif($transaction->reversalTransaction)
+    <div class="alert alert-warning">
+      รายการนี้ถูกกลับรายการแล้วด้วยธุรกรรมชดเชย
+      <a href="{{ route('transactions.show', $transaction->reversalTransaction) }}">#{{ $transaction->reversalTransaction->transaction_id }}</a>
+      เมื่อ {{ $transaction->reversed_at?->format('d/m/Y H:i') ?? '-' }}
+    </div>
+  @endif
+
+  <div class="rb-surface p-3 p-lg-4 mb-4">
+    <div class="rb-section-head">
+      <div>
+        <h2 class="rb-card-title">ข้อมูลการบันทึกและการตรวจสอบ</h2>
+        <p class="rb-card-subtitle">สรุปเจ้าหน้าที่ผู้บันทึก ความสัมพันธ์กับรายการอ้างอิง และข้อมูลการกลับรายการถ้ามี</p>
+      </div>
+    </div>
+
+    <dl class="row rb-detail-list mb-0">
+      <dt class="col-sm-4 mb-3">ผู้บันทึก</dt>
+      <dd class="col-sm-8 mb-3">{{ $transaction->recordedByUser?->staff?->full_name ?? $transaction->recordedByUser?->username ?? '-' }}</dd>
+
+      <dt class="col-sm-4 mb-3">อ้างอิงรายการเดิม</dt>
+      <dd class="col-sm-8 mb-3">
+        @if($transaction->reversalOf)
+          <a href="{{ route('transactions.show', $transaction->reversalOf) }}">#{{ $transaction->reversalOf->transaction_id }}</a>
+        @else
+          -
+        @endif
+      </dd>
+
+      <dt class="col-sm-4 mb-3">รายการชดเชย</dt>
+      <dd class="col-sm-8 mb-3">
+        @if($transaction->reversalTransaction)
+          <a href="{{ route('transactions.show', $transaction->reversalTransaction) }}">#{{ $transaction->reversalTransaction->transaction_id }}</a>
+        @else
+          -
+        @endif
+      </dd>
+
+      <dt class="col-sm-4 mb-3">กลับรายการโดย</dt>
+      <dd class="col-sm-8 mb-3">{{ $transaction->reversedByUser?->staff?->full_name ?? $transaction->reversedByUser?->username ?? '-' }}</dd>
+
+      <dt class="col-sm-4 mb-3">เวลาเมื่อกลับรายการ</dt>
+      <dd class="col-sm-8 mb-3">{{ $transaction->reversed_at?->format('d/m/Y H:i') ?? '-' }}</dd>
+
+      <dt class="col-sm-4 mb-0">เหตุผล</dt>
+      <dd class="col-sm-8 mb-0">{{ $transaction->reversal_reason ?: '-' }}</dd>
+    </dl>
+  </div>
+
+  @if($canReverse)
+    <div class="rb-surface p-3 p-lg-4 mb-4">
+      <div class="rb-section-head">
+        <div>
+          <h2 class="rb-card-title">กลับรายการธุรกรรม</h2>
+          <p class="rb-card-subtitle">ระบบจะสร้างรายการชดเชยอัตโนมัติและบันทึกเหตุผล พร้อมเก็บผู้ดำเนินการไว้ใน audit trail</p>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ route('transactions.reverse', $transaction) }}" class="row g-3">
+        @csrf
+
+        <div class="col-md-4">
+          <label class="form-label">วันที่กลับรายการ</label>
+          <input
+            class="form-control"
+            type="date"
+            name="reversal_date"
+            min="{{ $transaction->transaction_date?->toDateString() }}"
+            value="{{ old('reversal_date', now()->toDateString()) }}"
+            required
+          >
+        </div>
+
+        <div class="col-md-8">
+          <label class="form-label">เหตุผลในการกลับรายการ</label>
+          <input
+            class="form-control"
+            name="reason"
+            value="{{ old('reason') }}"
+            placeholder="เช่น บันทึกน้ำหนักผิด, เลือกครัวเรือนผิด, ยอดถอนผิด"
+            required
+          >
+        </div>
+
+        <div class="col-12">
+          <button class="btn btn-outline-danger">ยืนยันกลับรายการ</button>
+        </div>
+      </form>
+    </div>
+  @endif
 
   @if($transaction->transaction_type === 'withdraw')
     <div class="alert alert-info">
@@ -79,17 +182,17 @@
           <tbody>
             @foreach($transaction->details as $d)
               <tr>
-                <td>{{ $d->material?->material_name }}</td>
-                <td class="text-end">{{ number_format((float) $d->weight, 2) }}</td>
-                <td class="text-end">{{ number_format((float) $d->price_per_unit, 2) }}</td>
-                <td class="text-end">{{ number_format((float) $d->amount, 2) }}</td>
-              </tr>
-            @endforeach
+              <td>{{ $d->material?->material_name }}</td>
+              <td class="text-end">{{ number_format((float) $d->weight, 2) }}</td>
+              <td class="text-end">{{ number_format((float) $d->price_per_unit, 2) }}</td>
+              <td class="text-end {{ (float) $d->amount < 0 ? 'text-danger' : '' }}">{{ number_format((float) $d->amount, 2) }}</td>
+            </tr>
+          @endforeach
           </tbody>
           <tfoot>
             <tr>
               <th class="text-end" colspan="3">รวม</th>
-              <th class="text-end">{{ number_format((float) $transaction->total_amount, 2) }}</th>
+              <th class="text-end {{ (float) $transaction->total_amount < 0 ? 'text-danger' : '' }}">{{ number_format((float) $transaction->total_amount, 2) }}</th>
             </tr>
           </tfoot>
         </table>

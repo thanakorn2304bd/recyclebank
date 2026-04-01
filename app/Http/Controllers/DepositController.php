@@ -8,6 +8,7 @@ use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserIdResolver;
 use App\Support\Transactions\DepositService;
 use App\Support\Transactions\HouseholdTransactionService;
+use Illuminate\Support\Facades\DB;
 
 class DepositController extends Controller
 {
@@ -50,7 +51,23 @@ class DepositController extends Controller
         ActivityLogger::forCurrentUser(
             'transactions',
             "บันทึกฝาก/รับซื้อให้ {$household->account_no} ({$household->contact_person}) น้ำหนักรวม "
-            .number_format($totalWeight, 2).' กก. เป็นเงิน '.number_format($totalAmount, 2).' บาท'
+            .number_format($totalWeight, 2).' กก. เป็นเงิน '.number_format($totalAmount, 2).' บาท',
+            [
+                'entity_type' => 'transaction',
+                'entity_id' => (string) $transaction->transaction_id,
+                'after' => [
+                    'transaction_id' => (int) $transaction->transaction_id,
+                    'transaction_type' => 'deposit',
+                    'household_id' => $householdId,
+                    'account_no' => (string) $household->account_no,
+                    'transaction_date' => $date,
+                    'total_weight' => $totalWeight,
+                    'total_amount' => $totalAmount,
+                    'household_balance' => (float) DB::table('household')
+                        ->where('household_id', $householdId)
+                        ->value('total_balance'),
+                ],
+            ]
         );
 
         return redirect()

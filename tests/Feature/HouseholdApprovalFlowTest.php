@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Household;
+use App\Models\LogActivity;
 use App\Models\UserAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -28,17 +29,10 @@ class HouseholdApprovalFlowTest extends TestCase
             'is_active' => 0,
         ]);
 
-        $this->actingAs($staffUser)->put(route('households.update', $household), [
-            'account_no' => $household->account_no,
-            'house_no' => $household->house_no,
-            'village_no' => $household->village_no,
-            'community_id' => $household->community_id,
-            'phone' => $household->phone,
-            'contact_person' => $household->contact_person,
-            'register_date' => $household->register_date->toDateString(),
-            'active_status' => 'active',
-            'accumulated_months' => $household->accumulated_months,
-        ])->assertRedirect(route('households.index'));
+        $this->actingAs($staffUser)->patch(route('households.review', $household), [
+            'status' => 'active',
+            'review_notes' => 'ตรวจสอบข้อมูลและเอกสารครบถ้วนแล้ว',
+        ])->assertRedirect(route('households.show', $household));
 
         $this->assertDatabaseHas('user_account', [
             'username' => $household->account_no,
@@ -46,6 +40,27 @@ class HouseholdApprovalFlowTest extends TestCase
             'role' => 'member',
             'is_active' => 1,
         ]);
+
+        $this->assertDatabaseHas('household', [
+            'household_id' => $household->household_id,
+            'active_status' => 'active',
+            'reviewed_by' => $staffUser->user_id,
+            'review_notes' => 'ตรวจสอบข้อมูลและเอกสารครบถ้วนแล้ว',
+        ]);
+
+        $auditLog = LogActivity::query()
+            ->where('module', 'households.review')
+            ->where('entity_type', 'household')
+            ->where('entity_id', (string) $household->household_id)
+            ->firstOrFail();
+
+        $this->assertNotNull($auditLog->ip_address);
+        $this->assertSame('pending', $auditLog->before_values['active_status'] ?? null);
+        $this->assertSame('active', $auditLog->after_values['active_status'] ?? null);
+        $this->assertSame(
+            'ตรวจสอบข้อมูลและเอกสารครบถ้วนแล้ว',
+            $auditLog->metadata['review_notes'] ?? null
+        );
     }
 
     private function seedPendingHouseholdFixtures(): array

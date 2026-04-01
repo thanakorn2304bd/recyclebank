@@ -12,6 +12,8 @@ class ReceiptController extends Controller
     {
         $this->authorize('view', $transaction);
 
+        abort_if($transaction->is_reversal, 404);
+
         $transaction->load([
             'household',
             'details.material',

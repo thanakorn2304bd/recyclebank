@@ -102,9 +102,14 @@
                 @else
                   <span class="badge bg-warning text-dark">ถอน</span>
                 @endif
+                @if($t->is_reversal)
+                  <div class="text-danger small mt-1">รายการชดเชยของ #{{ $t->reversal_of_transaction_id }}</div>
+                @elseif($t->reversed_at)
+                  <div class="text-warning small mt-1">ถูกกลับรายการแล้วโดย #{{ $t->reversalTransaction?->transaction_id ?? '-' }}</div>
+                @endif
               </td>
               <td class="text-end">{{ number_format((float) $t->total_weight, 2) }}</td>
-              <td class="text-end">{{ number_format((float) $t->total_amount, 2) }}</td>
+              <td class="text-end {{ (float) $t->total_amount < 0 ? 'text-danger' : '' }}">{{ number_format((float) $t->total_amount, 2) }}</td>
               <td class="text-end">
                 <a class="btn btn-sm btn-outline-primary" href="{{ route('transactions.show', $t) }}">ดูรายละเอียด</a>
               </td>

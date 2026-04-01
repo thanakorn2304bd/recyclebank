@@ -142,7 +142,53 @@
               <td>
                 <span class="badge bg-light text-dark border">{{ $moduleLabels[$log->module] ?? $log->module }}</span>
               </td>
-              <td>{{ $log->action }}</td>
+              <td>
+                <div class="fw-semibold">{{ $log->action }}</div>
+
+                @if($log->entity_type || $log->entity_id)
+                  <div class="text-muted small mt-1">
+                    อ้างอิง {{ $entityLabels[$log->entity_type] ?? $log->entity_type ?? 'รายการ' }}
+                    @if($log->entity_id)
+                      #{{ $log->entity_id }}
+                    @endif
+                  </div>
+                @endif
+
+                @if($log->ip_address || $log->user_agent)
+                  <div class="text-muted small mt-1">
+                    @if($log->ip_address)
+                      IP {{ $log->ip_address }}
+                    @endif
+                    @if($log->ip_address && $log->user_agent)
+                      |
+                    @endif
+                    @if($log->user_agent)
+                      {{ \Illuminate\Support\Str::limit($log->user_agent, 90) }}
+                    @endif
+                  </div>
+                @endif
+
+                @if($log->before_values || $log->after_values || $log->metadata)
+                  <details class="mt-2">
+                    <summary class="small text-primary">ดูข้อมูล audit</summary>
+
+                    @if($log->before_values)
+                      <div class="small text-muted mt-2">ก่อนแก้ไข</div>
+                      <pre class="small bg-light border rounded p-2 mb-2">{{ json_encode($log->before_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
+                    @endif
+
+                    @if($log->after_values)
+                      <div class="small text-muted">หลังแก้ไข</div>
+                      <pre class="small bg-light border rounded p-2 mb-2">{{ json_encode($log->after_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
+                    @endif
+
+                    @if($log->metadata)
+                      <div class="small text-muted">ข้อมูลประกอบ</div>
+                      <pre class="small bg-light border rounded p-2 mb-0">{{ json_encode($log->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
+                    @endif
+                  </details>
+                @endif
+              </td>
               <td class="text-end">
                 @if($log->user)
                   <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.activity-logs.index', ['user_id' => $log->user_id]) }}">ดูของผู้ใช้นี้</a>

@@ -17,10 +17,20 @@ class LogActivity extends Model
         'action',
         'timestamp',
         'module',
+        'entity_type',
+        'entity_id',
+        'ip_address',
+        'user_agent',
+        'before_values',
+        'after_values',
+        'metadata',
     ];
 
     protected $casts = [
         'timestamp' => 'datetime',
+        'before_values' => 'array',
+        'after_values' => 'array',
+        'metadata' => 'array',
     ];
 
     public function user()

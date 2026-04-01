@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ReverseTransactionRequest;
 use App\Http\Requests\TransactionDateRangeRequest;
 use App\Http\Requests\TransactionHistoryIndexRequest;
 use App\Models\Household;
 use App\Models\Transaction;
+use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserHouseholdResolver;
+use App\Support\Auth\CurrentUserIdResolver;
 use App\Support\Transactions\TransactionHistoryService;
+use App\Support\Transactions\TransactionReversalService;
 use Illuminate\Http\Request;
 
 class TransactionHistoryController extends Controller
@@ -93,7 +97,62 @@ class TransactionHistoryController extends Controller
             $transaction,
             (string) $request->query('source', '')
         );
+        $isPrivileged = in_array((string) $request->user()?->role, ['admin', 'staff'], true);
+        $canReverse = $isPrivileged
+            && ! $transaction->is_reversal
+            && $transaction->reversed_at === null;
 
-        return view('transactions.show', compact('transaction', 'isDepositSummary'));
+        return view('transactions.show', compact(
+            'transaction',
+            'isDepositSummary',
+            'isPrivileged',
+            'canReverse'
+        ));
+    }
+
+    public function reverse(
+        ReverseTransactionRequest $request,
+        Transaction $transaction,
+        CurrentUserIdResolver $currentUserIdResolver,
+        TransactionHistoryService $transactionHistoryService,
+        TransactionReversalService $transactionReversalService
+    ) {
+        $this->authorize('view', $transaction);
+        $payload = $request->payload();
+        $recordedBy = $currentUserIdResolver->resolve($request);
+        [
+            'original' => $original,
+            'reversal' => $reversal,
+            'before' => $before,
+            'after' => $after,
+        ] = $transactionReversalService->reverse(
+            $transaction,
+            $payload['reversal_date'],
+            $payload['reason'],
+            $recordedBy
+        );
+
+        ActivityLogger::forCurrentUser(
+            'transactions.reverse',
+            "กลับรายการธุรกรรม #{$original->transaction_id} ด้วยรายการชดเชย #{$reversal->transaction_id}",
+            [
+                'entity_type' => 'transaction',
+                'entity_id' => (string) $original->transaction_id,
+                'before' => [
+                    'original' => $before,
+                ],
+                'after' => $after,
+                'metadata' => [
+                    'reversal_reason' => $payload['reason'],
+                    'reversal_date' => $payload['reversal_date'],
+                ],
+            ]
+        );
+
+        $transaction = $transactionHistoryService->loadDetails($original);
+
+        return redirect()
+            ->route('transactions.show', $transaction)
+            ->with('success', "กลับรายการสำเร็จ ระบบสร้างรายการชดเชย #{$reversal->transaction_id} แล้ว");
     }
 }

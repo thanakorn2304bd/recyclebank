@@ -48,13 +48,13 @@
       </div>
 
       <div class="col-md-4">
-        <label class="form-label">สถานะ</label>
-        <select class="form-select" name="active_status" required>
-          <option value="pending" @selected(old('active_status', $household->active_status) === 'pending')>รออนุมัติ</option>
-          <option value="active" @selected(old('active_status', $household->active_status) === 'active')>ใช้งาน</option>
-          <option value="inactive" @selected(old('active_status', $household->active_status) === 'inactive')>ปิด</option>
-        </select>
-        <div class="form-text">เมื่อเปลี่ยนเป็น "ใช้งาน" ครัวเรือนนี้จะสามารถเข้าสู่ระบบด้วยบัญชีของตนเองได้</div>
+        <label class="form-label">สถานะปัจจุบัน</label>
+        <input
+          class="form-control"
+          value="@if($household->active_status === 'active') ใช้งาน @elseif($household->active_status === 'pending') รออนุมัติ @else ปิด @endif"
+          readonly
+        >
+        <div class="form-text">การอนุมัติและปิดใช้งานทำจากหน้ารายละเอียดครัวเรือน เพื่อเก็บผู้พิจารณา เวลา และหมายเหตุไว้ใน audit trail</div>
       </div>
 
       <div class="col-md-4">

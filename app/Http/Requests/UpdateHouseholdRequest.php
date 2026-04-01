@@ -32,7 +32,6 @@ class UpdateHouseholdRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'contact_person' => ['required', 'string', 'max:100'],
             'register_date' => ['required', 'date'],
-            'active_status' => ['required', 'in:pending,active,inactive'],
             'accumulated_months' => ['required', 'integer', 'min:0'],
         ];
     }

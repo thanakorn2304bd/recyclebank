@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreHouseholdCredentialsRequest;
 use App\Http\Requests\StoreHouseholdRequest;
+use App\Http\Requests\ReviewHouseholdRequest;
 use App\Http\Requests\UpdateHouseholdRequest;
 use App\Models\Community;
 use App\Models\Household;
@@ -123,16 +124,83 @@ class HouseholdController extends Controller
         Household $household,
         HouseholdService $householdService
     ) {
+        $before = $household->only([
+            'account_no',
+            'house_no',
+            'village_no',
+            'community_id',
+            'phone',
+            'contact_person',
+            'register_date',
+            'accumulated_months',
+        ]);
         $data = $request->householdAttributes();
         $householdService->update($household, $data);
 
         ActivityLogger::forCurrentUser(
             'households',
-            "แก้ไขครัวเรือน {$household->account_no} ({$household->contact_person}) สถานะ {$household->active_status}"
+            "แก้ไขข้อมูลครัวเรือน {$household->account_no} ({$household->contact_person})",
+            [
+                'entity_type' => 'household',
+                'entity_id' => (string) $household->household_id,
+                'before' => $before,
+                'after' => $household->fresh()->only([
+                    'account_no',
+                    'house_no',
+                    'village_no',
+                    'community_id',
+                    'phone',
+                    'contact_person',
+                    'register_date',
+                    'accumulated_months',
+                ]),
+            ]
         );
 
         return redirect()->route('households.index')
             ->with('success', 'แก้ไขครัวเรือนเรียบร้อย');
+    }
+
+    public function review(
+        ReviewHouseholdRequest $request,
+        Household $household,
+        CurrentUserIdResolver $currentUserIdResolver,
+        HouseholdService $householdService
+    ) {
+        $payload = $request->payload();
+        $reviewedBy = $currentUserIdResolver->resolve($request);
+        [
+            'household' => $reviewedHousehold,
+            'before' => $before,
+            'after' => $after,
+        ] = $householdService->review(
+            $household,
+            $payload['status'],
+            $payload['review_notes'],
+            $reviewedBy
+        );
+
+        $statusLabel = $payload['status'] === 'active' ? 'อนุมัติใช้งาน' : 'กำหนดเป็นปิดใช้งาน';
+
+        ActivityLogger::forCurrentUser(
+            'households.review',
+            "{$statusLabel} ครัวเรือน {$reviewedHousehold->account_no} ({$reviewedHousehold->contact_person})",
+            [
+                'entity_type' => 'household',
+                'entity_id' => (string) $reviewedHousehold->household_id,
+                'before' => $before,
+                'after' => $after,
+                'metadata' => [
+                    'review_notes' => $payload['review_notes'],
+                ],
+            ]
+        );
+
+        return redirect()
+            ->route('households.show', $reviewedHousehold)
+            ->with('success', $payload['status'] === 'active'
+                ? 'อนุมัติครัวเรือนเรียบร้อย'
+                : 'อัปเดตสถานะครัวเรือนเรียบร้อย');
     }
 
     public function createCredentials(
