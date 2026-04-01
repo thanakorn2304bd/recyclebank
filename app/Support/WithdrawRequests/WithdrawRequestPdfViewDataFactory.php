@@ -37,5 +37,4 @@ class WithdrawRequestPdfViewDataFactory
 
         return Carbon::parse($date)->format('d/m/Y');
     }
-
 }
