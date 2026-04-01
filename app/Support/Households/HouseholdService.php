@@ -43,11 +43,17 @@ class HouseholdService
         ];
     }
 
-    public function update(Household $household, array $attributes): ?UserAccount
+    public function update(Household $household, array $attributes, ?array $members = null): ?UserAccount
     {
-        $household->update($attributes);
+        return DB::transaction(function () use ($household, $attributes, $members) {
+            $household->update($attributes);
 
-        return $this->syncExistingMemberAccount($household);
+            if ($members !== null) {
+                $this->syncMembers($household, $members);
+            }
+
+            return $this->syncExistingMemberAccount($household);
+        });
     }
 
     public function review(Household $household, string $status, string $notes, int $reviewedBy): array
@@ -99,7 +105,7 @@ class HouseholdService
         $memberAccount = $this->memberAccountFor($household) ?? new UserAccount;
 
         $this->fillMemberAccountFromHousehold($memberAccount, $household);
-        $memberAccount->password = $password;
+        $memberAccount->applyPassword($password, true);
         $memberAccount->created_at ??= now();
         $memberAccount->last_login ??= null;
         $memberAccount->save();
@@ -140,6 +146,12 @@ class HouseholdService
         }
 
         $household->members()->createMany($members);
+    }
+
+    private function syncMembers(Household $household, array $members): void
+    {
+        $household->members()->delete();
+        $this->createMembers($household, $members);
     }
 
     private function fillMemberAccountFromHousehold(UserAccount $memberAccount, Household $household): void

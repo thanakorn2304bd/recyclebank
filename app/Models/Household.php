@@ -51,6 +51,11 @@ class Household extends Model
         return $this->hasMany(Transaction::class, 'household_id', 'household_id');
     }
 
+    public function withdrawRequests()
+    {
+        return $this->hasMany(WithdrawRequest::class, 'household_id', 'household_id');
+    }
+
     public function createdByUser()
     {
         return $this->belongsTo(UserAccount::class, 'created_by', 'user_id');

@@ -676,10 +676,13 @@
                 <div class="rb-user-name">{{ $authUser->username }}</div>
                 <div class="rb-user-role">สิทธิ์ {{ $authUser->role }}</div>
               </div>
-              <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-outline-light">ออกจากระบบ</button>
-              </form>
+              <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('account.password.edit') }}" class="btn btn-sm btn-outline-light">เปลี่ยนรหัสผ่าน</a>
+                <form method="POST" action="{{ route('logout') }}">
+                  @csrf
+                  <button type="submit" class="btn btn-sm btn-outline-light">ออกจากระบบ</button>
+                </form>
+              </div>
             </div>
           </div>
         @endif

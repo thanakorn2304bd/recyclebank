@@ -32,18 +32,18 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $request->session()->put('user_id', $user->user_id);
 
+        $user->clearLoginLockState();
         $user->last_login = now();
         $user->save();
         ActivityLogger::log($user, 'auth', 'เข้าสู่ระบบ');
 
-        $householdId = $user->household_id ?: $user->household?->household_id;
-        $defaultRoute = $user->role === 'member'
-            ? ($householdId
-                ? route('households.show', ['household' => $householdId], absolute: false)
-                : route('households.index', absolute: false))
-            : route('main-menu', absolute: false);
+        if ($user->force_password_reset) {
+            return redirect()
+                ->route('account.password.edit')
+                ->with('success', 'กรุณาเปลี่ยนรหัสผ่านก่อนใช้งานต่อ เนื่องจากบัญชีนี้เพิ่งได้รับการตั้งหรือรีเซ็ตรหัสผ่าน');
+        }
 
-        return redirect()->intended($defaultRoute);
+        return redirect()->intended(route('main-menu', absolute: false));
     }
 
     /**

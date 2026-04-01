@@ -42,7 +42,7 @@
     <div class="rb-section-head">
       <div>
         <h2 class="rb-card-title">ค้นหาและกรองข้อมูล</h2>
-        <p class="rb-card-subtitle">ค้นหาจากเลขบัญชี บ้านเลขที่ ผู้ติดต่อ โทรศัพท์ ชุมชน หรือสถานะ</p>
+        <p class="rb-card-subtitle">ค้นหาจากเลขบัญชี บ้านเลขที่ ผู้ติดต่อ สมาชิกในครัวเรือน โทรศัพท์ ชุมชน หรือสถานะ</p>
       </div>
       @if($q || $communityId || $status)
         <span class="rb-chip">กำลังใช้ตัวกรอง</span>
@@ -52,7 +52,7 @@
     <div class="row g-3">
       <div class="col-lg-5">
         <label class="form-label">คำค้นหา</label>
-        <input class="form-control" name="q" value="{{ $q }}" placeholder="ค้นหาเลขบัญชี / บ้านเลขที่ / ผู้ติดต่อ / โทรศัพท์">
+        <input class="form-control" name="q" value="{{ $q }}" placeholder="ค้นหาเลขบัญชี / บ้านเลขที่ / ผู้ติดต่อ / สมาชิก / โทรศัพท์">
       </div>
       <div class="col-lg-3">
         <label class="form-label">ชุมชน</label>

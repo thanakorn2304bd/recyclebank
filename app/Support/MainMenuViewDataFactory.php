@@ -2,8 +2,12 @@
 
 namespace App\Support;
 
+use App\Models\DataSubjectRequest;
+use App\Models\Household;
 use App\Models\Material;
+use App\Models\SecurityIncident;
 use App\Models\UserAccount;
+use App\Models\WithdrawRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
@@ -21,6 +25,7 @@ class MainMenuViewDataFactory
             $catalogSections
         );
         $privilegedMenuCount = $this->privilegedMenuCount($authUser);
+        $attentionItems = $this->attentionItems($authUser);
 
         return [
             'authUser' => $authUser,
@@ -32,6 +37,8 @@ class MainMenuViewDataFactory
             'categoryFilters' => $categoryFilters,
             'totalCategories' => count($catalogSections),
             'totalMaterials' => array_sum(array_column($categoryFilters, 'count')),
+            'attentionItems' => $attentionItems,
+            'attentionCount' => array_sum(array_column($attentionItems, 'count')),
             'todayLabel' => $now->format('d/m/Y'),
             'updatedAtLabel' => $now->format('d/m/Y H:i'),
         ];
@@ -79,8 +86,8 @@ class MainMenuViewDataFactory
     private function privilegedMenuCount(?UserAccount $authUser): int
     {
         return match ($authUser?->role) {
-            'admin' => 8,
-            'staff' => 6,
+            'admin' => 10,
+            'staff' => 8,
             default => 0,
         };
     }
@@ -92,5 +99,73 @@ class MainMenuViewDataFactory
             'staff' => 'เจ้าหน้าที่',
             default => 'สมาชิก',
         };
+    }
+
+    private function attentionItems(?UserAccount $authUser): array
+    {
+        if (! $this->isPrivileged($authUser)) {
+            return [];
+        }
+
+        $today = now()->toDateString();
+        $pendingHouseholds = Household::query()
+            ->where('active_status', 'pending')
+            ->count();
+        $openDataSubjectRequests = DataSubjectRequest::query()
+            ->whereIn('status', ['submitted', 'in_review'])
+            ->count();
+        $overdueDataSubjectRequests = DataSubjectRequest::query()
+            ->whereIn('status', ['submitted', 'in_review'])
+            ->whereDate('due_at', '<', $today)
+            ->count();
+        $notificationPendingIncidents = SecurityIncident::query()
+            ->where('notification_required', true)
+            ->where('status', '!=', 'closed')
+            ->where(function ($query) {
+                $query->whereNull('authority_notified_at')
+                    ->orWhereNull('subject_notified_at');
+            })
+            ->count();
+        $pendingWithdrawRequests = WithdrawRequest::query()
+            ->where('status', 'pending')
+            ->count();
+
+        $items = [
+            [
+                'label' => 'คำขอสมาชิกใหม่',
+                'count' => $pendingHouseholds,
+                'description' => 'ครัวเรือนที่ยังรอการพิจารณาอนุมัติ',
+                'url' => route('households.index', ['status' => 'pending'], false),
+                'accent' => 'amber',
+            ],
+            [
+                'label' => 'DSAR เปิดอยู่',
+                'count' => $openDataSubjectRequests,
+                'description' => $overdueDataSubjectRequests > 0
+                    ? "เกินกำหนดแล้ว {$overdueDataSubjectRequests} รายการ"
+                    : 'คำขอเจ้าของข้อมูลที่ยังต้องติดตาม',
+                'url' => route('compliance.dsars.index', absolute: false),
+                'accent' => 'rose',
+            ],
+            [
+                'label' => 'เหตุที่ต้องแจ้งเตือน',
+                'count' => $notificationPendingIncidents,
+                'description' => 'เหตุข้อมูลส่วนบุคคลที่ยังต้องแจ้งหน่วยงานหรือเจ้าของข้อมูล',
+                'url' => route('compliance.incidents.index', absolute: false),
+                'accent' => 'sky',
+            ],
+        ];
+
+        if ($pendingWithdrawRequests > 0) {
+            $items[] = [
+                'label' => 'คำขอถอนรออนุมัติ',
+                'count' => $pendingWithdrawRequests,
+                'description' => 'สมาชิกที่ยื่นคำขอถอนและรอการพิจารณาจากเจ้าหน้าที่',
+                'url' => route('withdraw-requests.index', ['status' => 'pending'], false),
+                'accent' => 'emerald',
+            ];
+        }
+
+        return $items;
     }
 }

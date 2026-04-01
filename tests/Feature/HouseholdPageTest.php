@@ -57,6 +57,8 @@ class HouseholdPageTest extends TestCase
             ->assertOk()
             ->assertSee($activeHousehold->account_no)
             ->assertSee($memberUser->username)
+            ->assertSee('x-xxxx-xxxxx-3451')
+            ->assertDontSee('1101700203451')
             ->assertViewHas('isPrivileged', true);
     }
 

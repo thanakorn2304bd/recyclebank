@@ -3,6 +3,7 @@
 namespace App\Support\Transactions;
 
 use App\Models\Household;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class HouseholdTransactionService
@@ -40,6 +41,30 @@ class HouseholdTransactionService
         throw ValidationException::withMessages([
             'house_no' => $this->unavailableMessage($household),
         ]);
+    }
+
+    public function search(string $q, int $limit = 8): Collection
+    {
+        $term = trim($q);
+
+        if ($term === '') {
+            return collect();
+        }
+
+        return Household::query()
+            ->with('community')
+            ->where(function ($query) use ($term) {
+                $query->where('account_no', 'like', "%{$term}%")
+                    ->orWhere('contact_person', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', "%{$term}%")
+                    ->orWhere('house_no', 'like', "%{$term}%")
+                    ->orWhereHas('members', fn ($memberQuery) => $memberQuery->where('full_name', 'like', "%{$term}%"));
+            })
+            ->orderByRaw('account_no = ? desc', [$term])
+            ->orderByRaw('contact_person = ? desc', [$term])
+            ->orderBy('account_no')
+            ->limit($limit)
+            ->get();
     }
 
     public function lookupPayload(Household $household): array

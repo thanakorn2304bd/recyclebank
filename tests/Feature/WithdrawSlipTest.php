@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Transaction;
 use App\Models\UserAccount;
+use App\Models\WithdrawRequest;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdfWrapper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -80,7 +81,7 @@ class WithdrawSlipTest extends TestCase
         $this->assertDatabaseCount('transaction', 0);
     }
 
-    public function test_staff_can_save_withdraw_and_redirect_to_pdf_when_requested(): void
+    public function test_staff_can_create_pending_withdraw_request_from_withdraw_page(): void
     {
         ['staff' => $staffUser, 'householdId' => $householdId] = $this->seedWithdrawFixtures(createWithdraw: false);
 
@@ -91,22 +92,24 @@ class WithdrawSlipTest extends TestCase
             'amount' => '25.50',
         ]);
 
-        $transaction = Transaction::query()
+        $withdrawRequest = WithdrawRequest::query()
             ->where('household_id', $householdId)
-            ->where('transaction_type', 'withdraw')
-            ->latest('transaction_id')
+            ->latest('withdraw_request_id')
             ->firstOrFail();
 
-        $response->assertRedirect(route('transactions.receipt', $transaction));
+        $response
+            ->assertRedirect(route('withdraw-requests.index', ['status' => 'pending']))
+            ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('transaction', [
-            'transaction_id' => $transaction->transaction_id,
-            'total_amount' => '25.50',
-            'transaction_type' => 'withdraw',
-        ]);
+        $this->assertSame($staffUser->user_id, $withdrawRequest->requested_by);
+        $this->assertSame('pending', $withdrawRequest->status);
+        $this->assertSame('2026-03-10', $withdrawRequest->requested_for_date?->toDateString());
+        $this->assertSame(25.50, (float) $withdrawRequest->requested_amount);
+
+        $this->assertDatabaseCount('transaction', 0);
 
         $this->assertSame(
-            74.50,
+            100.00,
             (float) DB::table('household')->where('household_id', $householdId)->value('total_balance')
         );
     }

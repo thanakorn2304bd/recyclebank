@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\QuickSearchHouseholdRequest;
 use App\Http\Requests\ReviewHouseholdRequest;
 use App\Http\Requests\StoreHouseholdCredentialsRequest;
 use App\Http\Requests\StoreHouseholdRequest;
 use App\Http\Requests\UpdateHouseholdRequest;
 use App\Models\Community;
 use App\Models\Household;
+use App\Models\Member;
 use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserIdResolver;
 use App\Support\Households\HouseholdService;
 use App\Support\Households\HouseholdViewDataFactory;
+use App\Support\Transactions\HouseholdTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -41,7 +44,8 @@ class HouseholdController extends Controller
                     $sub->where('account_no', 'like', "%{$q}%")
                         ->orWhere('house_no', 'like', "%{$q}%")
                         ->orWhere('contact_person', 'like', "%{$q}%")
-                        ->orWhere('phone', 'like', "%{$q}%");
+                        ->orWhere('phone', 'like', "%{$q}%")
+                        ->orWhereHas('members', fn ($memberQuery) => $memberQuery->where('full_name', 'like', "%{$q}%"));
                 });
             })
             ->when($communityId, fn ($qb) => $qb->where('community_id', $communityId))
@@ -102,11 +106,20 @@ class HouseholdController extends Controller
             ->with('success', 'บันทึกข้อมูลครัวเรือนแล้ว กรุณาตั้งรหัสผ่านสำหรับเข้าใช้งาน');
     }
 
-    public function edit(Household $household)
-    {
+    public function edit(
+        Request $request,
+        Household $household,
+        HouseholdViewDataFactory $householdViewDataFactory
+    ) {
         $communities = Community::orderBy('community_id')->get();
+        $household->load([
+            'members' => fn ($query) => $query->orderByDesc('is_head')->orderBy('full_name'),
+        ]);
+        $oldMembers = $request->old('members')
+            ? $householdViewDataFactory->oldMembers($request->old('members', []))
+            : $householdViewDataFactory->membersForEdit($household);
 
-        return view('households.edit', compact('household', 'communities'));
+        return view('households.edit', compact('household', 'communities', 'oldMembers'));
     }
 
     public function show(Household $household, HouseholdService $householdService)
@@ -124,18 +137,11 @@ class HouseholdController extends Controller
         Household $household,
         HouseholdService $householdService
     ) {
-        $before = $household->only([
-            'account_no',
-            'house_no',
-            'village_no',
-            'community_id',
-            'phone',
-            'contact_person',
-            'register_date',
-            'accumulated_months',
-        ]);
+        $before = $this->householdSnapshot($household);
         $data = $request->householdAttributes();
-        $householdService->update($household, $data);
+        $members = $request->members();
+        $householdService->update($household, $data, $members);
+        $updatedHousehold = $household->fresh(['members']);
 
         ActivityLogger::forCurrentUser(
             'households',
@@ -144,21 +150,37 @@ class HouseholdController extends Controller
                 'entity_type' => 'household',
                 'entity_id' => (string) $household->household_id,
                 'before' => $before,
-                'after' => $household->fresh()->only([
-                    'account_no',
-                    'house_no',
-                    'village_no',
-                    'community_id',
-                    'phone',
-                    'contact_person',
-                    'register_date',
-                    'accumulated_months',
-                ]),
+                'after' => $this->householdSnapshot($updatedHousehold),
             ]
         );
 
-        return redirect()->route('households.index')
+        return redirect()->route('households.show', $household)
             ->with('success', 'แก้ไขครัวเรือนเรียบร้อย');
+    }
+
+    public function quickSearch(
+        QuickSearchHouseholdRequest $request,
+        HouseholdTransactionService $householdTransactionService
+    ) {
+        $q = $request->validated('q');
+        $matches = $householdTransactionService->search($q);
+
+        if ($matches->isEmpty()) {
+            return response()->json([
+                'found' => false,
+                'matches' => [],
+                'message' => "ไม่พบครัวเรือนที่ตรงกับคำค้น \"{$q}\"",
+            ]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'matches' => $matches
+                ->map(fn (Household $household) => $householdTransactionService->lookupPayload($household)['household'])
+                ->values()
+                ->all(),
+            'message' => null,
+        ]);
     }
 
     public function review(
@@ -231,7 +253,7 @@ class HouseholdController extends Controller
         );
 
         return redirect()->route('households.show', $household)
-            ->with('success', 'ตั้งรหัสผ่านครัวเรือนเรียบร้อย ชื่อผู้ใช้คือ '.$memberAccount->username);
+            ->with('success', 'ตั้งหรือรีเซ็ตรหัสผ่านครัวเรือนเรียบร้อย ชื่อผู้ใช้คือ '.$memberAccount->username.' และระบบจะให้ผู้ใช้เปลี่ยนรหัสเมื่อเข้าใช้ครั้งถัดไป');
     }
 
     public function destroy(Household $household, HouseholdService $householdService)
@@ -264,5 +286,31 @@ class HouseholdController extends Controller
         $householdId = Auth::user()?->household_id;
 
         return $householdId ? (int) $householdId : null;
+    }
+
+    private function householdSnapshot(Household $household): array
+    {
+        $household->loadMissing('members');
+
+        return [
+            'account_no' => (string) $household->account_no,
+            'house_no' => (string) $household->house_no,
+            'village_no' => $household->village_no,
+            'community_id' => (string) $household->community_id,
+            'phone' => $household->phone,
+            'contact_person' => (string) $household->contact_person,
+            'register_date' => $household->register_date?->format('Y-m-d'),
+            'accumulated_months' => (int) $household->accumulated_months,
+            'members' => $household->members
+                ->map(fn (Member $member) => [
+                    'full_name' => (string) $member->full_name,
+                    'id_card_last4' => $member->id_card_last4 ?: Member::extractIdCardLast4($member->id_card),
+                    'id_card_hash' => $member->id_card_hash ?: Member::hashIdCard($member->id_card),
+                    'relation' => $member->relation,
+                    'is_head' => (bool) $member->is_head,
+                ])
+                ->values()
+                ->all(),
+        ];
     }
 }

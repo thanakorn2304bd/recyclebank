@@ -81,6 +81,23 @@
             </div>
         </a>
 
+        <a href="{{ route('withdraw-requests.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-amber-200 hover:shadow-[0_20px_40px_rgba(245,158,11,0.12)]">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M8 7V5a4 4 0 118 0v2m-9 0h10a2 2 0 012 2v9a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2zm5 4v4m0 0l-2-2m2 2l2-2"/>
+                </svg>
+            </span>
+            <div class="mt-4 flex items-start justify-between gap-3">
+                <div>
+                    <div class="text-lg font-bold text-slate-900">คำขอถอน</div>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">ตรวจสอบคำขอถอนที่สมาชิกยื่นเอง พิมพ์แบบฟอร์ม และอนุมัติให้กลายเป็นรายการถอนจริง</p>
+                </div>
+                <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        </a>
+
         <a href="{{ route('reports.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-[0_20px_40px_rgba(6,182,212,0.12)]">
             <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,6 +127,23 @@
                     <p class="mt-2 text-sm leading-6 text-slate-600">จัดการข้อมูลสมาชิกครัวเรือนและตรวจสอบรายการของแต่ละบัญชี</p>
                 </div>
                 <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        </a>
+
+        <a href="{{ route('compliance.dsars.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-rose-200 hover:shadow-[0_20px_40px_rgba(244,63,94,0.12)]">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 12h6m-6 4h4m5-8V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2h4m6-11l3 3m0 0l-3 3m3-3H12"/>
+                </svg>
+            </span>
+            <div class="mt-4 flex items-start justify-between gap-3">
+                <div>
+                    <div class="text-lg font-bold text-slate-900">PDPA / Compliance</div>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">ติดตามคำขอเจ้าของข้อมูลและเหตุการณ์ข้อมูลส่วนบุคคลเพื่อให้การทำงานสอดคล้องกับ PDPA</p>
+                </div>
+                <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
                 </svg>
             </div>

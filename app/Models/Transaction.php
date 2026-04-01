@@ -63,4 +63,9 @@ class Transaction extends Model
     {
         return $this->hasMany(TransactionDetail::class, 'transaction_id', 'transaction_id');
     }
+
+    public function approvedWithdrawRequest()
+    {
+        return $this->hasOne(WithdrawRequest::class, 'approved_transaction_id', 'transaction_id');
+    }
 }

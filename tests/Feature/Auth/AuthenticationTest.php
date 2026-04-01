@@ -4,6 +4,8 @@ namespace Tests\Feature\Auth;
 
 use App\Models\UserAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -20,6 +22,22 @@ class AuthenticationTest extends TestCase
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
         $user = $this->createUserAccount();
+
+        $response = $this->post('/login', [
+            'username' => $user->username,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('main-menu'));
+    }
+
+    public function test_member_users_are_redirected_to_main_menu_after_login(): void
+    {
+        $user = $this->createUserAccount([
+            'username' => 'member-auth-test',
+            'role' => 'member',
+        ]);
 
         $response = $this->post('/login', [
             'username' => $user->username,
@@ -53,6 +71,51 @@ class AuthenticationTest extends TestCase
             'username' => $user->username,
             'password' => 'password',
         ])->assertSessionHasErrors('username');
+
+        $this->assertGuest();
+    }
+
+    public function test_pending_member_users_see_waiting_for_approval_notice_on_login(): void
+    {
+        DB::table('community')->insert([
+            'community_id' => '01',
+            'community_name' => 'North Community',
+        ]);
+
+        $householdId = DB::table('household')->insertGetId([
+            'account_no' => 'ACC0000099',
+            'house_no' => '11',
+            'village_no' => '1',
+            'community_id' => '01',
+            'phone' => '0812345678',
+            'contact_person' => 'สมชาย รออนุมัติ',
+            'register_date' => now()->toDateString(),
+            'active_status' => 'pending',
+            'accumulated_months' => 0,
+            'total_balance' => 0,
+            'created_by' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $user = $this->createUserAccount([
+            'username' => 'ACC0000099',
+            'password' => Hash::make('password123'),
+            'role' => 'member',
+            'household_id' => $householdId,
+            'is_active' => false,
+        ]);
+
+        $this->from(route('login'))
+            ->post('/login', [
+                'username' => $user->username,
+                'password' => 'password123',
+            ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors([
+                'username' => 'คำขอสมัครสมาชิกของบัญชี ACC0000099 อยู่ระหว่างรออนุมัติจากเจ้าหน้าที่ กรุณารอการยืนยันก่อนเข้าสู่ระบบ',
+            ])
+            ->assertSessionHas('approval_pending_notice');
 
         $this->assertGuest();
     }

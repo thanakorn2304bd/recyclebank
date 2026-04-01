@@ -41,6 +41,10 @@
                         </x-slot>
 
                         <x-slot name="content">
+                            <x-dropdown-link :href="route('account.password.edit')">
+                                เปลี่ยนรหัสผ่าน
+                            </x-dropdown-link>
+
                             <x-dropdown-link :href="route('reports.index')">
                                 สรุปรายงาน
                             </x-dropdown-link>
@@ -89,6 +93,10 @@
                 <div class="font-medium text-sm text-emerald-700/70">{{ Auth::user()->role }}</div>
 
                 <div class="mt-3 space-y-1">
+                    <x-responsive-nav-link :href="route('account.password.edit')">
+                        เปลี่ยนรหัสผ่าน
+                    </x-responsive-nav-link>
+
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
 

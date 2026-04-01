@@ -68,11 +68,15 @@ class AdminUserService
             $userAccount = UserAccount::create([
                 'username' => $payload['username'],
                 'password' => $payload['password'],
+                'password_changed_at' => now(),
                 'role' => 'staff',
                 'household_id' => null,
                 'staff_id' => $staff->staff_id,
                 'created_at' => now(),
                 'last_login' => null,
+                'force_password_reset' => true,
+                'failed_login_attempts' => 0,
+                'locked_until' => null,
                 'is_active' => $payload['is_active'],
             ]);
 

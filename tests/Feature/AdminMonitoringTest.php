@@ -78,9 +78,11 @@ class AdminMonitoringTest extends TestCase
         $this->assertNotNull($createdUser);
         $this->assertSame('staff', $createdUser->role);
         $this->assertTrue((bool) $createdUser->is_active);
+        $this->assertTrue((bool) $createdUser->force_password_reset);
         $this->assertNull($createdUser->household_id);
         $this->assertNotNull($createdUser->staff_id);
         $this->assertTrue(Hash::check('password123', $createdUser->password));
+        $this->assertNotNull($createdUser->password_changed_at);
         $this->assertSame('เจ้าหน้าที่ใหม่', $createdUser->staff?->full_name);
         $this->assertSame('เจ้าหน้าที่ประจำจุดรับซื้อ', $createdUser->staff?->position);
 

@@ -62,6 +62,8 @@
           {{ $accountHelpMessage }}
         </div>
 
+        <div class="form-text mb-3">รหัสผ่านที่เจ้าหน้าที่ตั้งหรือรีเซ็ตให้จะใช้เป็นรหัสชั่วคราว และระบบจะบังคับให้สมาชิกเปลี่ยนรหัสผ่านทันทีหลังเข้าสู่ระบบ</div>
+
         <div class="d-flex gap-2 flex-wrap">
           <button class="btn btn-success">{{ $submitLabel }}</button>
           <a class="btn btn-secondary" href="{{ route('households.show', $household) }}">ข้ามไปก่อน</a>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountPasswordController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
@@ -19,4 +20,11 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+});
+
+Route::middleware(['auth', 'active'])->group(function () {
+    Route::get('account/password', [AccountPasswordController::class, 'edit'])
+        ->name('account.password.edit');
+    Route::put('account/password', [AccountPasswordController::class, 'update'])
+        ->name('account.password.update');
 });

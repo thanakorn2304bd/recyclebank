@@ -19,6 +19,11 @@ class ActivityLogViewDataFactory
             'auth' => 'การเข้าสู่ระบบ',
             'registration' => 'สมัครสมาชิก',
             'admin.users' => 'บัญชีผู้ใช้',
+            'privacy.notice' => 'ประกาศ PDPA',
+            'privacy.consents' => 'การรับทราบ PDPA',
+            'data_subject_requests' => 'คำขอเจ้าของข้อมูล',
+            'security_incidents' => 'เหตุการณ์ข้อมูลส่วนบุคคล',
+            'withdraw_requests' => 'คำขอถอน',
             'households' => 'ครัวเรือน',
             'households.review' => 'อนุมัติครัวเรือน',
             'material_categories' => 'หมวดวัสดุ',
@@ -37,6 +42,11 @@ class ActivityLogViewDataFactory
             'transaction' => 'ธุรกรรม',
             'user_account' => 'บัญชีผู้ใช้',
             'material' => 'วัสดุ',
+            'privacy_notice_version' => 'ประกาศ PDPA',
+            'privacy_consent' => 'การรับทราบ PDPA',
+            'data_subject_request' => 'คำขอเจ้าของข้อมูล',
+            'security_incident' => 'เหตุการณ์ข้อมูลส่วนบุคคล',
+            'withdraw_request' => 'คำขอถอน',
         ];
     }
 }

@@ -20,6 +20,15 @@
                 ประวัติรายการ
             </a>
 
+            <a href="{{ route('withdraw-requests.index') }}" class="group flex items-center gap-3 rounded-xl border border-emerald-100/60 bg-white px-3 py-2.5 text-sm font-semibold text-emerald-900 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700 group-hover:bg-amber-200">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V5a4 4 0 118 0v2m-9 0h10a2 2 0 012 2v9a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2zm5 4v4m0 0l-2-2m2 2l2-2"/>
+                    </svg>
+                </span>
+                คำขอถอน
+            </a>
+
             <a href="{{ route('reports.index') }}" class="group flex items-center gap-3 rounded-xl border border-emerald-100/60 bg-white px-3 py-2.5 text-sm font-semibold text-emerald-900 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
                 <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700 group-hover:bg-cyan-200">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -147,6 +147,18 @@
           <dt class="col-sm-5 mb-3">เข้าใช้ล่าสุด</dt>
           <dd class="col-sm-7 mb-3">{{ $memberAccount?->last_login?->format('d/m/Y H:i') ?? '-' }}</dd>
 
+          <dt class="col-sm-5 mb-3">เปลี่ยนรหัสล่าสุด</dt>
+          <dd class="col-sm-7 mb-3">{{ $memberAccount?->password_changed_at?->format('d/m/Y H:i') ?? '-' }}</dd>
+
+          <dt class="col-sm-5 mb-3">สถานะรหัสผ่าน</dt>
+          <dd class="col-sm-7 mb-3">
+            @if($memberAccount?->force_password_reset)
+              <span class="badge bg-warning text-dark">ต้องเปลี่ยนรหัสเมื่อเข้าใช้ครั้งถัดไป</span>
+            @else
+              <span class="badge bg-success">พร้อมใช้งาน</span>
+            @endif
+          </dd>
+
           <dt class="col-sm-5 mb-0">อัปเดตล่าสุด</dt>
           <dd class="col-sm-7 mb-0">{{ $household->updated_at?->format('d/m/Y H:i') ?? '-' }}</dd>
         </dl>
@@ -247,7 +259,7 @@
                     <tr>
                       <td>{{ $index + 1 }}</td>
                       <td>{{ $member->full_name }}</td>
-                      <td>{{ $member->id_card ?? '-' }}</td>
+                      <td>{{ $member->masked_id_card ?? '-' }}</td>
                       <td>{{ $member->relation ?? '-' }}</td>
                       <td>
                         @if($member->is_head)

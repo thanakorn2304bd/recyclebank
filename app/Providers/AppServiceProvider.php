@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Household;
 use App\Models\Transaction;
+use App\Models\WithdrawRequest;
 use App\Policies\HouseholdPolicy;
 use App\Policies\TransactionPolicy;
+use App\Policies\WithdrawRequestPolicy;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Household::class, HouseholdPolicy::class);
         Gate::policy(Transaction::class, TransactionPolicy::class);
+        Gate::policy(WithdrawRequest::class, WithdrawRequestPolicy::class);
 
         Paginator::useBootstrapFive();
     }

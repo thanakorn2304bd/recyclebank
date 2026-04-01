@@ -23,9 +23,11 @@ class Admin extends Component
         $this->navItems = [
             ['label' => 'ฝาก/รับซื้อ', 'route' => 'deposits.create', 'patterns' => ['deposits.*'], 'privileged' => true, 'accent' => 'deposit'],
             ['label' => 'ถอน', 'route' => 'withdraws.create', 'patterns' => ['withdraws.*'], 'privileged' => true, 'accent' => 'withdraw'],
+            ['label' => 'คำขอถอน', 'route' => 'withdraw-requests.index', 'patterns' => ['withdraw-requests.*']],
             ['label' => 'สรุปรายงาน', 'route' => 'reports.index', 'patterns' => ['reports.*']],
             ['label' => 'ประวัติรายการ', 'route' => 'transactions.index', 'patterns' => ['transactions.*']],
             ['label' => 'ครัวเรือน', 'route' => 'households.index', 'patterns' => ['households.*']],
+            ['label' => 'PDPA', 'route' => 'compliance.dsars.index', 'patterns' => ['compliance.dsars.*', 'compliance.incidents.*'], 'privileged' => true],
             ['label' => 'เจ้าหน้าที่', 'route' => 'admin.staff.index', 'patterns' => ['admin.staff.*'], 'admin_only' => true],
             ['label' => 'บัญชีผู้ใช้', 'route' => 'admin.users.index', 'patterns' => ['admin.users.*'], 'admin_only' => true],
             ['label' => 'Activity Log', 'route' => 'admin.activity-logs.index', 'patterns' => ['admin.activity-logs.*'], 'admin_only' => true],

@@ -5,13 +5,58 @@
             กำลังเข้าสู่ระบบด้วยบัญชี <span class="font-semibold text-slate-900">{{ $authUser->username }}</span>
             ในสิทธิ์ <span class="font-semibold text-slate-900">{{ $roleLabel }}</span>
         </div>
-        <form method="POST" action="{{ route('logout') }}" class="mt-4">
-            @csrf
-            <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-50">
-                ออกจากระบบ
-            </button>
-        </form>
+        <div class="mt-4 grid gap-2">
+            <a href="{{ route('account.password.edit') }}" class="inline-flex w-full items-center justify-center rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50">
+                เปลี่ยนรหัสผ่าน
+            </a>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-50">
+                    ออกจากระบบ
+                </button>
+            </form>
+        </div>
     </section>
+
+    @if(!empty($attentionItems))
+        <section class="rounded-[30px] border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.98),rgba(255,255,255,0.98))] p-5 shadow-[0_12px_30px_rgba(245,158,11,0.08)]">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <div class="text-sm font-semibold text-slate-900">งานที่ต้องติดตาม</div>
+                    <p class="mt-1 text-sm text-slate-600">สรุปรายการค้างที่ควรเข้าไปจัดการต่อได้ทันที</p>
+                </div>
+                <div class="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-amber-700 shadow-sm">
+                    {{ number_format($attentionCount) }} งาน
+                </div>
+            </div>
+
+            <div class="mt-4 space-y-3">
+                @foreach($attentionItems as $item)
+                    <a href="{{ $item['url'] }}" class="block rounded-2xl border border-white/80 bg-white/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-sm font-semibold text-slate-900">{{ $item['label'] }}</div>
+                                <div class="mt-1 text-sm leading-6 text-slate-600">{{ $item['description'] }}</div>
+                            </div>
+                            <div class="rounded-2xl px-3 py-2 text-right text-sm font-bold
+                                @if($item['accent'] === 'amber')
+                                    bg-amber-100 text-amber-700
+                                @elseif($item['accent'] === 'rose')
+                                    bg-rose-100 text-rose-700
+                                @elseif($item['accent'] === 'emerald')
+                                    bg-emerald-100 text-emerald-700
+                                @else
+                                    bg-sky-100 text-sky-700
+                                @endif
+                            ">
+                                {{ number_format($item['count']) }}
+                            </div>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+    @endif
 
     <section class="rounded-[30px] border border-emerald-100 bg-[linear-gradient(180deg,rgba(236,253,245,0.96),rgba(255,255,255,0.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
         <div class="flex items-center justify-between gap-3">

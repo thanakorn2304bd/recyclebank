@@ -58,6 +58,12 @@
               @else
                 <span class="badge bg-secondary">ปิดใช้งาน</span>
               @endif
+              @if($user->force_password_reset)
+                <div class="small text-warning-emphasis mt-1">ต้องเปลี่ยนรหัสก่อนใช้งานต่อ</div>
+              @endif
+              @if($user->locked_until && $user->locked_until->isFuture())
+                <div class="small text-danger mt-1">ล็อกถึง {{ $user->locked_until->format('d/m/Y H:i') }}</div>
+              @endif
             </td>
             <td>{{ $user->created_at?->format('d/m/Y H:i') ?? '-' }}</td>
             <td>{{ $user->last_login?->format('d/m/Y H:i') ?? '-' }}</td>

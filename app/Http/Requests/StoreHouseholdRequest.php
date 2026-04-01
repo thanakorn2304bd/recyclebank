@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Household;
+use App\Models\Member;
 use App\Models\UserAccount;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
@@ -131,7 +132,9 @@ class StoreHouseholdRequest extends FormRequest
             ->map(function ($member) {
                 return [
                     'full_name' => trim((string) ($member['full_name'] ?? '')),
-                    'id_card' => preg_replace('/\D+/', '', (string) ($member['id_card'] ?? '')) ?? '',
+                    'id_card' => Member::normalizeIdCard((string) ($member['id_card'] ?? '')),
+                    'id_card_last4' => Member::extractIdCardLast4((string) ($member['id_card'] ?? '')),
+                    'id_card_hash' => Member::hashIdCard((string) ($member['id_card'] ?? '')),
                     'relation' => trim((string) ($member['relation'] ?? '')),
                     'is_head' => filter_var($member['is_head'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 ];

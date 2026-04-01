@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SaveWithdrawRequest;
-use App\Models\Transaction;
+use App\Models\WithdrawRequest;
 use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserIdResolver;
 use App\Support\Transactions\HouseholdTransactionService;
-use App\Support\Transactions\TransactionPdfViewDataFactory;
 use App\Support\Transactions\WithdrawService;
+use App\Support\WithdrawRequests\WithdrawRequestPdfViewDataFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 
 class WithdrawController extends Controller
 {
@@ -21,37 +22,28 @@ class WithdrawController extends Controller
 
     public function preview(
         SaveWithdrawRequest $request,
-        CurrentUserIdResolver $currentUserIdResolver,
         HouseholdTransactionService $householdTransactionService,
         WithdrawService $withdrawService,
-        TransactionPdfViewDataFactory $transactionPdfViewDataFactory
+        WithdrawRequestPdfViewDataFactory $withdrawRequestPdfViewDataFactory
     ) {
         [
             'household' => $household,
             'date' => $date,
             'amount' => $amount,
         ] = $this->withdrawPayload($request, $householdTransactionService, $withdrawService);
-        $recordedBy = $currentUserIdResolver->resolve($request);
 
-        $previewTransaction = new Transaction([
+        $previewRequest = new WithdrawRequest([
             'household_id' => $household->household_id,
-            'transaction_date' => $date,
-            'transaction_type' => 'withdraw',
-            'total_weight' => 0.00,
-            'total_amount' => $amount,
-            'recorded_by' => $recordedBy,
+            'requested_for_date' => $date,
+            'requested_amount' => $amount,
+            'status' => 'pending',
         ]);
 
-        $previewTransaction->setRelation('household', $household);
-
-        if ($user = $request->user()) {
-            $user->loadMissing('staff');
-            $previewTransaction->setRelation('recordedByUser', $user);
-        }
+        $previewRequest->setRelation('household', $household);
 
         $pdf = Pdf::loadView(
             'pdf.withdraw_slip_a5_landscape',
-            $transactionPdfViewDataFactory->withdrawSlip($previewTransaction)
+            $withdrawRequestPdfViewDataFactory->make($previewRequest)
         )->setPaper('a5', 'landscape');
 
         return $pdf->stream('withdraw-slip-preview.pdf');
@@ -62,39 +54,41 @@ class WithdrawController extends Controller
         CurrentUserIdResolver $currentUserIdResolver,
         HouseholdTransactionService $householdTransactionService,
         WithdrawService $withdrawService
-    ) {
+    ): RedirectResponse {
         [
             'household' => $household,
             'date' => $date,
             'amount' => $amount,
         ] = $this->withdrawPayload($request, $householdTransactionService, $withdrawService);
-        $householdId = (int) $household->household_id;
-        $recordedBy = $currentUserIdResolver->resolve($request);
-        $transaction = $withdrawService->record($householdId, $date, $amount, $recordedBy);
+        $requestedBy = $currentUserIdResolver->resolve($request);
+
+        $withdrawRequest = WithdrawRequest::create([
+            'request_no' => $this->nextRequestNo(),
+            'household_id' => $household->household_id,
+            'requested_by' => $requestedBy,
+            'requested_for_date' => $date,
+            'requested_amount' => $amount,
+            'request_notes' => null,
+            'status' => 'pending',
+        ]);
 
         ActivityLogger::forCurrentUser(
-            'transactions',
-            "บันทึกถอนให้ {$household->account_no} ({$household->contact_person}) เป็นเงิน "
+            'withdraw_requests',
+            "บันทึกคำขอถอน {$withdrawRequest->request_no} ให้ {$household->account_no} ({$household->contact_person}) เป็นเงิน "
             .number_format($amount, 2).' บาท',
             [
-                'entity_type' => 'transaction',
-                'entity_id' => (string) $transaction->transaction_id,
-                'after' => [
-                    'transaction_id' => (int) $transaction->transaction_id,
-                    'transaction_type' => 'withdraw',
-                    'household_id' => $householdId,
-                    'account_no' => (string) $household->account_no,
-                    'transaction_date' => $date,
-                    'total_weight' => 0.00,
-                    'total_amount' => $amount,
-                    'household_balance' => (float) DB::table('household')
-                        ->where('household_id', $householdId)
-                        ->value('total_balance'),
-                ],
+                'entity_type' => 'withdraw_request',
+                'entity_id' => (string) $withdrawRequest->withdraw_request_id,
+                'after' => $this->snapshot($withdrawRequest),
             ]
         );
 
-        return redirect()->route('transactions.receipt', $transaction);
+        return redirect()
+            ->route('withdraw-requests.index', ['status' => 'pending'])
+            ->with(
+                'success',
+                "บันทึกคำขอถอน {$withdrawRequest->request_no} เป็นรออนุมัติเรียบร้อยแล้ว สามารถพิมพ์แบบฟอร์มจากหน้าคำขอถอนได้"
+            );
     }
 
     private function withdrawPayload(
@@ -126,6 +120,23 @@ class WithdrawController extends Controller
             'household' => $household,
             'date' => $date,
             'amount' => $amount,
+        ];
+    }
+
+    private function nextRequestNo(): string
+    {
+        return 'WR-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
+    }
+
+    private function snapshot(WithdrawRequest $withdrawRequest): array
+    {
+        return [
+            'request_no' => (string) $withdrawRequest->request_no,
+            'household_id' => (int) $withdrawRequest->household_id,
+            'requested_by' => $withdrawRequest->requested_by !== null ? (int) $withdrawRequest->requested_by : null,
+            'requested_for_date' => $withdrawRequest->requested_for_date?->format('Y-m-d'),
+            'requested_amount' => (float) $withdrawRequest->requested_amount,
+            'status' => (string) $withdrawRequest->status,
         ];
     }
 }
