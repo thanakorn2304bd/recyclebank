@@ -1,8 +1,9 @@
 <?php
 
+$projectRoot = dirname(__DIR__);
 $requestPath = urldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
-$publicPath = realpath(__DIR__.'/public');
-$staticPath = $requestPath === '/' ? false : realpath(__DIR__.'/public'.$requestPath);
+$publicPath = realpath($projectRoot.'/public');
+$staticPath = $requestPath === '/' ? false : realpath($projectRoot.'/public'.$requestPath);
 
 if (
     $publicPath !== false
@@ -18,4 +19,4 @@ if (
     return true;
 }
 
-require __DIR__.'/public/index.php';
+require $projectRoot.'/public/index.php';
