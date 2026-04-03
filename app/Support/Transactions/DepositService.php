@@ -12,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class DepositService
 {
+    private const MAX_DECIMAL_VALUE = 99999999.99;
+
     public function materialsForCreateForm(): Collection
     {
         return Material::with('category')
@@ -60,6 +62,9 @@ class DepositService
                 $pricePerUnit = $this->pricePerUnitOnDate($materialId, $date);
                 $amount = round($weight * $pricePerUnit, 2);
 
+                $this->ensureDecimalFits($weight, 'น้ำหนักของวัสดุ');
+                $this->ensureDecimalFits($amount, 'จำนวนเงินของวัสดุ');
+
                 TransactionDetail::create([
                     'transaction_id' => $transaction->transaction_id,
                     'material_id' => $materialId,
@@ -72,19 +77,25 @@ class DepositService
                 $totalAmount += $amount;
             }
 
+            $totalWeight = round($totalWeight, 2);
+            $totalAmount = round($totalAmount, 2);
+
+            $this->ensureDecimalFits($totalWeight, 'น้ำหนักรวม');
+            $this->ensureDecimalFits($totalAmount, 'ยอดรวม');
+
             $transaction->update([
-                'total_weight' => round($totalWeight, 2),
-                'total_amount' => round($totalAmount, 2),
+                'total_weight' => $totalWeight,
+                'total_amount' => $totalAmount,
             ]);
 
             DB::table('household')
                 ->where('household_id', $householdId)
-                ->update(['total_balance' => DB::raw('total_balance + '.round($totalAmount, 2))]);
+                ->update(['total_balance' => DB::raw('total_balance + '.$totalAmount)]);
 
             return [
                 'transaction' => $transaction,
-                'total_weight' => round($totalWeight, 2),
-                'total_amount' => round($totalAmount, 2),
+                'total_weight' => $totalWeight,
+                'total_amount' => $totalAmount,
             ];
         });
     }
@@ -114,6 +125,17 @@ class DepositService
 
         throw ValidationException::withMessages([
             'items' => "ไม่พบราคาวัสดุ {$materialName} ณ วันที่ {$onDate}",
+        ]);
+    }
+
+    private function ensureDecimalFits(float $value, string $label): void
+    {
+        if (abs($value) <= self::MAX_DECIMAL_VALUE) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'items' => "{$label} เกินขนาดที่ระบบรองรับ (สูงสุด ".number_format(self::MAX_DECIMAL_VALUE, 2).')',
         ]);
     }
 }

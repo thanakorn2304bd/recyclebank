@@ -478,7 +478,7 @@
           </select>
         </td>
         <td><input class="form-control unit" value="${unit}" readonly></td>
-        <td><input class="form-control weight" type="number" step="0.01" min="0.01" name="items[${rowIndex}][weight]" value="${weight}" required></td>
+        <td><input class="form-control weight" type="number" step="0.01" min="0.01" max="99999999.99" name="items[${rowIndex}][weight]" value="${weight}" required></td>
         <td><input class="form-control ppu" value="${Number(ppu).toFixed(2)}" readonly></td>
         <td><input class="form-control amount" value="0.00" readonly></td>
         <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove">x</button></td>

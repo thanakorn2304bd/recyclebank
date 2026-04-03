@@ -128,6 +128,25 @@ class DepositSummaryFlowTest extends TestCase
         $this->assertDatabaseCount('transaction', 0);
     }
 
+    public function test_staff_can_not_save_deposit_when_values_exceed_decimal_limit(): void
+    {
+        ['staff' => $staffUser, 'materialId' => $materialId] = $this->seedDepositFixtures();
+
+        $this->actingAs($staffUser)->post(route('deposits.store'), [
+            'community_id' => '01',
+            'house_no' => '11',
+            'transaction_date' => '2026-03-10',
+            'items' => [
+                [
+                    'material_id' => $materialId,
+                    'weight' => '50000000.00',
+                ],
+            ],
+        ])->assertSessionHasErrors('items');
+
+        $this->assertDatabaseCount('transaction', 0);
+    }
+
     private function seedDepositFixtures(string $householdStatus = 'active'): array
     {
         DB::table('community')->insert([

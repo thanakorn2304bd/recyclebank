@@ -129,10 +129,23 @@
         <div class="mt-4">
             <x-input-label for="password" value="รหัสผ่าน" />
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
+            <div class="relative mt-1">
+                <x-text-input id="password" class="block w-full pr-20"
+                                type="password"
+                                name="password"
+                                required autocomplete="new-password" />
+
+                <button
+                    type="button"
+                    id="toggleRegisterPasswordVisibility"
+                    class="absolute inset-y-0 right-0 flex items-center rounded-r-md px-4 text-sm font-medium text-emerald-700 transition hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                    aria-controls="password"
+                    aria-label="แสดงรหัสผ่าน"
+                    aria-pressed="false"
+                >
+                    แสดง
+                </button>
+            </div>
 
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
@@ -164,12 +177,25 @@
             const communitySelect = document.getElementById('community_id');
             const houseNoInput = document.getElementById('house_no');
             const contactPersonInput = document.getElementById('contact_person');
+            const passwordInput = document.getElementById('password');
+            const toggleRegisterPasswordVisibilityBtn = document.getElementById('toggleRegisterPasswordVisibility');
             const addHouseholdMemberBtn = document.getElementById('addHouseholdMemberBtn');
             const householdMembersContainer = document.getElementById('householdMembersContainer');
             const householdMembersEmpty = document.getElementById('householdMembersEmpty');
             const currentYear = @json(now()->format('Y'));
             const oldMembers = @json($oldMembers);
             let memberIndex = 0;
+
+            if (passwordInput && toggleRegisterPasswordVisibilityBtn) {
+                toggleRegisterPasswordVisibilityBtn.addEventListener('click', function () {
+                    const isHidden = passwordInput.type === 'password';
+
+                    passwordInput.type = isHidden ? 'text' : 'password';
+                    toggleRegisterPasswordVisibilityBtn.textContent = isHidden ? 'ซ่อน' : 'แสดง';
+                    toggleRegisterPasswordVisibilityBtn.setAttribute('aria-label', isHidden ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน');
+                    toggleRegisterPasswordVisibilityBtn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+                });
+            }
 
             function generateAccountNo() {
                 const communityId = communitySelect.value.trim();
