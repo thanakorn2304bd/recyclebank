@@ -97,7 +97,7 @@
       <table class="table table-striped align-middle" data-sortable-table>
         <thead>
           <tr>
-            <th style="width:80px;" data-sort-type="number">ID</th>
+            <th style="width:90px;" data-sortable="false">ลำดับ</th>
             <th style="width:140px;">เลขบัญชี</th>
             <th>ชุมชน</th>
             <th style="width:120px;">บ้านเลขที่</th>
@@ -112,7 +112,7 @@
         <tbody>
           @forelse($households as $h)
             <tr>
-              <td>{{ $h->household_id }}</td>
+              <td>{{ ($households->firstItem() ?? 1) + $loop->index }}</td>
               <td>{{ $h->account_no }}</td>
               <td>{{ $h->community?->community_id }} - {{ $h->community?->community_name }}</td>
               <td>{{ $h->house_no }}</td>

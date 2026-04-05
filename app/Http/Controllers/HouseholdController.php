@@ -52,7 +52,8 @@ class HouseholdController extends Controller
             ->when($status, fn ($qb) => $qb->where('active_status', $status));
 
         $households = $householdsQuery
-            ->orderBy('account_no')
+            ->orderBy('created_at')
+            ->orderBy('household_id')
             ->paginate(15)
             ->withQueryString();
 
