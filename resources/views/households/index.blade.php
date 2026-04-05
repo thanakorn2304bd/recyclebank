@@ -97,7 +97,7 @@
       <table class="table table-striped align-middle" data-sortable-table>
         <thead>
           <tr>
-            <th style="width:90px;" data-sortable="false">ลำดับ</th>
+            <th style="width:90px;" data-sort-type="number">ลำดับ</th>
             <th style="width:140px;">เลขบัญชี</th>
             <th>ชุมชน</th>
             <th style="width:120px;">บ้านเลขที่</th>
