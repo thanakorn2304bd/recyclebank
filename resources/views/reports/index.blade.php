@@ -75,6 +75,54 @@
       color: #0f5132;
     }
 
+    .rb-section-switcher {
+      border: 1px solid #d7f0e3;
+      border-radius: 1rem;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(244, 251, 247, 0.92) 100%);
+      box-shadow: 0 12px 28px rgba(15, 109, 74, 0.06);
+      padding: 1rem 1.1rem;
+    }
+
+    .rb-section-toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      border: 1px solid #d7f0e3;
+      border-radius: 999px;
+      background: #fff;
+      padding: 0.55rem 0.85rem;
+      color: #2f5b49;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .rb-section-toggle-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(15, 109, 74, 0.08);
+    }
+
+    .rb-section-toggle-pill.is-active {
+      border-color: #91d6b5;
+      background: #eef8f2;
+      box-shadow: 0 10px 22px rgba(15, 109, 74, 0.08);
+    }
+
+    .rb-section-toggle-pill input {
+      margin: 0;
+      width: 1rem;
+      height: 1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .rb-report-row-single {
+      flex: 0 0 100%;
+      width: 100%;
+      max-width: 100%;
+    }
+
     .rb-bar-track {
       height: 0.45rem;
       border-radius: 999px;

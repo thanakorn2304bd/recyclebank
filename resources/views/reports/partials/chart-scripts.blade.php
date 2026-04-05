@@ -1,6 +1,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
   (function () {
+    const reportCharts = [];
     const monthlyLabels = @json($monthlyChart['labels']);
     const monthlyDeposit = @json($monthlyChart['deposit']);
     const monthlyWithdraw = @json($monthlyChart['withdraw']);
@@ -17,7 +18,10 @@
         return null;
       }
 
-      return new Chart(element, config);
+      const chart = new Chart(element, config);
+      reportCharts.push(chart);
+
+      return chart;
     }
 
     createChart('rbMonthlyChart', {
@@ -161,6 +165,121 @@
           },
         },
       },
+    });
+
+    document.querySelectorAll('[data-report-visibility-controls]').forEach(function (control) {
+      const inputs = Array.from(control.querySelectorAll('input[data-target]'));
+      const rows = Array.from(document.querySelectorAll('[data-report-section-row]'));
+      const selectAllButton = control.querySelector('[data-select-all]');
+      const storageKey = control.dataset.storageKey;
+
+      function saveSelection() {
+        if (! storageKey) {
+          return;
+        }
+
+        try {
+          const selected = inputs
+            .filter(function (input) {
+              return input.checked;
+            })
+            .map(function (input) {
+              return input.dataset.target;
+            });
+
+          localStorage.setItem(storageKey, JSON.stringify(selected));
+        } catch (error) {
+          // Ignore storage failures in private mode or restricted browsers.
+        }
+      }
+
+      function syncPill(input) {
+        const pill = input.closest('.rb-section-toggle-pill');
+        if (pill) {
+          pill.classList.toggle('is-active', input.checked);
+        }
+      }
+
+      function syncRows() {
+        rows.forEach(function (row) {
+          const sections = Array.from(row.querySelectorAll('[data-report-section]'));
+          const visibleSections = sections.filter(function (section) {
+            return ! section.hidden;
+          });
+          const hasVisibleSection = sections.some(function (section) {
+            return ! section.hidden;
+          });
+
+          sections.forEach(function (section) {
+            section.classList.toggle('rb-report-row-single', visibleSections.length === 1 && ! section.hidden);
+          });
+
+          row.hidden = ! hasVisibleSection;
+        });
+      }
+
+      function resizeCharts() {
+        window.requestAnimationFrame(function () {
+          reportCharts.forEach(function (chart) {
+            if (chart) {
+              chart.resize();
+            }
+          });
+        });
+      }
+
+      function applySelection(shouldPersist) {
+        inputs.forEach(function (input) {
+          const target = input.dataset.target;
+          const sections = document.querySelectorAll('[data-report-section="' + target + '"]');
+
+          syncPill(input);
+          sections.forEach(function (section) {
+            section.hidden = ! input.checked;
+          });
+        });
+
+        syncRows();
+
+        if (shouldPersist) {
+          saveSelection();
+        }
+
+        resizeCharts();
+      }
+
+      if (storageKey) {
+        try {
+          const storedValue = localStorage.getItem(storageKey);
+          const selectedTargets = storedValue ? JSON.parse(storedValue) : null;
+
+          if (Array.isArray(selectedTargets)) {
+            inputs.forEach(function (input) {
+              input.checked = selectedTargets.includes(input.dataset.target);
+            });
+          }
+        } catch (error) {
+          // Ignore malformed storage data and fall back to default checked state.
+        }
+      }
+
+      inputs.forEach(function (input) {
+        input.addEventListener('change', function () {
+          applySelection(true);
+        });
+      });
+
+      if (selectAllButton) {
+        selectAllButton.addEventListener('click', function () {
+          inputs.forEach(function (input) {
+            input.checked = true;
+          });
+
+          applySelection(true);
+        });
+      }
+
+      applySelection(false);
     });
   })();
 </script>

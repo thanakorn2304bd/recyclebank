@@ -37,8 +37,27 @@
   </div>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-xl-8">
+@php
+  $sectionOptions = [
+      ['id' => 'monthly-chart', 'label' => 'กราฟรายเดือน'],
+      ['id' => 'status-chart', 'label' => 'สถานะครัวเรือน'],
+      ['id' => 'material-chart', 'label' => 'กราฟวัสดุ'],
+      ['id' => 'top-materials', 'label' => 'วัสดุที่รับซื้อมากที่สุด'],
+      ['id' => 'pending-households', 'label' => 'ครัวเรือนรออนุมัติ'],
+      ['id' => 'monthly-table', 'label' => 'สรุปตามเดือน'],
+      ['id' => 'top-households', 'label' => 'ครัวเรือนมูลค่าสูงสุด'],
+      ['id' => 'community-summary', 'label' => 'สรุปตามชุมชน'],
+      ['id' => 'recent-transactions', 'label' => 'รายการล่าสุด'],
+  ];
+@endphp
+
+@include('reports.partials.section-visibility-controls', [
+  'sectionOptions' => $sectionOptions,
+  'storageKey' => 'privileged',
+])
+
+<div class="row g-4 mb-4" data-report-section-row>
+  <div class="col-xl-8" data-report-section="monthly-chart">
     <div class="card rb-chart-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-1">กราฟแนวโน้มรายเดือน</div>
@@ -49,7 +68,7 @@
       </div>
     </div>
   </div>
-  <div class="col-xl-4">
+  <div class="col-xl-4" data-report-section="status-chart">
     <div class="card rb-chart-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-1">สัดส่วนสถานะครัวเรือน</div>
@@ -62,8 +81,8 @@
   </div>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-xl-5">
+<div class="row g-4 mb-4" data-report-section-row>
+  <div class="col-xl-5" data-report-section="material-chart">
     <div class="card rb-chart-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-1">กราฟวัสดุยอดนิยม</div>
@@ -74,7 +93,7 @@
       </div>
     </div>
   </div>
-  <div class="col-xl-7">
+  <div class="col-xl-7" data-report-section="top-materials">
     <div class="card rb-report-card h-100">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -121,8 +140,8 @@
   </div>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-xl-5">
+<div class="row g-4 mb-4" data-report-section-row>
+  <div class="col-xl-5" data-report-section="pending-households">
     <div class="card rb-report-card h-100">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -154,7 +173,7 @@
       </div>
     </div>
   </div>
-  <div class="col-xl-7">
+  <div class="col-xl-7" data-report-section="monthly-table">
     <div class="card rb-report-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-3">สรุปตามเดือน</div>
@@ -197,8 +216,8 @@
   </div>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-xl-6">
+<div class="row g-4 mb-4" data-report-section-row>
+  <div class="col-xl-6" data-report-section="top-households">
     <div class="card rb-report-card h-100">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -242,7 +261,7 @@
       </div>
     </div>
   </div>
-  <div class="col-xl-6">
+  <div class="col-xl-6" data-report-section="community-summary">
     <div class="card rb-report-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-3">สรุปตามชุมชน</div>

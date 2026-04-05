@@ -29,8 +29,25 @@
   </div>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-xl-8">
+@php
+  $sectionOptions = [
+      ['id' => 'monthly-chart', 'label' => 'กราฟรายเดือน'],
+      ['id' => 'cashflow-chart', 'label' => 'สัดส่วนรับซื้อ/ถอน'],
+      ['id' => 'household-info', 'label' => 'ข้อมูลครัวเรือน'],
+      ['id' => 'monthly-table', 'label' => 'สรุปตามเดือน'],
+      ['id' => 'material-chart', 'label' => 'กราฟวัสดุ'],
+      ['id' => 'top-materials', 'label' => 'วัสดุที่ขายได้มากที่สุด'],
+      ['id' => 'recent-transactions', 'label' => 'รายการล่าสุด'],
+  ];
+@endphp
+
+@include('reports.partials.section-visibility-controls', [
+  'sectionOptions' => $sectionOptions,
+  'storageKey' => 'member',
+])
+
+<div class="row g-4 mb-4" data-report-section-row>
+  <div class="col-xl-8" data-report-section="monthly-chart">
     <div class="card rb-chart-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-1">กราฟแนวโน้มรายเดือนของฉัน</div>
@@ -41,7 +58,7 @@
       </div>
     </div>
   </div>
-  <div class="col-xl-4">
+  <div class="col-xl-4" data-report-section="cashflow-chart">
     <div class="card rb-chart-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-1">สัดส่วนยอดรับซื้อและถอน</div>
@@ -54,8 +71,8 @@
   </div>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-xl-5">
+<div class="row g-4 mb-4" data-report-section-row>
+  <div class="col-xl-5" data-report-section="household-info">
     <div class="card rb-report-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-3">ข้อมูลครัวเรือนของฉัน</div>
@@ -117,7 +134,7 @@
     </div>
   </div>
 
-  <div class="col-xl-7">
+  <div class="col-xl-7" data-report-section="monthly-table">
     <div class="card rb-report-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-3">สรุปตามเดือน</div>
@@ -160,8 +177,8 @@
   </div>
 </div>
 
-<div class="row g-4 mb-4">
-  <div class="col-xl-5">
+<div class="row g-4 mb-4" data-report-section-row>
+  <div class="col-xl-5" data-report-section="material-chart">
     <div class="card rb-chart-card h-100">
       <div class="card-body">
         <div class="rb-section-title mb-1">กราฟวัสดุที่ฉันขายได้มากที่สุด</div>
@@ -172,7 +189,7 @@
       </div>
     </div>
   </div>
-  <div class="col-xl-7">
+  <div class="col-xl-7" data-report-section="top-materials">
     <div class="card rb-report-card h-100">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">

@@ -21,6 +21,7 @@ class ReportPageTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('ข้อมูลครัวเรือนของฉัน')
+            ->assertSee('เลือกข้อมูลที่ต้องการแสดง')
             ->assertSee('ACC0000001')
             ->assertSee('Plastic Bottle')
             ->assertDontSee('ACC0000002')
@@ -39,6 +40,7 @@ class ReportPageTest extends TestCase
             ->assertSee('ยอดรับซื้อทั้งหมด')
             ->assertSee('ยอดถอนทั้งหมด')
             ->assertSee('ยอดคงเหลือทั้งหมด')
+            ->assertSee('เลือกข้อมูลที่ต้องการแสดง')
             ->assertSee('ACC0000001')
             ->assertSee('ACC0000002')
             ->assertSee('Plastic Bottle')
