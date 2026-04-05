@@ -106,12 +106,12 @@
             <th style="width:140px;">โทรศัพท์</th>
             <th style="width:110px;">สถานะ</th>
             <th style="width:130px;" class="text-end" data-sort-type="number">ยอดคงเหลือ</th>
-            <th style="width:320px;" data-sortable="false"></th>
+            <th style="width:130px;" data-sortable="false"></th>
           </tr>
         </thead>
         <tbody>
           @forelse($households as $h)
-            <tr>
+            <tr data-row-link="{{ route('households.show', $h) }}" title="ดับเบิลคลิกเพื่อดูรายละเอียดครัวเรือน">
               <td>{{ ($households->firstItem() ?? 1) + $loop->index }}</td>
               <td>{{ $h->account_no }}</td>
               <td>{{ $h->community?->community_id }} - {{ $h->community?->community_name }}</td>
@@ -129,17 +129,33 @@
                 @endif
               </td>
               <td class="text-end">{{ number_format((float) $h->total_balance, 2) }}</td>
-              <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary me-1" href="{{ route('households.show', $h) }}">ดูรายละเอียด</a>
-                @if($isPrivileged)
-                  <a class="btn btn-sm btn-outline-warning me-1" href="{{ route('households.credentials.create', $h) }}">รหัสผ่าน</a>
-                  <a class="btn btn-sm btn-outline-secondary me-1" href="{{ route('households.edit', $h) }}">แก้ไข</a>
-                  <form class="d-inline" method="POST" action="{{ route('households.destroy', $h) }}" onsubmit="return confirm('ลบครัวเรือนนี้?')">
-                    @csrf
-                    @method('DELETE')
-                    <button class="btn btn-sm btn-outline-danger">ลบ</button>
-                  </form>
-                @endif
+              <td class="text-end" data-row-link-ignore>
+                <div class="dropstart d-inline-block">
+                  <button class="btn btn-sm rb-action-toggle dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    จัดการ
+                  </button>
+                  <ul class="dropdown-menu rb-action-menu">
+                    <li>
+                      <a class="dropdown-item" href="{{ route('households.show', $h) }}">ดูรายละเอียด</a>
+                    </li>
+                    @if($isPrivileged)
+                      <li>
+                        <a class="dropdown-item" href="{{ route('households.credentials.create', $h) }}">รหัสผ่าน</a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="{{ route('households.edit', $h) }}">แก้ไข</a>
+                      </li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <form method="POST" action="{{ route('households.destroy', $h) }}" onsubmit="return confirm('ลบครัวเรือนนี้?')">
+                          @csrf
+                          @method('DELETE')
+                          <button class="dropdown-item dropdown-item-danger" type="submit">ลบ</button>
+                        </form>
+                      </li>
+                    @endif
+                  </ul>
+                </div>
               </td>
             </tr>
           @empty

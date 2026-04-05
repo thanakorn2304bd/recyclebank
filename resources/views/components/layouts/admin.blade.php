@@ -133,20 +133,47 @@
       padding: 2rem 0 3rem;
     }
 
-    .rb-user-panel {
+    .rb-user-dropdown {
+      max-width: 100%;
+    }
+
+    .rb-user-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      max-width: 100%;
       border: 1px solid rgba(217, 245, 230, 0.16);
       border-radius: 1.2rem;
       background: rgba(255, 255, 255, 0.08);
-      padding: 0.5rem 0.65rem 0.5rem 0.85rem;
+      padding: 0.5rem 0.85rem;
       color: #effcf5;
       white-space: nowrap;
+    }
+
+    .rb-user-toggle:hover,
+    .rb-user-toggle:focus,
+    .rb-user-toggle.show {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .rb-user-toggle:focus {
+      box-shadow: 0 0 0 0.2rem rgba(217, 245, 230, 0.16);
+    }
+
+    .rb-user-toggle::after {
+      margin-left: 0.15rem;
+      border-top-color: currentColor;
     }
 
     .rb-user-meta {
       display: flex;
       align-items: baseline;
       gap: 0.45rem;
+      min-width: 0;
       white-space: nowrap;
+      text-align: left;
     }
 
     .rb-user-name {
@@ -161,18 +188,101 @@
       line-height: 1;
     }
 
-    .rb-user-panel .btn-outline-light {
-      border-radius: 0.9rem;
-      border-color: rgba(255, 255, 255, 0.24);
-      color: #f2fff7;
-      background: rgba(255, 255, 255, 0.02);
+    .rb-user-menu {
+      min-width: 14rem;
+      padding: 0.45rem;
+      border: 1px solid rgba(13, 81, 52, 0.08);
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 18px 36px rgba(8, 45, 33, 0.18);
     }
 
-    .rb-user-panel .btn-outline-light:hover,
-    .rb-user-panel .btn-outline-light:focus {
-      background: rgba(255, 255, 255, 0.14);
-      color: #ffffff;
-      border-color: rgba(255, 255, 255, 0.28);
+    .rb-user-menu .dropdown-header {
+      padding: 0.55rem 0.7rem 0.6rem;
+      color: #0d5134;
+    }
+
+    .rb-user-menu .rb-user-role {
+      color: var(--rb-text-soft);
+    }
+
+    .rb-user-menu .dropdown-item {
+      border-radius: 0.85rem;
+      padding: 0.6rem 0.75rem;
+      font-weight: 500;
+      color: var(--rb-text);
+    }
+
+    .rb-user-menu .dropdown-item:hover,
+    .rb-user-menu .dropdown-item:focus {
+      background: rgba(15, 109, 74, 0.08);
+      color: #0d5134;
+    }
+
+    .rb-user-menu form {
+      margin: 0;
+    }
+
+    .rb-user-menu .dropdown-divider {
+      margin: 0.35rem 0;
+      border-color: rgba(13, 81, 52, 0.08);
+    }
+
+    .rb-action-toggle {
+      border-radius: 999px;
+      border-color: #cddbd4;
+      background: rgba(255, 255, 255, 0.92);
+      color: #30463b;
+      white-space: nowrap;
+    }
+
+    .rb-action-toggle:hover,
+    .rb-action-toggle:focus,
+    .rb-action-toggle.show {
+      background: #f2f6f4;
+      border-color: #b9ccc2;
+      color: #1f2937;
+    }
+
+    .rb-action-toggle:focus {
+      box-shadow: 0 0 0 0.2rem rgba(15, 109, 74, 0.12);
+    }
+
+    .rb-action-menu {
+      min-width: 12rem;
+      padding: 0.45rem;
+      border: 1px solid rgba(13, 81, 52, 0.08);
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 18px 36px rgba(8, 45, 33, 0.18);
+      z-index: 1080;
+    }
+
+    .rb-action-menu .dropdown-item {
+      border-radius: 0.85rem;
+      padding: 0.6rem 0.75rem;
+      font-weight: 500;
+      color: var(--rb-text);
+    }
+
+    .rb-action-menu .dropdown-item:hover,
+    .rb-action-menu .dropdown-item:focus {
+      background: rgba(15, 109, 74, 0.08);
+      color: #0d5134;
+    }
+
+    .rb-action-menu .dropdown-item-danger {
+      color: #dc2626;
+    }
+
+    .rb-action-menu .dropdown-item-danger:hover,
+    .rb-action-menu .dropdown-item-danger:focus {
+      background: rgba(220, 38, 38, 0.08);
+      color: #b91c1c;
+    }
+
+    .rb-action-menu form {
+      margin: 0;
     }
 
     .rb-flash-stack {
@@ -480,7 +590,8 @@
       border: 1px solid var(--rb-green-200);
       background: rgba(255, 255, 255, 0.96);
       box-shadow: var(--rb-shadow-soft);
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: visible;
     }
 
     .table {
@@ -510,6 +621,11 @@
 
     .table tbody tr:hover {
       background: rgba(241, 251, 245, 0.8);
+    }
+
+    .table tbody tr[data-row-link],
+    .table tbody tr.rb-row-link {
+      cursor: pointer;
     }
 
     .table[data-sortable-table] thead th[data-sortable="false"] {
@@ -624,7 +740,13 @@
         background: rgba(255, 255, 255, 0.08);
       }
 
-      .rb-user-panel {
+      .rb-user-dropdown,
+      .rb-user-toggle,
+      .rb-user-menu {
+        width: 100%;
+      }
+
+      .rb-user-dropdown {
         margin-top: 0.75rem;
       }
     }
@@ -671,18 +793,31 @@
         </div>
         @if($authUser)
           <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 ms-xl-3 mt-3 mt-xl-0">
-            <div class="rb-user-panel d-flex align-items-center justify-content-between gap-3">
-              <div class="rb-user-meta">
-                <div class="rb-user-name">{{ $authUser->username }}</div>
-                <div class="rb-user-role">สิทธิ์ {{ $authUser->role }}</div>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <a href="{{ route('account.password.edit') }}" class="btn btn-sm btn-outline-light">เปลี่ยนรหัสผ่าน</a>
-                <form method="POST" action="{{ route('logout') }}">
-                  @csrf
-                  <button type="submit" class="btn btn-sm btn-outline-light">ออกจากระบบ</button>
-                </form>
-              </div>
+            <div class="dropdown rb-user-dropdown">
+              <button class="btn rb-user-toggle dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="rb-user-meta">
+                  <span class="rb-user-name">{{ $authUser->username }}</span>
+                  <span class="rb-user-role">สิทธิ์ {{ $authUser->role }}</span>
+                </span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end rb-user-menu">
+                <li>
+                  <div class="dropdown-header">
+                    <div class="rb-user-name">{{ $authUser->username }}</div>
+                    <div class="rb-user-role text-muted">สิทธิ์ {{ $authUser->role }}</div>
+                  </div>
+                </li>
+                <li>
+                  <a href="{{ route('account.password.edit') }}" class="dropdown-item">เปลี่ยนรหัสผ่าน</a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="dropdown-item">ออกจากระบบ</button>
+                  </form>
+                </li>
+              </ul>
             </div>
           </div>
         @endif
@@ -838,6 +973,120 @@
         }
       });
     }
+
+    const rowLinkIgnoreSelector = [
+      'a',
+      'button',
+      'input',
+      'select',
+      'textarea',
+      'label',
+      'summary',
+      '[role="button"]',
+      '[data-bs-toggle]',
+      '.dropdown-menu',
+      '[data-row-link-ignore]',
+    ].join(', ');
+
+    function isRowLinkCandidate(link) {
+      if (!(link instanceof HTMLAnchorElement)) {
+        return false;
+      }
+
+      const href = normalizeText(link.getAttribute('href'));
+
+      if (href === '' || href === '#' || href.toLowerCase().startsWith('javascript:')) {
+        return false;
+      }
+
+      if (link.target === '_blank' || link.hasAttribute('download')) {
+        return false;
+      }
+
+      if (link.closest('.dropdown-menu')) {
+        return false;
+      }
+
+      return true;
+    }
+
+    function getRowLinkPriority(link) {
+      if (link.hasAttribute('data-row-link-target')) {
+        return 0;
+      }
+
+      if (!link.classList.contains('btn')) {
+        return 99;
+      }
+
+      if (link.classList.contains('btn-primary') || link.classList.contains('btn-outline-primary')) {
+        return 1;
+      }
+
+      if (link.classList.contains('btn-outline-dark')) {
+        return 2;
+      }
+
+      return 3;
+    }
+
+    function resolveRowLink(row) {
+      const explicitUrl = normalizeText(row.dataset.rowLink ?? '');
+
+      if (explicitUrl !== '') {
+        return explicitUrl;
+      }
+
+      const candidates = Array.from(row.querySelectorAll('a[href]'))
+        .filter(isRowLinkCandidate)
+        .map(function (link, index) {
+          return {
+            href: link.href,
+            priority: getRowLinkPriority(link),
+            index,
+          };
+        })
+        .filter(function (entry) {
+          return entry.priority < 99;
+        })
+        .sort(function (left, right) {
+          return left.priority - right.priority || left.index - right.index;
+        });
+
+      return candidates[0]?.href ?? '';
+    }
+
+    document.querySelectorAll('table tbody tr').forEach(function (row) {
+      const url = resolveRowLink(row);
+
+      if (url === '') {
+        return;
+      }
+
+      row.classList.add('rb-row-link');
+
+      if (!row.title) {
+        row.title = 'ดับเบิลคลิกเพื่อเปิดรายการ';
+      }
+
+      row.addEventListener('dblclick', function (event) {
+        const target = event.target;
+
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        if (target.closest(rowLinkIgnoreSelector)) {
+          return;
+        }
+
+        if (window.getSelection && normalizeText(window.getSelection().toString()) !== '') {
+          return;
+        }
+
+        window.location.assign(url);
+      });
+    });
 
     document.querySelectorAll('table[data-sortable-table]').forEach(function (table) {
       const theadRow = table.tHead?.rows?.[0];

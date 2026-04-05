@@ -71,6 +71,33 @@
       color: #0f5132;
     }
 
+    .rb-report-filters {
+      padding: 1rem !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    .rb-report-filter-card {
+      padding: 0.9rem 1rem !important;
+    }
+
+    .rb-report-filters .rb-section-head {
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .rb-report-filters .rb-card-subtitle {
+      line-height: 1.45;
+    }
+
+    .rb-report-filters .row {
+      --bs-gutter-x: 1rem;
+      --bs-gutter-y: 0.75rem;
+    }
+
+    .rb-report-filters .form-label {
+      margin-bottom: 0.35rem;
+    }
+
     .rb-chart-card {
       border: 1px solid #d7f0e3;
       border-radius: 1rem;
@@ -103,6 +130,11 @@
       padding: 0.85rem 1rem;
       border-radius: 0.85rem;
       font-size: 0.9rem;
+    }
+
+    .rb-report-note {
+      padding: 0.7rem 0.9rem;
+      margin-bottom: 0.75rem !important;
     }
   </style>
 

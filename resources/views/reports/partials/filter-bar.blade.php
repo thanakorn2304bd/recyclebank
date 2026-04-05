@@ -1,6 +1,6 @@
-<form class="rb-surface p-4 mb-3">
+<form class="rb-surface p-4 mb-3 rb-report-filters">
   @if($isPrivileged)
-    <div class="border rounded-4 p-3 mb-3 bg-light-subtle">
+    <div class="border rounded-4 p-3 mb-3 bg-light-subtle rb-report-filter-card">
       <div class="rb-section-head">
         <div>
           <h2 class="rb-card-title">ค้นหาครัวเรือน</h2>
@@ -38,7 +38,7 @@
     </div>
   @endif
 
-  <div class="border rounded-4 p-3 bg-white">
+  <div class="border rounded-4 p-3 bg-white rb-report-filter-card">
     <div class="rb-section-head">
       <div>
         <h2 class="rb-card-title">กรองรายงาน</h2>
@@ -96,12 +96,12 @@
   </div>
 </form>
 
-<div class="rb-note mb-3">
+<div class="rb-note rb-report-note mb-3">
   โซนค้นหาครัวเรือนจะช่วยเจาะจง household ที่ต้องการก่อน ส่วนโซนกรองรายงานใช้จำกัดช่วงข้อมูล ชุมชน สถานะ และหมวดวัสดุของรายงานโดยรวม
 </div>
 
 @if($filterSummary !== [])
-  <div class="d-flex flex-wrap gap-2 mb-4">
+  <div class="d-flex flex-wrap gap-2 mb-3">
     @foreach($filterSummary as $item)
       <span class="rb-filter-chip">{{ $item }}</span>
     @endforeach
