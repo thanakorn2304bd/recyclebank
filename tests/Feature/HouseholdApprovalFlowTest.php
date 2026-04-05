@@ -63,6 +63,38 @@ class HouseholdApprovalFlowTest extends TestCase
         );
     }
 
+    public function test_staff_can_approve_household_without_review_notes(): void
+    {
+        ['staff' => $staffUser, 'household' => $household] = $this->seedPendingHouseholdFixtures();
+
+        $this->actingAs($staffUser)->patch(route('households.review', $household), [
+            'status' => 'active',
+            'review_notes' => '',
+        ])->assertRedirect(route('households.show', $household));
+
+        $this->assertDatabaseHas('household', [
+            'household_id' => $household->household_id,
+            'active_status' => 'active',
+            'reviewed_by' => $staffUser->user_id,
+            'review_notes' => '',
+        ]);
+    }
+
+    public function test_staff_must_provide_review_notes_when_deactivating_household(): void
+    {
+        ['staff' => $staffUser, 'household' => $household] = $this->seedPendingHouseholdFixtures();
+
+        $this->actingAs($staffUser)->patch(route('households.review', $household), [
+            'status' => 'inactive',
+            'review_notes' => '',
+        ])->assertSessionHasErrors('review_notes');
+
+        $this->assertDatabaseHas('household', [
+            'household_id' => $household->household_id,
+            'active_status' => 'pending',
+        ]);
+    }
+
     private function seedPendingHouseholdFixtures(): array
     {
         DB::table('community')->insert([

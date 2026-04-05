@@ -77,6 +77,9 @@ class ReportDataBuilder
         $selectedCategory = $filters->categoryId
             ? $materialCategories->firstWhere('category_id', $filters->categoryId)
             : null;
+        $selectedHouseholdSearchCommunity = $filters->householdSearchCommunityId
+            ? $communities->firstWhere('community_id', $filters->householdSearchCommunityId)
+            : null;
         $statusLabels = $this->statusLabels();
 
         return [
@@ -85,11 +88,15 @@ class ReportDataBuilder
             'to' => $filters->to,
             'communityId' => $filters->communityId,
             'householdStatus' => $filters->householdStatus,
+            'householdQuery' => $filters->householdQuery,
+            'householdSearchCommunityId' => $filters->householdSearchCommunityId,
+            'householdSearchHouseNo' => $filters->householdSearchHouseNo,
             'categoryId' => $filters->categoryId,
             'communities' => $communities,
             'materialCategories' => $materialCategories,
             'selectedCommunity' => $selectedCommunity,
             'selectedCategory' => $selectedCategory,
+            'selectedHouseholdSearchCommunity' => $selectedHouseholdSearchCommunity,
             'statusLabels' => $statusLabels,
             'statusClasses' => $this->statusClasses(),
             'statusText' => $filters->householdStatus ? ($statusLabels[$filters->householdStatus] ?? $filters->householdStatus) : null,
@@ -138,6 +145,7 @@ class ReportDataBuilder
         return Household::query()
             ->when($isPrivileged && $filters->communityId, fn (Builder $query) => $query->where('community_id', $filters->communityId))
             ->when($isPrivileged && $filters->householdStatus, fn (Builder $query) => $query->where('active_status', $filters->householdStatus))
+            ->when($isPrivileged, fn (Builder $query) => $this->applyHouseholdSearchFiltersToHouseholdQuery($query, $filters))
             ->when(
                 ! $isPrivileged,
                 function (Builder $query) use ($memberHouseholdId) {
@@ -164,7 +172,7 @@ class ReportDataBuilder
                 }
             )
             ->when(
-                $isPrivileged && ($filters->communityId || $filters->householdStatus),
+                $isPrivileged && ($filters->communityId || $filters->householdStatus || $this->hasHouseholdSearchCriteria($filters)),
                 function (Builder $query) use ($filters) {
                     $query->whereHas('household', function (Builder $subQuery) use ($filters) {
                         if ($filters->communityId) {
@@ -174,6 +182,8 @@ class ReportDataBuilder
                         if ($filters->householdStatus) {
                             $subQuery->where('active_status', $filters->householdStatus);
                         }
+
+                        $this->applyHouseholdSearchFiltersToHouseholdQuery($subQuery, $filters);
                     });
                 }
             )
@@ -210,6 +220,7 @@ class ReportDataBuilder
             })
             ->when($isPrivileged && $filters->communityId, fn ($query) => $query->where('h.community_id', $filters->communityId))
             ->when($isPrivileged && $filters->householdStatus, fn ($query) => $query->where('h.active_status', $filters->householdStatus))
+            ->when($isPrivileged, fn ($query) => $this->applyHouseholdSearchFiltersToJoinedHouseholdQuery($query, $filters))
             ->when($filters->from, fn ($query) => $query->whereDate('t.transaction_date', '>=', $filters->from))
             ->when($filters->to, fn ($query) => $query->whereDate('t.transaction_date', '<=', $filters->to))
             ->when($filters->categoryId, fn ($query) => $query->where('m.category_id', $filters->categoryId));
@@ -231,6 +242,7 @@ class ReportDataBuilder
             ->when($memberHouseholdId, fn ($query) => $query->where('h.household_id', $memberHouseholdId))
             ->when($filters->communityId, fn ($query) => $query->where('h.community_id', $filters->communityId))
             ->when($filters->householdStatus, fn ($query) => $query->where('h.active_status', $filters->householdStatus))
+            ->when($this->hasHouseholdSearchCriteria($filters), fn ($query) => $this->applyHouseholdSearchFiltersToJoinedHouseholdQuery($query, $filters))
             ->count();
 
         return [
@@ -333,12 +345,22 @@ class ReportDataBuilder
     {
         $communities = Community::query()
             ->when($filters->communityId, fn (Builder $query) => $query->where('community_id', $filters->communityId))
+            ->when($this->hasHouseholdSearchCriteria($filters), function (Builder $query) use ($filters) {
+                $query->whereHas('households', function (Builder $householdQuery) use ($filters) {
+                    if ($filters->householdStatus) {
+                        $householdQuery->where('active_status', $filters->householdStatus);
+                    }
+
+                    $this->applyHouseholdSearchFiltersToHouseholdQuery($householdQuery, $filters);
+                });
+            })
             ->orderBy('community_id')
             ->get(['community_id', 'community_name']);
 
         $householdStats = Household::query()
             ->when($filters->communityId, fn (Builder $query) => $query->where('community_id', $filters->communityId))
             ->when($filters->householdStatus, fn (Builder $query) => $query->where('active_status', $filters->householdStatus))
+            ->when($this->hasHouseholdSearchCriteria($filters), fn (Builder $query) => $this->applyHouseholdSearchFiltersToHouseholdQuery($query, $filters))
             ->select('community_id')
             ->selectRaw('COUNT(*) as household_count')
             ->selectRaw("SUM(CASE WHEN active_status = 'active' THEN 1 ELSE 0 END) as active_household_count")
@@ -353,6 +375,7 @@ class ReportDataBuilder
             ->join('household as h', 'h.household_id', '=', 'm.household_id')
             ->when($filters->communityId, fn ($query) => $query->where('h.community_id', $filters->communityId))
             ->when($filters->householdStatus, fn ($query) => $query->where('h.active_status', $filters->householdStatus))
+            ->when($this->hasHouseholdSearchCriteria($filters), fn ($query) => $this->applyHouseholdSearchFiltersToJoinedHouseholdQuery($query, $filters))
             ->select('h.community_id')
             ->selectRaw('COUNT(*) as member_count')
             ->groupBy('h.community_id')
@@ -373,6 +396,7 @@ class ReportDataBuilder
             ->where('t.transaction_type', 'withdraw')
             ->when($filters->communityId, fn ($query) => $query->where('h.community_id', $filters->communityId))
             ->when($filters->householdStatus, fn ($query) => $query->where('h.active_status', $filters->householdStatus))
+            ->when($this->hasHouseholdSearchCriteria($filters), fn ($query) => $this->applyHouseholdSearchFiltersToJoinedHouseholdQuery($query, $filters))
             ->when($filters->from, fn ($query) => $query->whereDate('t.transaction_date', '>=', $filters->from))
             ->when($filters->to, fn ($query) => $query->whereDate('t.transaction_date', '<=', $filters->to))
             ->select('h.community_id')
@@ -422,6 +446,7 @@ class ReportDataBuilder
             ->where('t.transaction_type', 'withdraw')
             ->when($filters->communityId, fn ($query) => $query->where('h.community_id', $filters->communityId))
             ->when($filters->householdStatus, fn ($query) => $query->where('h.active_status', $filters->householdStatus))
+            ->when($this->hasHouseholdSearchCriteria($filters), fn ($query) => $this->applyHouseholdSearchFiltersToJoinedHouseholdQuery($query, $filters))
             ->when($filters->from, fn ($query) => $query->whereDate('t.transaction_date', '>=', $filters->from))
             ->when($filters->to, fn ($query) => $query->whereDate('t.transaction_date', '<=', $filters->to))
             ->select('h.household_id')
@@ -477,6 +502,21 @@ class ReportDataBuilder
             $summary[] = 'สถานะครัวเรือน: '.($statusLabels[$filters->householdStatus] ?? $filters->householdStatus);
         }
 
+        if ($filters->householdQuery) {
+            $summary[] = 'Quick Search: '.$filters->householdQuery;
+        }
+
+        if ($filters->householdSearchCommunityId) {
+            $community = $communities->firstWhere('community_id', $filters->householdSearchCommunityId);
+            if ($community) {
+                $summary[] = 'ค้นหาในชุมชน: '.$community->community_id.' - '.$community->community_name;
+            }
+        }
+
+        if ($filters->householdSearchHouseNo) {
+            $summary[] = 'บ้านเลขที่ที่ค้นหา: '.$filters->householdSearchHouseNo;
+        }
+
         if ($filters->categoryId) {
             $category = $materialCategories->firstWhere('category_id', $filters->categoryId);
             if ($category) {
@@ -510,5 +550,72 @@ class ReportDataBuilder
         $householdId = $user->household_id;
 
         return $householdId ? (int) $householdId : null;
+    }
+
+    private function hasHouseholdSearchCriteria(ReportFilters $filters): bool
+    {
+        return $filters->householdQuery !== null
+            || $filters->householdSearchCommunityId !== null
+            || $filters->householdSearchHouseNo !== null;
+    }
+
+    private function applyHouseholdSearchFiltersToHouseholdQuery(Builder $query, ReportFilters $filters): void
+    {
+        if ($filters->householdSearchCommunityId) {
+            $query->where('community_id', $filters->householdSearchCommunityId);
+        }
+
+        if ($filters->householdSearchHouseNo) {
+            $query->where('house_no', 'like', '%'.$filters->householdSearchHouseNo.'%');
+        }
+
+        $this->applyQuickHouseholdSearchToHouseholdQuery($query, $filters->householdQuery);
+    }
+
+    private function applyHouseholdSearchFiltersToJoinedHouseholdQuery(mixed $query, ReportFilters $filters, string $alias = 'h'): void
+    {
+        if ($filters->householdSearchCommunityId) {
+            $query->where($alias.'.community_id', $filters->householdSearchCommunityId);
+        }
+
+        if ($filters->householdSearchHouseNo) {
+            $query->where($alias.'.house_no', 'like', '%'.$filters->householdSearchHouseNo.'%');
+        }
+
+        $this->applyQuickHouseholdSearchToJoinedHouseholdQuery($query, $filters->householdQuery, $alias);
+    }
+
+    private function applyQuickHouseholdSearchToHouseholdQuery(Builder $query, ?string $search): void
+    {
+        $keyword = trim((string) $search);
+
+        if ($keyword === '') {
+            return;
+        }
+
+        $likeKeyword = '%'.$keyword.'%';
+
+        $query->where(function (Builder $subQuery) use ($likeKeyword) {
+            $subQuery->where('account_no', 'like', $likeKeyword)
+                ->orWhere('contact_person', 'like', $likeKeyword)
+                ->orWhere('house_no', 'like', $likeKeyword);
+        });
+    }
+
+    private function applyQuickHouseholdSearchToJoinedHouseholdQuery(mixed $query, ?string $search, string $alias = 'h'): void
+    {
+        $keyword = trim((string) $search);
+
+        if ($keyword === '') {
+            return;
+        }
+
+        $likeKeyword = '%'.$keyword.'%';
+
+        $query->where(function ($subQuery) use ($alias, $likeKeyword) {
+            $subQuery->where($alias.'.account_no', 'like', $likeKeyword)
+                ->orWhere($alias.'.contact_person', 'like', $likeKeyword)
+                ->orWhere($alias.'.house_no', 'like', $likeKeyword);
+        });
     }
 }

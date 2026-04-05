@@ -9,6 +9,15 @@
       @if($statusText)
         · สถานะ {{ $statusText }}
       @endif
+      @if($householdQuery)
+        · Quick Search {{ $householdQuery }}
+      @endif
+      @if($selectedHouseholdSearchCommunity)
+        · ชุมชนที่ค้นหา {{ $selectedHouseholdSearchCommunity->community_id }} - {{ $selectedHouseholdSearchCommunity->community_name }}
+      @endif
+      @if($householdSearchHouseNo)
+        · บ้านเลขที่ {{ $householdSearchHouseNo }}
+      @endif
       @if($selectedCategory)
         · หมวดวัสดุ {{ $selectedCategory->category_name }}
       @endif

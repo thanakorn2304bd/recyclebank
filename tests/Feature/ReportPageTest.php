@@ -59,6 +59,41 @@ class ReportPageTest extends TestCase
             ->assertDontSee('Aluminum Can');
     }
 
+    public function test_staff_can_filter_report_by_household_search(): void
+    {
+        ['staff' => $staffUser] = $this->seedReportFixtures();
+
+        $response = $this->actingAs($staffUser)->get(route('reports.index', [
+            'household_q' => 'ACC0000002',
+        ]));
+
+        $response
+            ->assertOk()
+            ->assertSee('ค้นหาครัวเรือน')
+            ->assertSee('ACC0000002')
+            ->assertSee('Aluminum Can')
+            ->assertDontSee('ACC0000001')
+            ->assertDontSee('Plastic Bottle');
+    }
+
+    public function test_staff_can_filter_report_by_household_community_and_house_no(): void
+    {
+        ['staff' => $staffUser] = $this->seedReportFixtures();
+
+        $response = $this->actingAs($staffUser)->get(route('reports.index', [
+            'household_search_community_id' => '01',
+            'household_search_house_no' => '11',
+        ]));
+
+        $response
+            ->assertOk()
+            ->assertSee('บ้านเลขที่')
+            ->assertSee('ACC0000001')
+            ->assertSee('Plastic Bottle')
+            ->assertDontSee('ACC0000002')
+            ->assertDontSee('Aluminum Can');
+    }
+
     public function test_member_can_filter_report_by_material_category(): void
     {
         ['member' => $memberUser, 'categoryId' => $thisCategoryId] = $this->seedReportFixtures();

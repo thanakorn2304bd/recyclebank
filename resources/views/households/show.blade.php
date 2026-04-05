@@ -208,20 +208,35 @@
                 <form method="POST" action="{{ route('households.review', $household) }}">
                   @csrf
                   @method('PATCH')
+                  @php
+                    $selectedReviewStatus = old('status', $household->active_status === 'pending' ? 'active' : $household->active_status);
+                  @endphp
 
                   <div class="mb-3">
-                    <label class="form-label">ผลการพิจารณา</label>
-                    <select class="form-select" name="status" required>
-                      <option value="active" @selected(old('status', $household->active_status === 'pending' ? 'active' : $household->active_status) === 'active')>อนุมัติให้ใช้งาน</option>
-                      <option value="inactive" @selected(old('status', $household->active_status) === 'inactive')>ปิดการใช้งาน</option>
-                    </select>
-                    <div class="form-text">เมื่ออนุมัติแล้ว บัญชีสมาชิกของครัวเรือนนี้จะถูกเปิดใช้งานอัตโนมัติถ้ามีการตั้งรหัสผ่านไว้แล้ว</div>
+                    <label class="form-label">กำหนดสถานะบัญชี</label>
+                    <div class="rb-review-status-panel" id="household-review-status-panel">
+                      <div class="rb-review-status-panel__kicker">ขั้นตอนสำคัญ</div>
+                      <div class="rb-review-status-panel__title">เลือกสถานะที่จะใช้กับบัญชีนี้</div>
+                      <select class="form-select rb-review-status-select" id="household-review-status" name="status" required>
+                        <option value="active" @selected($selectedReviewStatus === 'active')>อนุมัติให้ใช้งาน</option>
+                        <option value="inactive" @selected($selectedReviewStatus === 'inactive')>ปิดการใช้งาน</option>
+                      </select>
+                      <div class="form-text rb-review-status-panel__help" id="household-review-status-help">เมื่ออนุมัติแล้ว บัญชีสมาชิกของครัวเรือนนี้จะถูกเปิดใช้งานอัตโนมัติถ้ามีการตั้งรหัสผ่านไว้แล้ว</div>
+                    </div>
                   </div>
 
                   <div class="mb-3">
                     <label class="form-label">หมายเหตุการพิจารณา</label>
-                    <textarea class="form-control" name="review_notes" rows="4" required>{{ old('review_notes', $household->review_notes) }}</textarea>
-                    <div class="form-text">ระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา เช่น เอกสารครบถ้วน ตรวจสอบข้อมูลแล้ว หรือปิดใช้งานตามคำร้อง</div>
+                    <textarea
+                      class="form-control"
+                      id="household-review-notes"
+                      name="review_notes"
+                      rows="4"
+                      @required($selectedReviewStatus === 'inactive')
+                    >{{ old('review_notes', $household->review_notes) }}</textarea>
+                    <div class="form-text" id="household-review-notes-help">
+                      การอนุมัติให้ใช้งานสามารถเว้นหมายเหตุได้ แต่หากปิดการใช้งานต้องระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา
+                    </div>
                   </div>
 
                   <button class="btn btn-primary">บันทึกผลการพิจารณา</button>
@@ -278,4 +293,114 @@
       </div>
     </div>
   </div>
+
+  @if($isPrivileged)
+    <style>
+      .rb-review-status-panel {
+        border: 1px solid rgba(23, 169, 122, 0.24);
+        border-radius: 1.25rem;
+        background:
+          linear-gradient(135deg, rgba(238, 249, 243, 0.98) 0%, rgba(255, 255, 255, 0.96) 55%),
+          linear-gradient(180deg, rgba(52, 211, 153, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+        box-shadow: 0 18px 34px rgba(15, 109, 74, 0.08);
+        padding: 1rem;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+      }
+
+      .rb-review-status-panel--active {
+        border-color: rgba(16, 185, 129, 0.32);
+        box-shadow: 0 18px 36px rgba(16, 185, 129, 0.12);
+      }
+
+      .rb-review-status-panel--inactive {
+        border-color: rgba(234, 88, 12, 0.28);
+        background:
+          linear-gradient(135deg, rgba(255, 247, 237, 0.98) 0%, rgba(255, 255, 255, 0.96) 58%),
+          linear-gradient(180deg, rgba(251, 146, 60, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+        box-shadow: 0 18px 36px rgba(234, 88, 12, 0.12);
+      }
+
+      .rb-review-status-panel__kicker {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: rgba(15, 109, 74, 0.1);
+        color: #0f6d4a;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        padding: 0.35rem 0.7rem;
+        text-transform: uppercase;
+      }
+
+      .rb-review-status-panel__title {
+        margin-top: 0.7rem;
+        margin-bottom: 0.85rem;
+        color: #0d5134;
+        font-size: 1.02rem;
+        font-weight: 700;
+      }
+
+      .rb-review-status-select {
+        min-height: 58px;
+        border-width: 2px;
+        font-size: 1.05rem;
+        font-weight: 600;
+      }
+
+      .rb-review-status-panel__help {
+        margin-top: 0.75rem;
+        font-size: 0.88rem;
+      }
+
+      .rb-review-status-panel--inactive .rb-review-status-panel__kicker {
+        background: rgba(234, 88, 12, 0.12);
+        color: #c2410c;
+      }
+
+      .rb-review-status-panel--inactive .rb-review-status-panel__title {
+        color: #9a3412;
+      }
+    </style>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const statusField = document.getElementById('household-review-status');
+        const statusPanel = document.getElementById('household-review-status-panel');
+        const statusHelp = document.getElementById('household-review-status-help');
+        const reviewNotesField = document.getElementById('household-review-notes');
+        const reviewNotesHelp = document.getElementById('household-review-notes-help');
+
+        if (! statusField || ! statusPanel || ! statusHelp || ! reviewNotesField || ! reviewNotesHelp) {
+          return;
+        }
+
+        const activeStatusHelpText = 'เมื่ออนุมัติแล้ว บัญชีสมาชิกของครัวเรือนนี้จะถูกเปิดใช้งานอัตโนมัติถ้ามีการตั้งรหัสผ่านไว้แล้ว';
+        const inactiveStatusHelpText = 'ใช้เมื่อจำเป็นต้องระงับการเข้าใช้งานบัญชี และควรระบุเหตุผลประกอบไว้ด้านล่าง';
+        const activeHelpText = 'การอนุมัติให้ใช้งานสามารถเว้นหมายเหตุได้ แต่หากปิดการใช้งานต้องระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา';
+        const inactiveHelpText = 'กรณีปิดการใช้งาน ต้องระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา เช่น ปิดใช้งานตามคำร้อง เอกสารไม่ครบ หรือข้อมูลไม่ตรงกัน';
+
+        function syncReviewNotesRequirement() {
+          const requiresReviewNotes = statusField.value === 'inactive';
+
+          statusPanel.classList.toggle('rb-review-status-panel--active', ! requiresReviewNotes);
+          statusPanel.classList.toggle('rb-review-status-panel--inactive', requiresReviewNotes);
+          statusHelp.textContent = requiresReviewNotes ? inactiveStatusHelpText : activeStatusHelpText;
+
+          if (requiresReviewNotes) {
+            reviewNotesField.setAttribute('required', 'required');
+            reviewNotesField.setAttribute('aria-required', 'true');
+          } else {
+            reviewNotesField.removeAttribute('required');
+            reviewNotesField.removeAttribute('aria-required');
+          }
+
+          reviewNotesHelp.textContent = requiresReviewNotes ? inactiveHelpText : activeHelpText;
+        }
+
+        statusField.addEventListener('change', syncReviewNotesRequirement);
+        syncReviewNotesRequirement();
+      });
+    </script>
+  @endif
 </x-layouts.admin>

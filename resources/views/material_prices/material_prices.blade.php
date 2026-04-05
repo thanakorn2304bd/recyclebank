@@ -16,8 +16,8 @@
       @foreach($prices as $p)
         <tr>
           <td>{{ number_format((float)$p->price, 2) }}</td>
-          <td>{{ $p->effective_date }}</td>
-          <td>{{ $p->expired_date ?? '-' }}</td>
+          <td>{{ $p->effective_date?->format('d/m/Y') ?? '-' }}</td>
+          <td>{{ $p->expired_date?->format('d/m/Y') ?? '-' }}</td>
         </tr>
       @endforeach
     </tbody>

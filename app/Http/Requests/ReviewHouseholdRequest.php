@@ -14,27 +14,38 @@ class ReviewHouseholdRequest extends FormRequest
 
     public function rules(): array
     {
+        $requiresReviewNotes = $this->input('status') === 'inactive';
+
         return [
             'status' => ['required', Rule::in(['active', 'inactive'])],
-            'review_notes' => ['required', 'string', 'min:5', 'max:1000'],
+            'review_notes' => [
+                'nullable',
+                'string',
+                'max:1000',
+                Rule::requiredIf($requiresReviewNotes),
+                ...(($this->filled('review_notes') || $requiresReviewNotes) ? ['min:5'] : []),
+            ],
         ];
     }
 
     public function payload(): array
     {
         $validated = $this->validated();
+        $reviewNotes = $validated['review_notes'] ?? null;
 
         return [
             'status' => (string) $validated['status'],
-            'review_notes' => trim((string) $validated['review_notes']),
+            'review_notes' => $reviewNotes !== null ? trim((string) $reviewNotes) : '',
         ];
     }
 
     protected function prepareForValidation(): void
     {
+        $reviewNotes = trim((string) $this->input('review_notes', ''));
+
         $this->merge([
             'status' => $this->filled('status') ? trim((string) $this->input('status')) : null,
-            'review_notes' => trim((string) $this->input('review_notes', '')),
+            'review_notes' => $reviewNotes !== '' ? $reviewNotes : null,
         ]);
     }
 }

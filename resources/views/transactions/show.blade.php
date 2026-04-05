@@ -6,7 +6,7 @@
         {{ $isDepositSummary ? 'สรุปรายการฝาก/รับซื้อ' : 'รายละเอียดรายการ' }} #{{ $transaction->transaction_id }}
       </h1>
       <p class="rb-page-subtitle">
-        วันที่ {{ $transaction->transaction_date }} |
+        วันที่ {{ $transaction->transaction_date?->format('d/m/Y') ?? '-' }} |
         ครัวเรือน {{ $transaction->household?->account_no }} - {{ $transaction->household?->contact_person }}
       </p>
     </div>

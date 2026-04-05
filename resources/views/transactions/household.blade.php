@@ -95,7 +95,7 @@
           @forelse($txs as $t)
             <tr>
               <td>{{ $t->transaction_id }}</td>
-              <td>{{ $t->transaction_date }}</td>
+              <td>{{ $t->transaction_date?->format('d/m/Y') ?? '-' }}</td>
               <td>
                 @if($t->transaction_type === 'deposit')
                   <span class="badge bg-success">ฝาก</span>
