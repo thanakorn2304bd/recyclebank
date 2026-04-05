@@ -36,10 +36,33 @@ class ReportPageTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('สรุปตามชุมชน')
+            ->assertSee('ยอดรับซื้อทั้งหมด')
+            ->assertSee('ยอดถอนทั้งหมด')
+            ->assertSee('ยอดคงเหลือทั้งหมด')
             ->assertSee('ACC0000001')
             ->assertSee('ACC0000002')
             ->assertSee('Plastic Bottle')
             ->assertSee('Aluminum Can');
+    }
+
+    public function test_staff_overall_summary_is_not_affected_by_filters(): void
+    {
+        ['staff' => $staffUser] = $this->seedReportFixtures();
+
+        $response = $this->actingAs($staffUser)->get(route('reports.index', [
+            'community_id' => '01',
+            'from' => '2026-03-01',
+            'to' => '2026-03-03',
+        ]));
+
+        $response
+            ->assertOk()
+            ->assertSee('ยอดรับซื้อทั้งหมด')
+            ->assertSee('300.00')
+            ->assertSee('ยอดถอนทั้งหมด')
+            ->assertSee('20.00')
+            ->assertSee('ยอดคงเหลือทั้งหมด')
+            ->assertSee('280.00');
     }
 
     public function test_staff_can_filter_report_by_community(): void

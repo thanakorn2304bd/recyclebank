@@ -19,6 +19,7 @@ class ReportDataBuilder
     {
         $isPrivileged = in_array($user->role, ['admin', 'staff'], true);
         $memberHouseholdId = $isPrivileged ? null : $this->memberHouseholdId($user);
+        $overallFilters = $this->emptyFilters();
 
         if (! $isPrivileged && ! $memberHouseholdId) {
             throw new MissingMemberHouseholdException('ไม่พบบัญชีครัวเรือนของผู้ใช้นี้');
@@ -30,6 +31,10 @@ class ReportDataBuilder
         $materialCategories = MaterialCategory::query()
             ->orderBy('category_name')
             ->get(['category_id', 'category_name']);
+
+        $overallHouseholdQuery = $this->householdScope($isPrivileged, $memberHouseholdId, $overallFilters);
+        $overallTransactionQuery = $this->transactionScope($isPrivileged, $memberHouseholdId, $overallFilters);
+        $overallDepositDetailQuery = $this->depositDetailScope($isPrivileged, $memberHouseholdId, $overallFilters);
 
         $householdQuery = $this->householdScope($isPrivileged, $memberHouseholdId, $filters);
         $transactionQuery = $this->transactionScope($isPrivileged, $memberHouseholdId, $filters);
@@ -45,6 +50,8 @@ class ReportDataBuilder
                 ->first();
         }
 
+        $overallHouseholdSummary = $this->buildHouseholdSummary($overallHouseholdQuery, $memberHouseholdId, $overallFilters);
+        $overallTransactionSummary = $this->buildTransactionSummary($overallTransactionQuery, $overallDepositDetailQuery);
         $householdSummary = $this->buildHouseholdSummary($householdQuery, $memberHouseholdId, $filters);
         $transactionSummary = $this->buildTransactionSummary($transactionQuery, $depositDetailQuery);
         $monthlySummary = $this->buildMonthlySummary($transactionQuery, $depositDetailQuery);
@@ -102,6 +109,17 @@ class ReportDataBuilder
             'statusText' => $filters->householdStatus ? ($statusLabels[$filters->householdStatus] ?? $filters->householdStatus) : null,
             'periodLabel' => $this->buildPeriodLabel($filters),
             'filterSummary' => $this->buildFilterSummary($communities, $materialCategories, $filters, $statusLabels),
+            'overallSummary' => [
+                'depositAmount' => $overallTransactionSummary['depositAmount'],
+                'withdrawAmount' => $overallTransactionSummary['withdrawAmount'],
+                'totalBalance' => $overallHouseholdSummary['totalBalance'],
+                'depositWeight' => $overallTransactionSummary['depositWeight'],
+                'depositCount' => $overallTransactionSummary['depositCount'],
+                'withdrawCount' => $overallTransactionSummary['withdrawCount'],
+                'transactionCount' => $overallTransactionSummary['transactionCount'],
+                'netAmount' => $overallTransactionSummary['netAmount'],
+                'householdCount' => $overallHouseholdSummary['totalHouseholds'],
+            ],
             'householdSummary' => $householdSummary,
             'transactionSummary' => $transactionSummary,
             'monthlySummary' => $monthlySummary,
@@ -138,6 +156,20 @@ class ReportDataBuilder
                 'withdraw' => $monthlySummary->reverse()->map(fn ($month) => round((float) $month->withdraw_amount, 2))->values()->all(),
             ],
         ];
+    }
+
+    private function emptyFilters(): ReportFilters
+    {
+        return new ReportFilters(
+            from: null,
+            to: null,
+            communityId: null,
+            householdStatus: null,
+            householdQuery: null,
+            householdSearchCommunityId: null,
+            householdSearchHouseNo: null,
+            categoryId: null,
+        );
     }
 
     private function householdScope(bool $isPrivileged, ?int $memberHouseholdId, ReportFilters $filters): Builder
