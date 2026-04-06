@@ -30,8 +30,7 @@ class RegisteredUserController extends Controller
         Request $request,
         HouseholdViewDataFactory $householdViewDataFactory,
         PendingHouseholdRegistrationStore $pendingHouseholdRegistrationStore
-    ): View
-    {
+    ): View {
         $registrationDraft = $pendingHouseholdRegistrationStore->get($request);
         $draftForm = is_array($registrationDraft['form'] ?? null) ? $registrationDraft['form'] : [];
         $communities = Community::orderBy('community_id')->get();
@@ -51,8 +50,7 @@ class RegisteredUserController extends Controller
     public function store(
         RegisterHouseholdRequest $request,
         PendingHouseholdRegistrationStore $pendingHouseholdRegistrationStore
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $privacyNotice = $this->currentPrivacyNotice();
 
         $householdAttributes = $request->householdAttributes();
@@ -75,8 +73,7 @@ class RegisteredUserController extends Controller
         Request $request,
         RegistrationDocumentService $registrationDocumentService,
         PendingHouseholdRegistrationStore $pendingHouseholdRegistrationStore
-    ): View|RedirectResponse
-    {
+    ): View|RedirectResponse {
         $registration = $pendingHouseholdRegistrationStore->get($request);
 
         if ($registration === null) {
