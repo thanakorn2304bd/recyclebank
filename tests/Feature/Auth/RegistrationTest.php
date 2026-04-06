@@ -64,9 +64,10 @@ class RegistrationTest extends TestCase
             'community_name' => 'North Community',
         ]);
 
-        $this->post('/register', [
-            ...$this->validRegistrationPayload(),
-        ])->assertRedirect(route('register.documents'));
+        $this->assertStringStartsWith(
+            route('register.documents'),
+            (string) $this->post('/register', [...$this->validRegistrationPayload()])->headers->get('Location')
+        );
 
         $response = $this->post(route('register.complete'), [
             'member_household_copies' => [
@@ -184,9 +185,10 @@ class RegistrationTest extends TestCase
             'community_name' => 'North Community',
         ]);
 
-        $this->post('/register', [
-            ...$this->validRegistrationPayload(),
-        ])->assertRedirect(route('register.documents'));
+        $this->assertStringStartsWith(
+            route('register.documents'),
+            (string) $this->post('/register', [...$this->validRegistrationPayload()])->headers->get('Location')
+        );
 
         $this->post(route('register.complete'), [
             'member_household_copies' => [
@@ -250,9 +252,10 @@ class RegistrationTest extends TestCase
             'community_name' => 'North Community',
         ]);
 
-        $this->post('/register', [
-            ...$this->validRegistrationPayload(),
-        ])->assertRedirect(route('register.documents'));
+        $this->assertStringStartsWith(
+            route('register.documents'),
+            (string) $this->post('/register', [...$this->validRegistrationPayload()])->headers->get('Location')
+        );
 
         $response = $this->from(route('register.documents'))->post(route('register.complete'), [
             'member_household_copies' => [

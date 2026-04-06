@@ -442,7 +442,7 @@ class HouseholdController extends Controller
                     'member_name' => $document->member_full_name,
                     'member_last4' => $document->member_id_card_last4,
                     'member_relation' => $document->member_relation,
-                    'source_label' => 'คำขอเพิ่มสมาชิก #'.$memberAdditionRequest->member_addition_request_id,
+                    'source_label' => 'เพิ่มสมาชิกภายหลัง',
                     'uploaded_at' => $document->created_at?->format('d/m/Y H:i'),
                     'created_at' => $document->created_at,
                     'document' => $document,
