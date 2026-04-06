@@ -9,14 +9,21 @@ use App\Http\Requests\StoreHouseholdRequest;
 use App\Http\Requests\UpdateHouseholdRequest;
 use App\Models\Community;
 use App\Models\Household;
+use App\Models\HouseholdRegistrationDocument;
 use App\Models\Member;
 use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserIdResolver;
+use App\Support\Households\HouseholdMemberAdditionService;
 use App\Support\Households\HouseholdService;
 use App\Support\Households\HouseholdViewDataFactory;
+use App\Support\Households\RegistrationDocumentService;
 use App\Support\Transactions\HouseholdTransactionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class HouseholdController extends Controller
 {
@@ -36,6 +43,7 @@ class HouseholdController extends Controller
         $q = $request->string('q')->toString();
         $communityId = $request->string('community_id')->toString();
         $status = $request->string('status')->toString();
+        $memberAddition = $request->string('member_addition')->toString();
 
         $householdsQuery = Household::query()
             ->with('community')
@@ -49,7 +57,10 @@ class HouseholdController extends Controller
                 });
             })
             ->when($communityId, fn ($qb) => $qb->where('community_id', $communityId))
-            ->when($status, fn ($qb) => $qb->where('active_status', $status));
+            ->when($status, fn ($qb) => $qb->where('active_status', $status))
+            ->when($memberAddition === 'pending', function ($qb) {
+                $qb->whereHas('memberAdditionRequests', fn ($requestQuery) => $requestQuery->where('status', 'pending'));
+            });
 
         $households = $householdsQuery
             ->orderBy('created_at')
@@ -71,6 +82,7 @@ class HouseholdController extends Controller
             'q',
             'communityId',
             'status',
+            'memberAddition',
             'activeCount',
             'pendingCount',
             'inactiveCount',
@@ -123,14 +135,73 @@ class HouseholdController extends Controller
         return view('households.edit', compact('household', 'communities', 'oldMembers'));
     }
 
-    public function show(Household $household, HouseholdService $householdService)
-    {
+    public function show(
+        Household $household,
+        HouseholdService $householdService,
+        HouseholdMemberAdditionService $householdMemberAdditionService
+    ) {
         $this->authorize('view', $household);
         $household = $householdService->loadDetails($household);
         $memberAccount = $householdService->memberAccountFor($household);
         $isPrivileged = ! $this->isMember();
+        $pendingMemberAdditionRequest = $household->memberAdditionRequests->firstWhere('status', 'pending');
+        $latestMemberAdditionRequest = $household->memberAdditionRequests->first();
+        $memberAdditionRequestForView = $pendingMemberAdditionRequest ?? $latestMemberAdditionRequest;
+        $memberAdditionRequestMembers = $memberAdditionRequestForView
+            ? $householdMemberAdditionService->normalizedMembers($memberAdditionRequestForView->requestedMembers)
+            : [];
 
-        return view('households.show', compact('household', 'memberAccount', 'isPrivileged'));
+        return view('households.show', compact(
+            'household',
+            'memberAccount',
+            'isPrivileged',
+            'pendingMemberAdditionRequest',
+            'latestMemberAdditionRequest',
+            'memberAdditionRequestForView',
+            'memberAdditionRequestMembers'
+        ));
+    }
+
+    public function documentsIndex(
+        Household $household,
+        HouseholdService $householdService,
+        RegistrationDocumentService $registrationDocumentService,
+        HouseholdMemberAdditionService $householdMemberAdditionService
+    ) {
+        $this->authorize('view', $household);
+
+        $household = $householdService->loadDetails($household);
+        $documentPageData = $this->buildHouseholdDocumentPageData(
+            $household,
+            $registrationDocumentService,
+            $householdMemberAdditionService
+        );
+
+        return view('households.documents.index', array_merge(
+            compact('household'),
+            $documentPageData
+        ));
+    }
+
+    public function showRegistrationDocument(
+        Request $request,
+        Household $household,
+        HouseholdRegistrationDocument $registrationDocument
+    ): StreamedResponse {
+        $this->authorize('view', $household);
+
+        abort_unless((int) $registrationDocument->household_id === (int) $household->household_id, 404);
+        abort_unless(Storage::exists($registrationDocument->stored_path), 404);
+
+        $downloadName = $registrationDocument->original_name ?: basename((string) $registrationDocument->stored_path);
+
+        if ($request->boolean('download')) {
+            return Storage::download($registrationDocument->stored_path, $downloadName);
+        }
+
+        return Storage::response($registrationDocument->stored_path, $downloadName, [
+            'Content-Type' => $registrationDocument->mime_type ?: 'application/octet-stream',
+        ]);
     }
 
     public function update(
@@ -313,5 +384,260 @@ class HouseholdController extends Controller
                 ->values()
                 ->all(),
         ];
+    }
+
+    private function buildHouseholdDocumentPageData(
+        Household $household,
+        RegistrationDocumentService $registrationDocumentService,
+        HouseholdMemberAdditionService $householdMemberAdditionService
+    ): array {
+        $confirmedDocumentEntries = $this->buildConfirmedDocumentEntries($household);
+        $currentMemberDocumentCards = $this->buildCurrentMemberDocumentCards(
+            $household,
+            $registrationDocumentService,
+            $confirmedDocumentEntries
+        );
+        $openRequestDocumentGroups = $this->buildOpenRequestDocumentGroups(
+            $household,
+            $householdMemberAdditionService
+        );
+
+        return [
+            'documentSummary' => [
+                'member_count' => $household->members->count(),
+                'document_count' => $household->registrationDocuments->count()
+                    + $household->memberAdditionRequests->sum(fn ($request) => $request->documents->count()),
+                'open_request_count' => count($openRequestDocumentGroups),
+                'open_request_member_count' => collect($openRequestDocumentGroups)
+                    ->sum(fn (array $group) => count($group['members'])),
+            ],
+            'currentMemberDocumentCards' => $currentMemberDocumentCards,
+            'openRequestDocumentGroups' => $openRequestDocumentGroups,
+        ];
+    }
+
+    private function buildConfirmedDocumentEntries(Household $household): Collection
+    {
+        $entries = collect();
+
+        foreach ($household->registrationDocuments as $document) {
+            $entries->push([
+                'document_type' => $document->document_type,
+                'member_name' => $document->member_full_name,
+                'member_last4' => $document->member_id_card_last4,
+                'member_relation' => $document->member_relation,
+                'source_label' => 'เอกสารสมัครสมาชิกครั้งแรก',
+                'uploaded_at' => $document->created_at?->format('d/m/Y H:i'),
+                'created_at' => $document->created_at,
+                'document' => $document,
+                'view_url' => route('households.documents.show', [$household, $document]),
+                'download_url' => route('households.documents.show', [$household, $document, 'download' => 1]),
+            ]);
+        }
+
+        foreach ($household->memberAdditionRequests->where('status', 'approved') as $memberAdditionRequest) {
+            foreach ($memberAdditionRequest->documents as $document) {
+                $entries->push([
+                    'document_type' => $document->document_type,
+                    'member_name' => $document->member_full_name,
+                    'member_last4' => $document->member_id_card_last4,
+                    'member_relation' => $document->member_relation,
+                    'source_label' => 'คำขอเพิ่มสมาชิก #'.$memberAdditionRequest->member_addition_request_id,
+                    'uploaded_at' => $document->created_at?->format('d/m/Y H:i'),
+                    'created_at' => $document->created_at,
+                    'document' => $document,
+                    'view_url' => route('households.member-additions.documents.show', [$household, $memberAdditionRequest, $document]),
+                    'download_url' => route('households.member-additions.documents.show', [$household, $memberAdditionRequest, $document, 'download' => 1]),
+                ]);
+            }
+        }
+
+        return $entries;
+    }
+
+    private function buildCurrentMemberDocumentCards(
+        Household $household,
+        RegistrationDocumentService $registrationDocumentService,
+        Collection $confirmedDocumentEntries
+    ): array {
+        $documentRequirements = $registrationDocumentService->documentRequirements();
+
+        return $household->members
+            ->values()
+            ->map(function (Member $member, int $index) use ($documentRequirements, $confirmedDocumentEntries) {
+                $householdCopy = $this->pickBestDocumentEntryForMember($member, $confirmedDocumentEntries, 'household_copy');
+                $nationalIdCopy = $this->pickBestDocumentEntryForMember($member, $confirmedDocumentEntries, 'national_id_copy');
+
+                return [
+                    'title' => 'สมาชิกคนที่ '.($index + 1).': '.$member->full_name,
+                    'meta' => collect([
+                        $member->relation ?: null,
+                        $member->masked_id_card,
+                    ])->filter()->implode(' | '),
+                    'is_head' => (bool) $member->is_head,
+                    'documents' => [
+                        [
+                            'label' => $documentRequirements['member_household_copies']['label'] ?? 'สำเนาทะเบียนบ้าน',
+                            'document' => $householdCopy['document'] ?? null,
+                            'uploaded_at' => $householdCopy['uploaded_at'] ?? null,
+                            'source_label' => $householdCopy['source_label'] ?? null,
+                            'view_url' => $householdCopy['view_url'] ?? null,
+                            'download_url' => $householdCopy['download_url'] ?? null,
+                        ],
+                        [
+                            'label' => $documentRequirements['member_national_id_copies']['label'] ?? 'สำเนาบัตรประชาชน',
+                            'document' => $nationalIdCopy['document'] ?? null,
+                            'uploaded_at' => $nationalIdCopy['uploaded_at'] ?? null,
+                            'source_label' => $nationalIdCopy['source_label'] ?? null,
+                            'view_url' => $nationalIdCopy['view_url'] ?? null,
+                            'download_url' => $nationalIdCopy['download_url'] ?? null,
+                        ],
+                    ],
+                ];
+            })
+            ->all();
+    }
+
+    private function buildOpenRequestDocumentGroups(
+        Household $household,
+        HouseholdMemberAdditionService $householdMemberAdditionService
+    ): array {
+        $memberAdditionStatusMap = [
+            'pending' => ['label' => 'รอตรวจสอบ', 'class' => 'text-bg-warning'],
+            'rejected' => ['label' => 'ตีกลับ', 'class' => 'text-bg-danger'],
+        ];
+
+        return $household->memberAdditionRequests
+            ->filter(fn ($request) => in_array($request->status, ['pending', 'rejected'], true))
+            ->values()
+            ->map(function ($memberAdditionRequest) use ($household, $householdMemberAdditionService, $memberAdditionStatusMap) {
+                $statusUi = $memberAdditionStatusMap[$memberAdditionRequest->status] ?? $memberAdditionStatusMap['pending'];
+                $documentLookup = $householdMemberAdditionService->documentLookup($memberAdditionRequest);
+                $documentRequirements = $householdMemberAdditionService->documentRequirements();
+
+                return [
+                    'title' => 'คำขอเพิ่มสมาชิก #'.$memberAdditionRequest->member_addition_request_id,
+                    'subtitle' => 'ยื่นเมื่อ '.($memberAdditionRequest->created_at?->format('d/m/Y H:i') ?? '-'),
+                    'badge_label' => $statusUi['label'],
+                    'badge_class' => $statusUi['class'],
+                    'review_notes' => $memberAdditionRequest->review_notes,
+                    'members' => collect($householdMemberAdditionService->normalizedMembers($memberAdditionRequest->requestedMembers))
+                        ->map(function (array $member) use (
+                            $household,
+                            $memberAdditionRequest,
+                            $documentLookup,
+                            $documentRequirements
+                        ) {
+                            $householdCopy = $documentLookup->get($member['position'].'-household_copy');
+                            $nationalIdCopy = $documentLookup->get($member['position'].'-national_id_copy');
+
+                            return [
+                                'title' => $member['display_name'],
+                                'meta' => $member['display_meta'],
+                                'documents' => [
+                                    [
+                                        'label' => $documentRequirements['member_household_copies']['label'] ?? 'สำเนาทะเบียนบ้าน',
+                                        'document' => $householdCopy,
+                                        'uploaded_at' => $householdCopy?->created_at?->format('d/m/Y H:i'),
+                                        'source_label' => 'คำขอนี้',
+                                        'view_url' => $householdCopy
+                                            ? route('households.member-additions.documents.show', [$household, $memberAdditionRequest, $householdCopy])
+                                            : null,
+                                        'download_url' => $householdCopy
+                                            ? route('households.member-additions.documents.show', [$household, $memberAdditionRequest, $householdCopy, 'download' => 1])
+                                            : null,
+                                    ],
+                                    [
+                                        'label' => $documentRequirements['member_national_id_copies']['label'] ?? 'สำเนาบัตรประชาชน',
+                                        'document' => $nationalIdCopy,
+                                        'uploaded_at' => $nationalIdCopy?->created_at?->format('d/m/Y H:i'),
+                                        'source_label' => 'คำขอนี้',
+                                        'view_url' => $nationalIdCopy
+                                            ? route('households.member-additions.documents.show', [$household, $memberAdditionRequest, $nationalIdCopy])
+                                            : null,
+                                        'download_url' => $nationalIdCopy
+                                            ? route('households.member-additions.documents.show', [$household, $memberAdditionRequest, $nationalIdCopy, 'download' => 1])
+                                            : null,
+                                    ],
+                                ],
+                            ];
+                        })
+                        ->all(),
+                ];
+            })
+            ->all();
+    }
+
+    private function pickBestDocumentEntryForMember(
+        Member $member,
+        Collection $confirmedDocumentEntries,
+        string $documentType
+    ): ?array {
+        $bestCandidate = null;
+
+        foreach ($confirmedDocumentEntries as $entry) {
+            if (($entry['document_type'] ?? null) !== $documentType) {
+                continue;
+            }
+
+            $score = $this->scoreDocumentMatch(
+                $member,
+                $entry['member_name'] ?? null,
+                $entry['member_last4'] ?? null,
+                $entry['member_relation'] ?? null
+            );
+
+            if ($score < 3) {
+                continue;
+            }
+
+            $timestamp = $entry['created_at']?->getTimestamp() ?? 0;
+
+            if ($bestCandidate === null
+                || $score > $bestCandidate['score']
+                || ($score === $bestCandidate['score'] && $timestamp > $bestCandidate['timestamp'])) {
+                $bestCandidate = [
+                    'score' => $score,
+                    'timestamp' => $timestamp,
+                    'entry' => $entry,
+                ];
+            }
+        }
+
+        return $bestCandidate['entry'] ?? null;
+    }
+
+    private function scoreDocumentMatch(
+        Member $member,
+        ?string $documentMemberName,
+        ?string $documentMemberLast4,
+        ?string $documentMemberRelation
+    ): int {
+        $score = 0;
+        $memberLast4 = $member->id_card_last4 ?: Member::extractIdCardLast4($member->id_card);
+
+        if ($documentMemberLast4 !== null
+            && $documentMemberLast4 !== ''
+            && $memberLast4 !== null
+            && $documentMemberLast4 === $memberLast4) {
+            $score += 3;
+        }
+
+        if ($this->normalizeDocumentMatchValue($documentMemberName) !== ''
+            && $this->normalizeDocumentMatchValue($documentMemberName) === $this->normalizeDocumentMatchValue($member->full_name)) {
+            $score += 2;
+        }
+
+        if ($this->normalizeDocumentMatchValue($documentMemberRelation) !== ''
+            && $this->normalizeDocumentMatchValue($documentMemberRelation) === $this->normalizeDocumentMatchValue($member->relation)) {
+            $score += 1;
+        }
+
+        return $score;
+    }
+
+    private function normalizeDocumentMatchValue(?string $value): string
+    {
+        return Str::lower(preg_replace('/\s+/u', ' ', trim((string) ($value ?? ''))) ?? '');
     }
 }

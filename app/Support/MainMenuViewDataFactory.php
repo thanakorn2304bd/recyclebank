@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\DataSubjectRequest;
 use App\Models\Household;
+use App\Models\HouseholdMemberAdditionRequest;
 use App\Models\Material;
 use App\Models\SecurityIncident;
 use App\Models\UserAccount;
@@ -126,6 +127,9 @@ class MainMenuViewDataFactory
                     ->orWhereNull('subject_notified_at');
             })
             ->count();
+        $pendingMemberAdditionRequests = HouseholdMemberAdditionRequest::query()
+            ->where('status', 'pending')
+            ->count();
         $pendingWithdrawRequests = WithdrawRequest::query()
             ->where('status', 'pending')
             ->count();
@@ -153,6 +157,13 @@ class MainMenuViewDataFactory
                 'description' => 'เหตุข้อมูลส่วนบุคคลที่ยังต้องแจ้งหน่วยงานหรือเจ้าของข้อมูล',
                 'url' => route('compliance.incidents.index', absolute: false),
                 'accent' => 'sky',
+            ],
+            [
+                'label' => 'คำขอเพิ่มสมาชิก',
+                'count' => $pendingMemberAdditionRequests,
+                'description' => 'ครัวเรือนที่ยื่นขอเพิ่มสมาชิกและยังรอเจ้าหน้าที่ตรวจสอบ',
+                'url' => route('households.index', ['member_addition' => 'pending'], false),
+                'accent' => 'emerald',
             ],
         ];
 

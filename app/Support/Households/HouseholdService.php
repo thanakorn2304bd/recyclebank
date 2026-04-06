@@ -26,6 +26,15 @@ class HouseholdService
             'community',
             'createdByUser',
             'reviewedByUser.staff',
+            'memberAdditionRequests' => fn ($query) => $query
+                ->with([
+                    'requestedMembers' => fn ($memberQuery) => $memberQuery->orderBy('member_addition_request_member_id'),
+                    'documents' => fn ($documentQuery) => $documentQuery->orderBy('member_position')->orderBy('document_type'),
+                    'requestedByUser.staff',
+                    'reviewedByUser.staff',
+                ])
+                ->orderByDesc('member_addition_request_id'),
+            'registrationDocuments' => fn ($query) => $query->orderBy('member_position')->orderBy('document_type'),
             'members' => fn ($query) => $query->orderByDesc('is_head')->orderBy('full_name'),
         ]);
 

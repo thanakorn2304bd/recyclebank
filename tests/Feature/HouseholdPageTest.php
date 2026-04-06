@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Household;
+use App\Models\HouseholdMemberAdditionRequest;
 use App\Models\UserAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,29 @@ class HouseholdPageTest extends TestCase
             ->assertViewHas('pendingCount', 1)
             ->assertViewHas('inactiveCount', 0)
             ->assertViewHas('isPrivileged', true);
+    }
+
+    public function test_staff_can_filter_household_index_by_pending_member_addition_requests(): void
+    {
+        [
+            'staff' => $staffUser,
+            'activeHousehold' => $activeHousehold,
+            'pendingHousehold' => $pendingHousehold,
+            'member' => $memberUser,
+        ] = $this->seedHouseholdFixtures();
+
+        HouseholdMemberAdditionRequest::create([
+            'household_id' => $activeHousehold->household_id,
+            'requested_by' => $memberUser->user_id,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($staffUser)
+            ->get(route('households.index', ['member_addition' => 'pending']))
+            ->assertOk()
+            ->assertSee($activeHousehold->account_no)
+            ->assertDontSee($pendingHousehold->account_no)
+            ->assertViewHas('memberAddition', 'pending');
     }
 
     public function test_member_is_redirected_to_their_household_detail_from_index(): void

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\DataSubjectRequest;
 use App\Models\Household;
+use App\Models\HouseholdMemberAdditionRequest;
 use App\Models\SecurityIncident;
 use App\Models\UserAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -87,7 +88,7 @@ class HouseholdConvenienceFlowTest extends TestCase
 
     public function test_staff_main_menu_shows_attention_items(): void
     {
-        ['staff' => $staffUser, 'household' => $household] = $this->seedFixtures();
+        ['staff' => $staffUser, 'household' => $household, 'memberUser' => $memberUser] = $this->seedFixtures();
 
         Household::create([
             'account_no' => 'ACC9000003',
@@ -137,11 +138,18 @@ class HouseholdConvenienceFlowTest extends TestCase
             'closed_at' => null,
         ]);
 
+        HouseholdMemberAdditionRequest::create([
+            'household_id' => $household->household_id,
+            'requested_by' => $memberUser->user_id,
+            'status' => 'pending',
+        ]);
+
         $this->actingAs($staffUser)
             ->get(route('main-menu'))
             ->assertOk()
             ->assertSeeText('งานที่ต้องติดตาม')
             ->assertSeeText('คำขอสมาชิกใหม่')
+            ->assertSeeText('คำขอเพิ่มสมาชิก')
             ->assertSeeText('DSAR เปิดอยู่')
             ->assertSeeText('เหตุที่ต้องแจ้งเตือน')
             ->assertViewHas('attentionItems', function (array $attentionItems) {
@@ -149,6 +157,7 @@ class HouseholdConvenienceFlowTest extends TestCase
                     'คำขอสมาชิกใหม่' => 1,
                     'DSAR เปิดอยู่' => 1,
                     'เหตุที่ต้องแจ้งเตือน' => 1,
+                    'คำขอเพิ่มสมาชิก' => 1,
                 ];
             });
     }

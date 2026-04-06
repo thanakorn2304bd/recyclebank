@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataSubjectRequestController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\HouseholdController;
+use App\Http\Controllers\HouseholdMemberAdditionRequestController;
 use App\Http\Controllers\MainMenuController;
 use App\Http\Controllers\MaterialCategoryController;
 use App\Http\Controllers\MaterialController;
@@ -43,10 +44,22 @@ Route::middleware(['auth', 'active', 'password.current'])->group(function () {
         Route::resource('material-categories', MaterialCategoryController::class)->except(['show']);
         Route::resource('materials', MaterialController::class)->except(['show']);
         Route::get('households/quick-search', [HouseholdController::class, 'quickSearch'])->name('households.quick-search');
+        Route::get('households/{household}/documents', [HouseholdController::class, 'documentsIndex'])
+            ->name('households.documents.index');
+        Route::get('households/{household}/documents/{registrationDocument}', [HouseholdController::class, 'showRegistrationDocument'])
+            ->name('households.documents.show');
+        Route::get(
+            'households/{household}/member-additions/{memberAdditionRequest}/documents/{memberAdditionRequestDocument}',
+            [HouseholdMemberAdditionRequestController::class, 'showDocument']
+        )->name('households.member-additions.documents.show');
         Route::resource('households', HouseholdController::class)->except(['index', 'show']);
         Route::get('households/{household}/credentials', [HouseholdController::class, 'createCredentials'])->name('households.credentials.create');
         Route::post('households/{household}/credentials', [HouseholdController::class, 'storeCredentials'])->name('households.credentials.store');
         Route::patch('households/{household}/review', [HouseholdController::class, 'review'])->name('households.review');
+        Route::patch(
+            'households/{household}/member-additions/{memberAdditionRequest}/review',
+            [HouseholdMemberAdditionRequestController::class, 'review']
+        )->name('households.member-additions.review');
 
         // ราคา: ใช้ resource + เพิ่ม route ดู “ราคาปัจจุบัน” ต่อวัสดุ
         Route::post('material-prices/bulk-update', [MaterialPriceController::class, 'bulkUpdate'])->name('material-prices.bulk-update');
@@ -80,6 +93,10 @@ Route::middleware(['auth', 'active', 'password.current'])->group(function () {
     Route::resource('households', HouseholdController::class)->only(['index', 'show']);
     Route::get('withdraw-requests', [WithdrawRequestController::class, 'index'])->name('withdraw-requests.index');
     Route::middleware('role:member')->group(function () {
+        Route::get('households/{household}/member-additions/create', [HouseholdMemberAdditionRequestController::class, 'create'])
+            ->name('households.member-additions.create');
+        Route::post('households/{household}/member-additions', [HouseholdMemberAdditionRequestController::class, 'store'])
+            ->name('households.member-additions.store');
         Route::get('withdraw-requests/create', [WithdrawRequestController::class, 'create'])->name('withdraw-requests.create');
         Route::post('withdraw-requests', [WithdrawRequestController::class, 'store'])->name('withdraw-requests.store');
     });

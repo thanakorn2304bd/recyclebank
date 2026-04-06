@@ -36,11 +36,11 @@
 
             @if(!$authUser)
                 <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
-                        สมัครสมาชิก
-                    </a>
-                    <a href="{{ route('login') }}" class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:text-emerald-800">
+                    <a href="{{ route('login') }}" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
                         ลงชื่อเข้าใช้
+                    </a>
+                    <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:text-emerald-800">
+                        สมัครสมาชิก
                     </a>
                 </div>
             @endif

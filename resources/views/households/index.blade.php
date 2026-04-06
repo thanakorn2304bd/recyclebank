@@ -44,17 +44,17 @@
         <h2 class="rb-card-title">ค้นหาและกรองข้อมูล</h2>
         <p class="rb-card-subtitle">ค้นหาจากเลขบัญชี บ้านเลขที่ ผู้ติดต่อ สมาชิกในครัวเรือน โทรศัพท์ ชุมชน หรือสถานะ</p>
       </div>
-      @if($q || $communityId || $status)
+      @if($q || $communityId || $status || $memberAddition)
         <span class="rb-chip">กำลังใช้ตัวกรอง</span>
       @endif
     </div>
 
     <div class="row g-3">
-      <div class="col-lg-5">
+      <div class="col-lg-4">
         <label class="form-label">คำค้นหา</label>
         <input class="form-control" name="q" value="{{ $q }}" placeholder="ค้นหาเลขบัญชี / บ้านเลขที่ / ผู้ติดต่อ / สมาชิก / โทรศัพท์">
       </div>
-      <div class="col-lg-3">
+      <div class="col-lg-2">
         <label class="form-label">ชุมชน</label>
         <select class="form-select" name="community_id">
           <option value="">ทุกชุมชน</option>
@@ -72,6 +72,13 @@
           <option value="pending" @selected($status === 'pending')>รออนุมัติ</option>
           <option value="active" @selected($status === 'active')>ใช้งาน</option>
           <option value="inactive" @selected($status === 'inactive')>ปิด</option>
+        </select>
+      </div>
+      <div class="col-lg-2">
+        <label class="form-label">คำขอเพิ่มสมาชิก</label>
+        <select class="form-select" name="member_addition">
+          <option value="">ทุกคำขอ</option>
+          <option value="pending" @selected($memberAddition === 'pending')>มีคำขอรอตรวจ</option>
         </select>
       </div>
       <div class="col-lg-2 d-flex align-items-end gap-2">

@@ -2,30 +2,6 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    @if(session('approval_pending_notice'))
-        <div
-            x-data="{ open: true }"
-            x-show="open"
-            class="mb-4 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 shadow-sm"
-        >
-            <div class="border-b border-amber-200 bg-amber-100/80 px-4 py-3">
-                <div class="text-sm font-semibold text-amber-900">สถานะคำขอสมัครสมาชิก</div>
-            </div>
-            <div class="px-4 py-4">
-                <p class="text-sm leading-6 text-amber-900">{{ session('approval_pending_notice') }}</p>
-                <div class="mt-4 flex justify-end">
-                    <button
-                        type="button"
-                        @click="open = false"
-                        class="inline-flex items-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
-                    >
-                        รับทราบ
-                    </button>
-                </div>
-            </div>
-        </div>
-    @endif
-
     <form method="POST" action="{{ route('login') }}">
         @csrf
 

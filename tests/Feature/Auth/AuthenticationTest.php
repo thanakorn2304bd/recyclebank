@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Http\Controllers\Auth\RegistrationStatusController;
 use App\Models\UserAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +76,7 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_pending_member_users_see_waiting_for_approval_notice_on_login(): void
+    public function test_pending_member_users_are_redirected_to_tracking_page_on_login(): void
     {
         DB::table('community')->insert([
             'community_id' => '01',
@@ -111,11 +112,53 @@ class AuthenticationTest extends TestCase
                 'username' => $user->username,
                 'password' => 'password123',
             ])
-            ->assertRedirect(route('login'))
-            ->assertSessionHasErrors([
-                'username' => 'คำขอสมัครสมาชิกของบัญชี ACC0000099 อยู่ระหว่างรออนุมัติจากเจ้าหน้าที่ กรุณารอการยืนยันก่อนเข้าสู่ระบบ',
+            ->assertRedirect(route('registration-status.show'))
+            ->assertSessionHas(RegistrationStatusController::TRACKING_SESSION_KEY, $user->user_id)
+            ->assertSessionHas('status', 'คำขอสมัครสมาชิกของบัญชี ACC0000099 อยู่ระหว่างรออนุมัติจากเจ้าหน้าที่ กรุณาติดตามผลได้จากหน้าสถานะคำขอสมัครสมาชิก');
+
+        $this->assertGuest();
+    }
+
+    public function test_returned_member_users_are_redirected_to_tracking_page_on_login(): void
+    {
+        DB::table('community')->insert([
+            'community_id' => '01',
+            'community_name' => 'North Community',
+        ]);
+
+        $householdId = DB::table('household')->insertGetId([
+            'account_no' => 'ACC0000100',
+            'house_no' => '12',
+            'village_no' => '1',
+            'community_id' => '01',
+            'phone' => '0811111111',
+            'contact_person' => 'สมหญิง แก้เอกสาร',
+            'register_date' => now()->toDateString(),
+            'active_status' => 'inactive',
+            'accumulated_months' => 0,
+            'total_balance' => 0,
+            'created_by' => null,
+            'review_notes' => 'บัตรประชาชนไม่ชัดเจน',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $user = $this->createUserAccount([
+            'username' => 'ACC0000100',
+            'password' => Hash::make('password123'),
+            'role' => 'member',
+            'household_id' => $householdId,
+            'is_active' => false,
+        ]);
+
+        $this->from(route('login'))
+            ->post('/login', [
+                'username' => $user->username,
+                'password' => 'password123',
             ])
-            ->assertSessionHas('approval_pending_notice');
+            ->assertRedirect(route('registration-status.show'))
+            ->assertSessionHas(RegistrationStatusController::TRACKING_SESSION_KEY, $user->user_id)
+            ->assertSessionHas('status', 'คำขอสมัครสมาชิกของบัญชี ACC0000100 ถูกส่งกลับเพื่อแก้ไขเอกสาร กรุณาไปที่หน้าติดตามคำขอเพื่อดูหมายเหตุและอัปโหลดเอกสารใหม่');
 
         $this->assertGuest();
     }

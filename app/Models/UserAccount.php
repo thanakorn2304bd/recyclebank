@@ -106,6 +106,16 @@ class UserAccount extends Authenticatable
         return $this->hasMany(WithdrawRequest::class, 'reviewed_by', 'user_id');
     }
 
+    public function requestedHouseholdMemberAdditionRequests()
+    {
+        return $this->hasMany(HouseholdMemberAdditionRequest::class, 'requested_by', 'user_id');
+    }
+
+    public function reviewedHouseholdMemberAdditionRequests()
+    {
+        return $this->hasMany(HouseholdMemberAdditionRequest::class, 'reviewed_by', 'user_id');
+    }
+
     public function applyPassword(string $password, bool $forcePasswordReset = false): void
     {
         $this->password = $password;

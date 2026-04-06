@@ -1,8 +1,11 @@
 <x-guest-layout>
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-emerald-900">สมัครสมาชิกครัวเรือน</h1>
+        <div class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            ขั้นตอนที่ 1 จาก 2
+        </div>
+        <h1 class="mt-3 text-2xl font-bold text-emerald-900">สมัครสมาชิกครัวเรือน</h1>
         <p class="mt-2 text-sm text-gray-600">
-            กรอกข้อมูลครัวเรือนเพื่อส่งคำขอสมัครเข้าใช้งาน ระบบจะตั้งสถานะเป็นรออนุมัติ และ staff/admin จะตรวจสอบก่อนเปิดใช้งานบัญชี
+            กรอกข้อมูลครัวเรือนก่อน จากนั้นระบบจะพาไปหน้าอัปโหลดเอกสารยืนยันตัวตนเพื่อส่งคำขอสมัครเข้าใช้งาน
         </p>
     </div>
 
@@ -21,7 +24,7 @@
 
         <div>
             <x-input-label for="account_no" value="เลขบัญชี" />
-            <x-text-input id="account_no" class="block mt-1 w-full bg-gray-100 text-gray-700" type="text" value="{{ old('account_no') }}" maxlength="10" inputmode="numeric" readonly />
+            <x-text-input id="account_no" class="block mt-1 w-full bg-gray-100 text-gray-700" type="text" value="{{ old('account_no', $draftAccountNo) }}" maxlength="10" inputmode="numeric" readonly />
             <x-input-error :messages="$errors->get('account_no')" class="mt-2" />
             <p class="mt-2 text-sm text-gray-500">ระบบสร้างอัตโนมัติจากปีปัจจุบัน + ชุมชน + บ้านเลขที่ และให้ staff/admin แก้ไขได้ภายหลังเท่านั้น</p>
         </div>
@@ -31,7 +34,7 @@
             <select id="community_id" name="community_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" required autofocus>
                 <option value="">-- เลือกชุมชน --</option>
                 @foreach($communities as $community)
-                    <option value="{{ $community->community_id }}" @selected(old('community_id') == $community->community_id)>
+                    <option value="{{ $community->community_id }}" @selected(old('community_id', $draftForm['community_id'] ?? '') == $community->community_id)>
                         {{ $community->community_id }} - {{ $community->community_name }}
                     </option>
                 @endforeach
@@ -41,25 +44,25 @@
 
         <div class="mt-4">
             <x-input-label for="house_no" value="บ้านเลขที่" />
-            <x-text-input id="house_no" class="block mt-1 w-full" type="text" name="house_no" :value="old('house_no')" required />
+            <x-text-input id="house_no" class="block mt-1 w-full" type="text" name="house_no" :value="old('house_no', $draftForm['house_no'] ?? '')" required />
             <x-input-error :messages="$errors->get('house_no')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="village_no" value="หมู่" />
-            <x-text-input id="village_no" class="block mt-1 w-full" type="text" name="village_no" :value="old('village_no')" />
+            <x-text-input id="village_no" class="block mt-1 w-full" type="text" name="village_no" :value="old('village_no', $draftForm['village_no'] ?? '')" />
             <x-input-error :messages="$errors->get('village_no')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="contact_person" value="ชื่อผู้ติดต่อ" />
-            <x-text-input id="contact_person" class="block mt-1 w-full" type="text" name="contact_person" :value="old('contact_person')" required />
+            <x-text-input id="contact_person" class="block mt-1 w-full" type="text" name="contact_person" :value="old('contact_person', $draftForm['contact_person'] ?? '')" required />
             <x-input-error :messages="$errors->get('contact_person')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="phone" value="เบอร์โทร" />
-            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" :value="old('phone')" />
+            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" :value="old('phone', $draftForm['phone'] ?? '')" />
             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
         </div>
 
@@ -117,7 +120,7 @@
                     type="checkbox"
                     name="accepted_privacy_notice"
                     value="1"
-                    @checked(old('accepted_privacy_notice'))
+                    @checked(old('accepted_privacy_notice', $draftForm['accepted_privacy_notice'] ?? false))
                     class="mt-1 rounded border-sky-300 text-sky-600 shadow-sm focus:ring-sky-500"
                     required
                 >
@@ -166,7 +169,7 @@
             </a>
 
             <x-primary-button class="ms-4">
-                สมัครสมาชิก
+                ถัดไป: ส่งเอกสาร
             </x-primary-button>
         </div>
     </form>

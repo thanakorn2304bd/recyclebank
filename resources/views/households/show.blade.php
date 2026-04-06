@@ -10,10 +10,15 @@
     <div class="rb-page-actions">
       <a class="btn btn-outline-secondary" href="{{ route('households.index') }}">กลับ</a>
       @if($isPrivileged)
+        <a class="btn btn-outline-primary" href="{{ route('households.documents.index', $household) }}">ดูเอกสาร</a>
         <a class="btn btn-outline-warning" href="{{ route('households.credentials.create', $household) }}">
           {{ $memberAccount ? 'รีเซ็ตรหัสผ่าน' : 'ตั้งรหัสผ่าน' }}
         </a>
         <a class="btn btn-outline-primary" href="{{ route('households.edit', $household) }}">แก้ไข</a>
+      @elseif(! $pendingMemberAdditionRequest)
+        <a class="btn btn-outline-primary" href="{{ route('households.member-additions.create', $household) }}">
+          เพิ่มสมาชิก
+        </a>
       @endif
       <a class="btn btn-primary" href="{{ route('transactions.household', $household) }}">ดู statement</a>
     </div>
@@ -239,7 +244,12 @@
                     </div>
                   </div>
 
-                  <button class="btn btn-primary">บันทึกผลการพิจารณา</button>
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary">บันทึกผลการพิจารณา</button>
+                    <a class="btn btn-outline-primary" href="{{ route('households.documents.index', $household) }}">
+                      ดูเอกสาร
+                    </a>
+                  </div>
                 </form>
               </div>
             </div>
@@ -290,6 +300,8 @@
             </div>
           @endif
         </div>
+
+        @include('households.partials.member-addition-requests')
       </div>
     </div>
   </div>

@@ -70,4 +70,14 @@ class Household extends Model
     {
         return $this->hasMany(UserAccount::class, 'household_id', 'household_id');
     }
+
+    public function registrationDocuments()
+    {
+        return $this->hasMany(HouseholdRegistrationDocument::class, 'household_id', 'household_id');
+    }
+
+    public function memberAdditionRequests()
+    {
+        return $this->hasMany(HouseholdMemberAdditionRequest::class, 'household_id', 'household_id');
+    }
 }

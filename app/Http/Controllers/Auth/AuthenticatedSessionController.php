@@ -27,6 +27,15 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        if ($trackedUser = $request->trackedHouseholdUser()) {
+            $request->session()->regenerate();
+            $request->session()->put(RegistrationStatusController::TRACKING_SESSION_KEY, $trackedUser->user_id);
+
+            return redirect()
+                ->route('registration-status.show')
+                ->with('status', $request->trackedHouseholdStatusMessage());
+        }
+
         $request->session()->regenerate();
 
         $user = $request->user();

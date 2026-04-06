@@ -19,6 +19,10 @@ class LoginRequest extends FormRequest
 
     private const PASSWORD_LOCK_MINUTES = 15;
 
+    private ?UserAccount $trackedHouseholdUser = null;
+
+    private ?string $trackedHouseholdMessage = null;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -56,14 +60,12 @@ class LoginRequest extends FormRequest
             'password' => $this->string('password')->toString(),
             'is_active' => 1,
         ])) {
-            if ($this->credentialsMatchInactivePendingAccount($user)) {
+            if ($this->credentialsMatchTrackedHouseholdAccount($user)) {
                 RateLimiter::clear($this->throttleKey());
-                $message = $this->approvalPendingMessage($user);
-                $this->session()->flash('approval_pending_notice', $message);
+                $this->trackedHouseholdUser = $user;
+                $this->trackedHouseholdMessage = $this->registrationStatusMessage($user);
 
-                throw ValidationException::withMessages([
-                    'username' => $message,
-                ]);
+                return;
             }
 
             RateLimiter::hit($this->throttleKey());
@@ -91,6 +93,16 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    public function trackedHouseholdUser(): ?UserAccount
+    {
+        return $this->trackedHouseholdUser;
+    }
+
+    public function trackedHouseholdStatusMessage(): ?string
+    {
+        return $this->trackedHouseholdMessage;
     }
 
     /**
@@ -132,7 +144,7 @@ class LoginRequest extends FormRequest
             ->first();
     }
 
-    private function credentialsMatchInactivePendingAccount(?UserAccount $user): bool
+    private function credentialsMatchTrackedHouseholdAccount(?UserAccount $user): bool
     {
         if (! $user instanceof UserAccount || $user->is_active) {
             return false;
@@ -142,7 +154,7 @@ class LoginRequest extends FormRequest
             return false;
         }
 
-        if ($user->household->active_status !== 'pending') {
+        if (! in_array($user->household->active_status, ['pending', 'inactive'], true)) {
             return false;
         }
 
@@ -203,10 +215,14 @@ class LoginRequest extends FormRequest
         return $user->locked_until;
     }
 
-    private function approvalPendingMessage(UserAccount $user): string
+    private function registrationStatusMessage(UserAccount $user): string
     {
         $accountNo = $user->household?->account_no ?: $user->username;
 
-        return "คำขอสมัครสมาชิกของบัญชี {$accountNo} อยู่ระหว่างรออนุมัติจากเจ้าหน้าที่ กรุณารอการยืนยันก่อนเข้าสู่ระบบ";
+        if ($user->household?->active_status === 'inactive') {
+            return "คำขอสมัครสมาชิกของบัญชี {$accountNo} ถูกส่งกลับเพื่อแก้ไขเอกสาร กรุณาไปที่หน้าติดตามคำขอเพื่อดูหมายเหตุและอัปโหลดเอกสารใหม่";
+        }
+
+        return "คำขอสมัครสมาชิกของบัญชี {$accountNo} อยู่ระหว่างรออนุมัติจากเจ้าหน้าที่ กรุณาติดตามผลได้จากหน้าสถานะคำขอสมัครสมาชิก";
     }
 }
