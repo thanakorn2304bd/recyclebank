@@ -7,7 +7,7 @@
         @include('main_menu.partials.material-catalog')
 
         <div class="mt-4 text-xs text-emerald-700/70">
-            หมายเหตุ: ราคาเป็นราคาปัจจุบันที่มีผล ณ {{ $todayLabel }}.
+            หมายเหตุ: {{ $selectedPriceNotice }}.
         </div>
     </main>
 </div>

@@ -8,6 +8,9 @@ $tidbDatabase = env('TIDB_DATABASE');
 $tidbUser = env('TIDB_USER');
 $tidbPassword = env('TIDB_PASSWORD');
 $mysqlSslCa = env('MYSQL_ATTR_SSL_CA', $tidbHost ? '/etc/ssl/cert.pem' : null);
+$testingMysqlHost = env('APP_ENV') === 'testing' && env('LARAVEL_SAIL')
+    ? env('DB_HOST_SAIL', 'mysql')
+    : env('DB_HOST', $tidbHost ?? '127.0.0.1');
 
 return [
 
@@ -53,7 +56,7 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
-            'host' => env('DB_HOST', $tidbHost ?? '127.0.0.1'),
+            'host' => $testingMysqlHost,
             'port' => env('DB_PORT', $tidbPort ?? '3306'),
             'database' => env('DB_DATABASE', $tidbDatabase ?? 'laravel'),
             'username' => env('DB_USERNAME', $tidbUser ?? 'root'),

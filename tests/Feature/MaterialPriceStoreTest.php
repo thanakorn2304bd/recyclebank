@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\UserAccount;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -11,6 +12,20 @@ class MaterialPriceStoreTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->travelTo(CarbonImmutable::parse('2026-04-07 10:00:00'));
+    }
+
+    protected function tearDown(): void
+    {
+        $this->travelBack();
+
+        parent::tearDown();
+    }
+
     public function test_staff_can_store_material_price_and_close_previous_open_ended_price(): void
     {
         ['staff' => $staffUser, 'materialId' => $materialId, 'previousPriceId' => $previousPriceId] = $this->seedPriceFixtures();
@@ -18,7 +33,7 @@ class MaterialPriceStoreTest extends TestCase
         $response = $this->actingAs($staffUser)->post(route('material-prices.store'), [
             'material_id' => $materialId,
             'price' => '14.75',
-            'effective_date' => '2026-03-20',
+            'effective_date' => '2026-04-20',
             'expired_date' => '',
         ]);
 
@@ -29,14 +44,14 @@ class MaterialPriceStoreTest extends TestCase
         $this->assertDatabaseHas('material_price', [
             'material_id' => $materialId,
             'price' => '14.75',
-            'effective_date' => '2026-03-20',
+            'effective_date' => '2026-04-20',
             'expired_date' => null,
             'created_by' => $staffUser->user_id,
         ]);
 
         $this->assertDatabaseHas('material_price', [
             'price_id' => $previousPriceId,
-            'expired_date' => '2026-03-19',
+            'expired_date' => '2026-04-19',
         ]);
 
         $this->assertDatabaseHas('log_activity', [
@@ -52,8 +67,20 @@ class MaterialPriceStoreTest extends TestCase
         $this->actingAs($staffUser)->post(route('material-prices.store'), [
             'material_id' => $materialId,
             'price' => '14.75',
-            'effective_date' => '2026-03-10',
-            'expired_date' => '2026-03-25',
+            'effective_date' => '2026-04-10',
+            'expired_date' => '2026-04-25',
+        ])->assertSessionHasErrors('effective_date');
+    }
+
+    public function test_store_rejects_effective_dates_before_current_month(): void
+    {
+        ['staff' => $staffUser, 'materialId' => $materialId] = $this->seedPriceFixtures();
+
+        $this->actingAs($staffUser)->post(route('material-prices.store'), [
+            'material_id' => $materialId,
+            'price' => '14.75',
+            'effective_date' => '2026-03-20',
+            'expired_date' => '',
         ])->assertSessionHasErrors('effective_date');
     }
 
@@ -89,7 +116,7 @@ class MaterialPriceStoreTest extends TestCase
         $previousPriceId = DB::table('material_price')->insertGetId([
             'material_id' => $materialId,
             'price' => 12.00,
-            'effective_date' => '2026-03-01',
+            'effective_date' => '2026-04-01',
             'expired_date' => null,
             'created_by' => $staffUser->user_id,
             'created_at' => now(),

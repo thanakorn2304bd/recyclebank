@@ -10,11 +10,13 @@ use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class DataSubjectRequestController extends Controller
 {
     public function index(Request $request)
     {
+        $this->ensurePdpaEnabled();
         $q = trim($request->string('q')->toString());
         $status = trim($request->string('status')->toString());
 
@@ -57,6 +59,7 @@ class DataSubjectRequestController extends Controller
 
     public function create()
     {
+        $this->ensurePdpaEnabled();
         ['households' => $households, 'assignees' => $assignees] = $this->formDependencies();
 
         return view('compliance.data_subject_requests.create', compact('households', 'assignees'));
@@ -64,6 +67,7 @@ class DataSubjectRequestController extends Controller
 
     public function store(SaveDataSubjectRequestRequest $request)
     {
+        $this->ensurePdpaEnabled();
         $payload = $request->payload();
         $dataSubjectRequest = DataSubjectRequest::create(array_merge($payload, [
             'request_no' => $this->nextRequestNo(),
@@ -88,6 +92,7 @@ class DataSubjectRequestController extends Controller
 
     public function show(DataSubjectRequest $dsar)
     {
+        $this->ensurePdpaEnabled();
         $dsar->load(['household.community', 'assignedToUser.staff']);
         ['households' => $households, 'assignees' => $assignees] = $this->formDependencies();
 
@@ -96,6 +101,7 @@ class DataSubjectRequestController extends Controller
 
     public function update(SaveDataSubjectRequestRequest $request, DataSubjectRequest $dsar)
     {
+        $this->ensurePdpaEnabled();
         $before = $this->snapshot($dsar);
         $payload = $request->payload();
         $dsar->update(array_merge($payload, [
@@ -155,5 +161,10 @@ class DataSubjectRequestController extends Controller
             'assigned_to' => $dataSubjectRequest->assigned_to !== null ? (int) $dataSubjectRequest->assigned_to : null,
             'closed_at' => $dataSubjectRequest->closed_at?->format('Y-m-d H:i:s'),
         ];
+    }
+
+    private function ensurePdpaEnabled(): void
+    {
+        throw_unless((bool) config('features.pdpa', false), new NotFoundHttpException());
     }
 }

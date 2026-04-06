@@ -9,11 +9,13 @@ use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserIdResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SecurityIncidentController extends Controller
 {
     public function index(Request $request)
     {
+        $this->ensurePdpaEnabled();
         $q = trim($request->string('q')->toString());
         $status = trim($request->string('status')->toString());
         $severity = trim($request->string('severity')->toString());
@@ -54,6 +56,7 @@ class SecurityIncidentController extends Controller
 
     public function create()
     {
+        $this->ensurePdpaEnabled();
         $assignees = $this->assignees();
 
         return view('compliance.security_incidents.create', compact('assignees'));
@@ -63,6 +66,7 @@ class SecurityIncidentController extends Controller
         SaveSecurityIncidentRequest $request,
         CurrentUserIdResolver $currentUserIdResolver
     ) {
+        $this->ensurePdpaEnabled();
         $payload = $request->payload();
         $incident = SecurityIncident::create(array_merge($payload, [
             'incident_no' => $this->nextIncidentNo(),
@@ -87,6 +91,7 @@ class SecurityIncidentController extends Controller
 
     public function show(SecurityIncident $incident)
     {
+        $this->ensurePdpaEnabled();
         $incident->load(['reportedByUser.staff', 'assignedToUser.staff']);
         $assignees = $this->assignees();
 
@@ -95,6 +100,7 @@ class SecurityIncidentController extends Controller
 
     public function update(SaveSecurityIncidentRequest $request, SecurityIncident $incident)
     {
+        $this->ensurePdpaEnabled();
         $before = $this->snapshot($incident);
         $payload = $request->payload();
         $incident->update(array_merge($payload, [
@@ -147,5 +153,10 @@ class SecurityIncidentController extends Controller
             'subject_notified_at' => $incident->subject_notified_at?->format('Y-m-d H:i:s'),
             'closed_at' => $incident->closed_at?->format('Y-m-d H:i:s'),
         ];
+    }
+
+    private function ensurePdpaEnabled(): void
+    {
+        throw_unless((bool) config('features.pdpa', false), new NotFoundHttpException());
     }
 }

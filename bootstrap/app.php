@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'active' => \App\Http\Middleware\EnsureActiveUser::class,
+            'pdpa.enabled' => \App\Http\Middleware\EnsurePdpaFeatureEnabled::class,
             'password.current' => \App\Http\Middleware\EnsurePasswordChangeCompleted::class,
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);

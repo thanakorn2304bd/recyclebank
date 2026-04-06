@@ -13,9 +13,10 @@
       document.getElementById('rbResetPriceEditor'),
       document.getElementById('rbResetPriceEditorBottom'),
     ].filter(Boolean);
+    const totalRows = rows.length;
 
     function rowInputs(row) {
-      return Array.from(row.querySelectorAll('input[type="number"], input[type="date"]'));
+      return Array.from(row.querySelectorAll('input[type="number"]'));
     }
 
     function isDirty(row) {
@@ -39,14 +40,14 @@
 
       if (summary) {
         summary.textContent = dirtyCount > 0
-          ? 'แก้ไขแล้ว ' + dirtyCount + ' รายการ'
-          : 'ยังไม่มีรายการแก้ไข';
+          ? 'แก้จากค่าตั้งต้น ' + dirtyCount + ' จาก ' + totalRows + ' รายการ'
+          : 'ยังไม่ได้แก้จากค่าตั้งต้น ระบบจะเผยแพร่ตามค่าที่แสดง';
       }
 
       if (submitButton) {
         submitButton.textContent = dirtyCount > 0
-          ? 'บันทึก ' + dirtyCount + ' รายการ'
-          : 'บันทึกการแก้ไข';
+          ? 'เผยแพร่เดือนนี้ (แก้ ' + dirtyCount + ' รายการ)'
+          : 'เผยแพร่ชุดราคาเดือนนี้';
       }
     }
 

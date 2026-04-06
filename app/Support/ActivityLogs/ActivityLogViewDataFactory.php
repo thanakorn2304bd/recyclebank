@@ -15,7 +15,7 @@ class ActivityLogViewDataFactory
 
     public function moduleLabels(): array
     {
-        return [
+        $labels = [
             'auth' => 'การเข้าสู่ระบบ',
             'registration' => 'สมัครสมาชิก',
             'admin.users' => 'บัญชีผู้ใช้',
@@ -33,11 +33,22 @@ class ActivityLogViewDataFactory
             'transactions.reverse' => 'กลับรายการธุรกรรม',
             'reports' => 'รายงาน',
         ];
+
+        if (! config('features.pdpa', false)) {
+            unset(
+                $labels['privacy.notice'],
+                $labels['privacy.consents'],
+                $labels['data_subject_requests'],
+                $labels['security_incidents'],
+            );
+        }
+
+        return $labels;
     }
 
     public function entityLabels(): array
     {
-        return [
+        $labels = [
             'household' => 'ครัวเรือน',
             'transaction' => 'ธุรกรรม',
             'user_account' => 'บัญชีผู้ใช้',
@@ -48,5 +59,16 @@ class ActivityLogViewDataFactory
             'security_incident' => 'เหตุการณ์ข้อมูลส่วนบุคคล',
             'withdraw_request' => 'คำขอถอน',
         ];
+
+        if (! config('features.pdpa', false)) {
+            unset(
+                $labels['privacy_notice_version'],
+                $labels['privacy_consent'],
+                $labels['data_subject_request'],
+                $labels['security_incident'],
+            );
+        }
+
+        return $labels;
     }
 }

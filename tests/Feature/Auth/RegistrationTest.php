@@ -27,7 +27,7 @@ class RegistrationTest extends TestCase
             ->assertStatus(200)
             ->assertSee('สมัครสมาชิก')
             ->assertSee('ขั้นตอนที่ 1 จาก 2')
-            ->assertSee('ประกาศคุ้มครองข้อมูลส่วนบุคคล');
+            ->assertDontSee('ประกาศคุ้มครองข้อมูลส่วนบุคคล');
     }
 
     public function test_step_one_registration_redirects_to_documents_step(): void
@@ -117,14 +117,7 @@ class RegistrationTest extends TestCase
             'is_head' => 0,
         ]);
 
-        $privacyNoticeId = DB::table('privacy_notice_version')->value('privacy_notice_version_id');
-
-        $this->assertDatabaseHas('privacy_consent', [
-            'user_id' => DB::table('user_account')->value('user_id'),
-            'household_id' => $household->household_id,
-            'privacy_notice_version_id' => $privacyNoticeId,
-            'consent_type' => 'registration',
-        ]);
+        $this->assertDatabaseCount('privacy_consent', 0);
 
         $documents = DB::table('household_registration_document')
             ->where('household_id', $household->household_id)
@@ -220,7 +213,7 @@ class RegistrationTest extends TestCase
         }
     }
 
-    public function test_registration_requires_accepting_privacy_notice(): void
+    public function test_registration_does_not_require_accepting_privacy_notice_when_pdpa_is_hidden(): void
     {
         DB::table('community')->insert([
             'community_id' => '01',
@@ -234,8 +227,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $response
-            ->assertRedirect('/register')
-            ->assertSessionHasErrors('accepted_privacy_notice');
+            ->assertSessionHas('auth.pending_household_registration.token');
 
         $this->assertDatabaseCount('household', 0);
     }

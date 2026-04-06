@@ -92,42 +92,44 @@
             หลังสมัคร ระบบจะสร้างบัญชีครัวเรือนในสถานะรออนุมัติ และจะยังไม่สามารถเข้าสู่ระบบได้จนกว่า staff/admin จะยืนยัน
         </div>
 
-        <div class="mt-4 rounded-2xl border border-sky-200 bg-sky-50/90 p-4">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h2 class="text-lg font-semibold text-sky-950">ประกาศคุ้มครองข้อมูลส่วนบุคคล</h2>
-                    <p class="mt-1 text-sm text-sky-900/75">
-                        {{ $privacyNotice?->summary }}
-                    </p>
-                    <p class="mt-2 text-xs text-sky-900/60">
-                        เวอร์ชัน {{ $privacyNotice?->version_code ?? '-' }}
-                        @if($privacyNotice?->effective_at)
-                            | มีผลตั้งแต่ {{ $privacyNotice->effective_at->format('d/m/Y H:i') }}
-                        @endif
-                    </p>
+        @if(config('features.pdpa', false))
+            <div class="mt-4 rounded-2xl border border-sky-200 bg-sky-50/90 p-4">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-sky-950">ประกาศคุ้มครองข้อมูลส่วนบุคคล</h2>
+                        <p class="mt-1 text-sm text-sky-900/75">
+                            {{ $privacyNotice?->summary }}
+                        </p>
+                        <p class="mt-2 text-xs text-sky-900/60">
+                            เวอร์ชัน {{ $privacyNotice?->version_code ?? '-' }}
+                            @if($privacyNotice?->effective_at)
+                                | มีผลตั้งแต่ {{ $privacyNotice->effective_at->format('d/m/Y H:i') }}
+                            @endif
+                        </p>
+                    </div>
+                    <a
+                        href="{{ route('privacy-notice.show') }}"
+                        target="_blank"
+                        class="inline-flex items-center justify-center rounded-xl border border-sky-200 bg-white px-4 py-2 text-sm font-semibold text-sky-700 shadow-sm transition hover:bg-sky-100"
+                    >
+                        อ่านฉบับเต็ม
+                    </a>
                 </div>
-                <a
-                    href="{{ route('privacy-notice.show') }}"
-                    target="_blank"
-                    class="inline-flex items-center justify-center rounded-xl border border-sky-200 bg-white px-4 py-2 text-sm font-semibold text-sky-700 shadow-sm transition hover:bg-sky-100"
-                >
-                    อ่านฉบับเต็ม
-                </a>
-            </div>
 
-            <label class="mt-4 inline-flex items-start gap-3 text-sm text-sky-950">
-                <input
-                    type="checkbox"
-                    name="accepted_privacy_notice"
-                    value="1"
-                    @checked(old('accepted_privacy_notice', $draftForm['accepted_privacy_notice'] ?? false))
-                    class="mt-1 rounded border-sky-300 text-sky-600 shadow-sm focus:ring-sky-500"
-                    required
-                >
-                <span>ข้าพเจ้ารับทราบประกาศคุ้มครองข้อมูลส่วนบุคคลและยินยอมให้ระบบเก็บ ใช้ และเปิดเผยข้อมูลเท่าที่จำเป็นเพื่อการสมัครสมาชิก การอนุมัติบัญชี การทำธุรกรรม และการตรวจสอบย้อนหลัง</span>
-            </label>
-            <x-input-error :messages="$errors->get('accepted_privacy_notice')" class="mt-2" />
-        </div>
+                <label class="mt-4 inline-flex items-start gap-3 text-sm text-sky-950">
+                    <input
+                        type="checkbox"
+                        name="accepted_privacy_notice"
+                        value="1"
+                        @checked(old('accepted_privacy_notice', $draftForm['accepted_privacy_notice'] ?? false))
+                        class="mt-1 rounded border-sky-300 text-sky-600 shadow-sm focus:ring-sky-500"
+                        required
+                    >
+                    <span>ข้าพเจ้ารับทราบประกาศคุ้มครองข้อมูลส่วนบุคคลและยินยอมให้ระบบเก็บ ใช้ และเปิดเผยข้อมูลเท่าที่จำเป็นเพื่อการสมัครสมาชิก การอนุมัติบัญชี การทำธุรกรรม และการตรวจสอบย้อนหลัง</span>
+                </label>
+                <x-input-error :messages="$errors->get('accepted_privacy_notice')" class="mt-2" />
+            </div>
+        @endif
 
         <div class="mt-4">
             <x-input-label for="password" value="รหัสผ่าน" />

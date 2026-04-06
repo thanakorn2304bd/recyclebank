@@ -10,11 +10,36 @@ class MaterialPriceEditorViewDataFactory
     {
         return $materials->map(function ($material) {
             $materialKey = (string) $material->material_id;
-            $initialPrice = $material->current_price_value !== null
-                ? number_format((float) $material->current_price_value, 2, '.', '')
+            $selectedMonthPrice = $material->selected_month_price_value !== null
+                ? number_format((float) $material->selected_month_price_value, 2, '.', '')
                 : '';
-            $initialEffectiveDate = $material->current_effective_date ?? '';
-            $initialExpiredDate = $material->current_expired_date ?? '';
+            $carryForwardPrice = $material->carry_forward_price_value !== null
+                ? number_format((float) $material->carry_forward_price_value, 2, '.', '')
+                : '';
+            $initialPrice = $selectedMonthPrice !== '' ? $selectedMonthPrice : $carryForwardPrice;
+            $hasSelectedMonthPrice = $material->selected_month_price_id !== null;
+            $hasCarryForwardPrice = $material->carry_forward_price_value !== null;
+
+            if ($hasSelectedMonthPrice) {
+                $statusLabel = 'มีชุดราคาเดือนนี้แล้ว';
+                $statusVariant = 'current';
+                $sourceLabel = 'กำลังใช้ราคาที่เผยแพร่ไว้สำหรับเดือนนี้';
+                $sourceMeta = $material->selected_month_effective_date
+                    ? 'เริ่มใช้ '.$this->formatDate($material->selected_month_effective_date)
+                    : 'บันทึกไว้แล้วในเดือนที่เลือก';
+            } elseif ($hasCarryForwardPrice) {
+                $statusLabel = 'พร้อมคัดลอกจากเดือนก่อน';
+                $statusVariant = 'carry';
+                $sourceLabel = 'หากไม่แก้ ระบบจะยกราคาจากเดือนก่อนมาสร้างชุดใหม่ให้';
+                $sourceMeta = $material->carry_forward_effective_date
+                    ? 'อ้างอิงราคาล่าสุดที่เริ่มใช้ '.$this->formatDate($material->carry_forward_effective_date)
+                    : 'มีราคาตั้งต้นจากเดือนก่อน';
+            } else {
+                $statusLabel = 'ยังไม่มีราคาตั้งต้น';
+                $statusVariant = 'missing';
+                $sourceLabel = 'วัสดุนี้ยังไม่มีราคาจากเดือนก่อน';
+                $sourceMeta = 'กรอกราคาเพื่อเริ่มชุดราคาเดือนนี้';
+            }
 
             return [
                 'material_id' => (int) $material->material_id,
@@ -23,15 +48,29 @@ class MaterialPriceEditorViewDataFactory
                 'unit' => $material->unit,
                 'category_name' => $material->category_name,
                 'is_active' => (bool) $material->is_active,
-                'current_price_id' => $material->current_price_id,
-                'has_current_price' => $material->current_price_id !== null,
+                'current_price_id' => $material->selected_month_price_id,
+                'has_current_price' => $hasSelectedMonthPrice,
+                'has_carry_forward_price' => $hasCarryForwardPrice,
+                'status_label' => $statusLabel,
+                'status_variant' => $statusVariant,
+                'source_label' => $sourceLabel,
+                'source_meta' => $sourceMeta,
+                'selected_month_price' => $selectedMonthPrice,
+                'carry_forward_price' => $carryForwardPrice,
                 'initial_price' => $initialPrice,
-                'initial_effective_date' => $initialEffectiveDate,
-                'initial_expired_date' => $initialExpiredDate,
                 'row_price' => old("rows.$materialKey.price", $initialPrice),
-                'row_effective_date' => old("rows.$materialKey.effective_date", $initialEffectiveDate),
-                'row_expired_date' => old("rows.$materialKey.expired_date", $initialExpiredDate),
             ];
         })->values();
+    }
+
+    private function formatDate(?string $date): string
+    {
+        if (! is_string($date) || $date === '') {
+            return '-';
+        }
+
+        [$year, $month, $day] = explode('-', $date);
+
+        return sprintf('%s/%s/%s', $day, $month, $year);
     }
 }

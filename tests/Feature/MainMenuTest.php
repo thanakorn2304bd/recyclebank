@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\UserAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -77,8 +78,69 @@ class MainMenuTest extends TestCase
             ->assertSeeText('เมนูหลักสำหรับการทำงานประจำวัน')
             ->assertSeeText('เมนูจัดการระบบ')
             ->assertSeeText('รับซื้อวัสดุรีไซเคิ้ล')
+            ->assertDontSeeText('PDPA / Compliance')
             ->assertDontSeeText('ดูราคารับซื้อวันนี้ พร้อมสมัครสมาชิกครัวเรือนออนไลน์')
             ->assertDontSeeText('รายการวัสดุและราคา');
+    }
+
+    public function test_guest_can_view_material_prices_for_a_selected_past_month(): void
+    {
+        Carbon::setTestNow('2026-04-15 09:30:00');
+
+        try {
+            $staffUser = $this->createStaffUser('main-menu-history-owner');
+            $categoryId = DB::table('material_category')->insertGetId([
+                'category_name' => 'โลหะ',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $materialId = DB::table('material')->insertGetId([
+                'category_id' => $categoryId,
+                'material_name' => 'ทองแดงคัดพิเศษ',
+                'unit' => 'kg',
+                'description' => 'ทดสอบราคาย้อนหลัง',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('material_price')->insert([
+                [
+                    'material_id' => $materialId,
+                    'price' => 110.00,
+                    'effective_date' => '2026-02-01',
+                    'expired_date' => '2026-02-28',
+                    'created_by' => $staffUser->user_id,
+                    'created_at' => '2026-02-01 08:00:00',
+                ],
+                [
+                    'material_id' => $materialId,
+                    'price' => 125.50,
+                    'effective_date' => '2026-03-01',
+                    'expired_date' => '2026-03-31',
+                    'created_by' => $staffUser->user_id,
+                    'created_at' => '2026-03-01 08:00:00',
+                ],
+                [
+                    'material_id' => $materialId,
+                    'price' => 140.75,
+                    'effective_date' => '2026-04-01',
+                    'expired_date' => null,
+                    'created_by' => $staffUser->user_id,
+                    'created_at' => '2026-04-01 08:00:00',
+                ],
+            ]);
+
+            $this->get(route('main-menu', ['price_month' => '2026-03']))
+                ->assertOk()
+                ->assertSeeText('มีนาคม 2569')
+                ->assertSeeText('31/03/2026')
+                ->assertSeeText('125.50')
+                ->assertDontSeeText('140.75');
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     private function createStaffUser(string $username): UserAccount

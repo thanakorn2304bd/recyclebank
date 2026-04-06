@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreMaterialPriceRequest extends FormRequest
 {
@@ -47,5 +49,31 @@ class StoreMaterialPriceRequest extends FormRequest
             'effective_date' => $this->filled('effective_date') ? trim((string) $this->input('effective_date')) : null,
             'expired_date' => $this->filled('expired_date') ? trim((string) $this->input('expired_date')) : null,
         ]);
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $effectiveDate = $this->input('effective_date');
+
+            if (! is_string($effectiveDate) || $effectiveDate === '') {
+                return;
+            }
+
+            try {
+                $requestedDate = CarbonImmutable::parse($effectiveDate)->startOfDay();
+            } catch (\Throwable) {
+                return;
+            }
+
+            if ($requestedDate->lessThan($this->minimumEffectiveDate())) {
+                $validator->errors()->add('effective_date', 'ไม่สามารถเพิ่มราคาย้อนหลังไปก่อนเดือนปัจจุบันได้');
+            }
+        });
+    }
+
+    private function minimumEffectiveDate(): CarbonImmutable
+    {
+        return CarbonImmutable::now()->startOfMonth();
     }
 }

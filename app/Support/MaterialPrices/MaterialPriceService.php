@@ -39,8 +39,9 @@ class MaterialPriceService
         });
     }
 
-    public function planBulkUpdate(array $rows): array
+    public function planMonthlyPublish(string $targetMonth, array $rows): array
     {
+        $monthStart = Carbon::createFromFormat('Y-m', $targetMonth)->startOfMonth()->toDateString();
         $rowCollection = collect($rows);
 
         $materialIds = $rowCollection->keys()
@@ -63,6 +64,23 @@ class MaterialPriceService
             ->get()
             ->keyBy('price_id');
 
+        $duplicateMonthPrices = MaterialPrice::query()
+            ->select('material_id', DB::raw('COUNT(*) as aggregate'))
+            ->whereIn('material_id', $materialIds)
+            ->whereDate('effective_date', $monthStart)
+            ->groupBy('material_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('aggregate', 'material_id');
+
+        $nextFuturePrices = MaterialPrice::query()
+            ->whereIn('material_id', $materialIds)
+            ->whereDate('effective_date', '>', $monthStart)
+            ->orderBy('effective_date')
+            ->orderBy('price_id')
+            ->get()
+            ->groupBy('material_id')
+            ->map(fn (Collection $prices) => $prices->first());
+
         $updates = [];
         $creates = [];
         $errors = [];
@@ -72,10 +90,6 @@ class MaterialPriceService
             $material = $materials->get($materialId);
 
             if (! $material) {
-                continue;
-            }
-
-            if ($this->isBlankRow($row)) {
                 continue;
             }
 
@@ -89,7 +103,13 @@ class MaterialPriceService
                 continue;
             }
 
-            $rowErrors = $this->validateBulkRow($row, $materialId);
+            if ($duplicateMonthPrices->has($materialId)) {
+                $errors["rows.$materialId.price"] = 'พบราคาของเดือนนี้มากกว่า 1 รายการ กรุณาตรวจสอบประวัติราคาก่อนบันทึก';
+
+                continue;
+            }
+
+            $rowErrors = $this->validateMonthlyRow($row, $materialId);
 
             if ($rowErrors !== []) {
                 $errors = [...$errors, ...$rowErrors];
@@ -97,31 +117,27 @@ class MaterialPriceService
                 continue;
             }
 
-            $normalizedPrice = number_format((float) $row['price'], 2, '.', '');
-            $normalizedExpiredDate = $row['expired_date'] !== '' ? $row['expired_date'] : null;
-
-            if ($overlapMessage = $this->pricePeriodOverlapMessage(
-                $materialId,
-                $row['effective_date'],
-                $normalizedExpiredDate,
-                $row['price_id'] ?? null
-            )) {
-                $errors["rows.$materialId.effective_date"] = $overlapMessage;
-
+            if (($row['price'] ?? '') === '') {
                 continue;
             }
 
+            $normalizedPrice = number_format((float) $row['price'], 2, '.', '');
+            $nextFuturePrice = $nextFuturePrices->get($materialId);
+            $normalizedExpiredDate = $nextFuturePrice?->effective_date !== null
+                ? Carbon::parse($nextFuturePrice->effective_date)->subDay()->toDateString()
+                : null;
+
             if ($existingPrice) {
                 $hasChanged = number_format((float) $existingPrice->price, 2, '.', '') !== $normalizedPrice
-                    || $existingPrice->effective_date?->format('Y-m-d') !== $row['effective_date']
                     || $existingPrice->expired_date?->format('Y-m-d') !== $normalizedExpiredDate;
 
                 if ($hasChanged) {
                     $updates[] = [
                         'model' => $existingPrice,
+                        'material_id' => $materialId,
                         'material_name' => $material->material_name,
                         'price' => $normalizedPrice,
-                        'effective_date' => $row['effective_date'],
+                        'effective_date' => $monthStart,
                         'expired_date' => $normalizedExpiredDate,
                     ];
                 }
@@ -133,7 +149,7 @@ class MaterialPriceService
                 'material_id' => $materialId,
                 'material_name' => $material->material_name,
                 'price' => $normalizedPrice,
-                'effective_date' => $row['effective_date'],
+                'effective_date' => $monthStart,
                 'expired_date' => $normalizedExpiredDate,
             ];
         }
@@ -148,13 +164,26 @@ class MaterialPriceService
         ];
     }
 
-    public function applyBulkUpdate(array $updates, array $creates, int $createdBy): void
+    public function applyMonthlyPublish(array $updates, array $creates, int $createdBy): void
     {
         DB::transaction(function () use ($updates, $creates, $createdBy) {
+            $monthStartByMaterial = [];
+
+            foreach ($updates as $update) {
+                $monthStartByMaterial[(int) $update['material_id']] = $update['effective_date'];
+            }
+
+            foreach ($creates as $create) {
+                $monthStartByMaterial[(int) $create['material_id']] = $create['effective_date'];
+            }
+
+            foreach ($monthStartByMaterial as $materialId => $effectiveDate) {
+                $this->closePreviousPricesForMonth((int) $materialId, (string) $effectiveDate);
+            }
+
             foreach ($updates as $update) {
                 $update['model']->update([
                     'price' => $update['price'],
-                    'effective_date' => $update['effective_date'],
                     'expired_date' => $update['expired_date'],
                 ]);
             }
@@ -180,24 +209,15 @@ class MaterialPriceService
             ->values();
     }
 
-    private function validateBulkRow(array $row, int $materialId): array
+    private function validateMonthlyRow(array $row, int $materialId): array
     {
         $validator = Validator::make([
             'price' => $row['price'],
-            'effective_date' => $row['effective_date'],
-            'expired_date' => $row['expired_date'],
         ], [
-            'price' => ['required', 'numeric', 'min:0'],
-            'effective_date' => ['required', 'date'],
-            'expired_date' => ['nullable', 'date', 'after_or_equal:effective_date'],
+            'price' => ['nullable', 'numeric', 'min:0'],
         ], [
-            'price.required' => 'กรุณากรอกราคา',
             'price.numeric' => 'ราคาต้องเป็นตัวเลข',
             'price.min' => 'ราคาต้องไม่น้อยกว่า 0',
-            'effective_date.required' => 'กรุณาเลือกวันที่เริ่มใช้',
-            'effective_date.date' => 'วันที่เริ่มใช้ไม่ถูกต้อง',
-            'expired_date.date' => 'วันที่สิ้นสุดไม่ถูกต้อง',
-            'expired_date.after_or_equal' => 'วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มใช้',
         ]);
 
         if (! $validator->fails()) {
@@ -216,9 +236,21 @@ class MaterialPriceService
     private function isBlankRow(array $row): bool
     {
         return ($row['price_id'] ?? null) === null
-            && ($row['price'] ?? '') === ''
-            && ($row['effective_date'] ?? '') === ''
-            && ($row['expired_date'] ?? '') === '';
+            && ($row['price'] ?? '') === '';
+    }
+
+    private function closePreviousPricesForMonth(int $materialId, string $effectiveDate): void
+    {
+        MaterialPrice::query()
+            ->where('material_id', $materialId)
+            ->whereDate('effective_date', '<', $effectiveDate)
+            ->where(function ($query) use ($effectiveDate) {
+                $query->whereNull('expired_date')
+                    ->orWhereDate('expired_date', '>=', $effectiveDate);
+            })
+            ->update([
+                'expired_date' => Carbon::parse($effectiveDate)->subDay()->toDateString(),
+            ]);
     }
 
     private function pricePeriodOverlapMessage(

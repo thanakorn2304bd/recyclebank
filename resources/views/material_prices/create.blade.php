@@ -23,7 +23,8 @@
 
     <div class="mb-3">
       <label class="form-label">เริ่มใช้ (effective_date)</label>
-      <input class="form-control" type="date" name="effective_date" value="{{ old('effective_date', now()->toDateString()) }}" required>
+      <input class="form-control" type="date" name="effective_date" value="{{ old('effective_date', now()->toDateString()) }}" min="{{ now()->startOfMonth()->toDateString() }}" required>
+      <div class="form-text">ระบบไม่อนุญาตให้เพิ่มราคาย้อนหลังไปก่อนเดือนปัจจุบัน</div>
     </div>
 
     <div class="mb-3">

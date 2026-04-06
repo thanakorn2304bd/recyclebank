@@ -28,7 +28,7 @@ class RegisterHouseholdRequest extends FormRequest
             'members.*.id_card' => ['nullable', 'string', 'max:20'],
             'members.*.relation' => ['nullable', 'string', 'max:50'],
             'members.*.is_head' => ['nullable'],
-            'accepted_privacy_notice' => ['accepted'],
+            'accepted_privacy_notice' => config('features.pdpa', false) ? ['accepted'] : ['nullable'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }

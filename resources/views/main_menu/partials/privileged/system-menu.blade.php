@@ -132,22 +132,24 @@
             </div>
         </a>
 
-        <a href="{{ route('compliance.dsars.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-rose-200 hover:shadow-[0_20px_40px_rgba(244,63,94,0.12)]">
-            <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 12h6m-6 4h4m5-8V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2h4m6-11l3 3m0 0l-3 3m3-3H12"/>
-                </svg>
-            </span>
-            <div class="mt-4 flex items-start justify-between gap-3">
-                <div>
-                    <div class="text-lg font-bold text-slate-900">PDPA / Compliance</div>
-                    <p class="mt-2 text-sm leading-6 text-slate-600">ติดตามคำขอเจ้าของข้อมูลและเหตุการณ์ข้อมูลส่วนบุคคลเพื่อให้การทำงานสอดคล้องกับ PDPA</p>
+        @if(config('features.pdpa', false))
+            <a href="{{ route('compliance.dsars.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-rose-200 hover:shadow-[0_20px_40px_rgba(244,63,94,0.12)]">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 12h6m-6 4h4m5-8V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2h4m6-11l3 3m0 0l-3 3m3-3H12"/>
+                    </svg>
+                </span>
+                <div class="mt-4 flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-lg font-bold text-slate-900">PDPA / Compliance</div>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">ติดตามคำขอเจ้าของข้อมูลและเหตุการณ์ข้อมูลส่วนบุคคลเพื่อให้การทำงานสอดคล้องกับ PDPA</p>
+                    </div>
+                    <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                    </svg>
                 </div>
-                <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
-                </svg>
-            </div>
-        </a>
+            </a>
+        @endif
 
         <a href="{{ route('materials.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-teal-200 hover:shadow-[0_20px_40px_rgba(20,184,166,0.12)]">
             <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">

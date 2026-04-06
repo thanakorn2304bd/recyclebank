@@ -226,6 +226,10 @@ class RegisteredUserController extends Controller
 
     private function currentPrivacyNotice(): ?PrivacyNoticeVersion
     {
+        if (! $this->pdpaEnabled()) {
+            return null;
+        }
+
         return PrivacyNoticeVersion::query()
             ->where('is_active', true)
             ->where('effective_at', '<=', now())
@@ -243,7 +247,7 @@ class RegisteredUserController extends Controller
             'contact_person' => trim((string) $request->input('contact_person', '')),
             'phone' => $request->filled('phone') ? trim((string) $request->input('phone')) : null,
             'members' => $request->members(),
-            'accepted_privacy_notice' => true,
+            'accepted_privacy_notice' => $this->pdpaEnabled(),
         ];
     }
 
@@ -261,10 +265,19 @@ class RegisteredUserController extends Controller
 
     private function resolvePendingPrivacyNotice(mixed $privacyNoticeVersionId): ?PrivacyNoticeVersion
     {
+        if (! $this->pdpaEnabled()) {
+            return null;
+        }
+
         if (! is_numeric($privacyNoticeVersionId)) {
             return null;
         }
 
         return PrivacyNoticeVersion::query()->find((int) $privacyNoticeVersionId);
+    }
+
+    private function pdpaEnabled(): bool
+    {
+        return (bool) config('features.pdpa', false);
     }
 }

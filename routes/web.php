@@ -25,7 +25,9 @@ Route::get('/', function () {
     return redirect()->route('main-menu');
 });
 
-Route::get('privacy-notice', [PrivacyNoticeController::class, 'show'])->name('privacy-notice.show');
+Route::get('privacy-notice', [PrivacyNoticeController::class, 'show'])
+    ->middleware('pdpa.enabled')
+    ->name('privacy-notice.show');
 
 Route::get('main-menu', MainMenuController::class)->name('main-menu');
 
@@ -76,17 +78,19 @@ Route::middleware(['auth', 'active', 'password.current'])->group(function () {
         Route::patch('withdraw-requests/{withdrawRequest}/review', [WithdrawRequestController::class, 'review'])->name('withdraw-requests.review');
         Route::post('transactions/{transaction}/reverse', [TransactionHistoryController::class, 'reverse'])->name('transactions.reverse');
 
-        Route::get('compliance/dsars', [DataSubjectRequestController::class, 'index'])->name('compliance.dsars.index');
-        Route::get('compliance/dsars/create', [DataSubjectRequestController::class, 'create'])->name('compliance.dsars.create');
-        Route::post('compliance/dsars', [DataSubjectRequestController::class, 'store'])->name('compliance.dsars.store');
-        Route::get('compliance/dsars/{dsar}', [DataSubjectRequestController::class, 'show'])->name('compliance.dsars.show');
-        Route::put('compliance/dsars/{dsar}', [DataSubjectRequestController::class, 'update'])->name('compliance.dsars.update');
+        Route::middleware('pdpa.enabled')->group(function () {
+            Route::get('compliance/dsars', [DataSubjectRequestController::class, 'index'])->name('compliance.dsars.index');
+            Route::get('compliance/dsars/create', [DataSubjectRequestController::class, 'create'])->name('compliance.dsars.create');
+            Route::post('compliance/dsars', [DataSubjectRequestController::class, 'store'])->name('compliance.dsars.store');
+            Route::get('compliance/dsars/{dsar}', [DataSubjectRequestController::class, 'show'])->name('compliance.dsars.show');
+            Route::put('compliance/dsars/{dsar}', [DataSubjectRequestController::class, 'update'])->name('compliance.dsars.update');
 
-        Route::get('compliance/incidents', [SecurityIncidentController::class, 'index'])->name('compliance.incidents.index');
-        Route::get('compliance/incidents/create', [SecurityIncidentController::class, 'create'])->name('compliance.incidents.create');
-        Route::post('compliance/incidents', [SecurityIncidentController::class, 'store'])->name('compliance.incidents.store');
-        Route::get('compliance/incidents/{incident}', [SecurityIncidentController::class, 'show'])->name('compliance.incidents.show');
-        Route::put('compliance/incidents/{incident}', [SecurityIncidentController::class, 'update'])->name('compliance.incidents.update');
+            Route::get('compliance/incidents', [SecurityIncidentController::class, 'index'])->name('compliance.incidents.index');
+            Route::get('compliance/incidents/create', [SecurityIncidentController::class, 'create'])->name('compliance.incidents.create');
+            Route::post('compliance/incidents', [SecurityIncidentController::class, 'store'])->name('compliance.incidents.store');
+            Route::get('compliance/incidents/{incident}', [SecurityIncidentController::class, 'show'])->name('compliance.incidents.show');
+            Route::put('compliance/incidents/{incident}', [SecurityIncidentController::class, 'update'])->name('compliance.incidents.update');
+        });
     });
 
     // สมาชิกดูได้เฉพาะข้อมูลของตนเอง (บังคับด้วย policy และ query scope)

@@ -67,7 +67,9 @@
             </div>
 
             <div class="mt-6 rounded-2xl bg-white/12 px-4 py-4 text-sm text-emerald-50/90">
-                อัปเดตราคา ณ {{ $todayLabel }} และเปิดให้สมัครสมาชิกใหม่ได้ตลอดเวลา
+                {{ $isCurrentPriceMonth
+                    ? 'อัปเดตราคา ณ '.$selectedPriceDateLabel.' และเปิดให้สมัครสมาชิกใหม่ได้ตลอดเวลา'
+                    : 'กำลังเปิดดูราคาย้อนหลังของเดือน '.$selectedPriceMonthLabel.' (อ้างอิง '.$selectedPriceDateLabel.')' }}
             </div>
         </div>
     </div>

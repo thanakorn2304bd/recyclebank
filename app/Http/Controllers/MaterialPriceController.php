@@ -10,6 +10,7 @@ use App\Models\MaterialPrice;
 use App\Support\ActivityLogger;
 use App\Support\MaterialPrices\MaterialPriceEditorViewDataFactory;
 use App\Support\MaterialPrices\MaterialPriceService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,11 @@ class MaterialPriceController extends Controller
 {
     public function index(Request $request, MaterialPriceEditorViewDataFactory $viewDataFactory)
     {
-        $today = now()->toDateString();
+        $targetMonthDate = $this->resolveTargetMonth($request->string('target_month')->toString());
+        $minimumTargetMonth = CarbonImmutable::now()->startOfMonth()->format('Y-m');
+        $targetMonth = $targetMonthDate->format('Y-m');
+        $monthStart = $targetMonthDate->startOfMonth()->toDateString();
+        $carryForwardDate = $targetMonthDate->subDay()->toDateString();
         $q = trim($request->string('q')->toString());
         $categoryId = $request->integer('category_id') ?: null;
         $materialId = $request->integer('material_id') ?: null;
@@ -30,16 +35,24 @@ class MaterialPriceController extends Controller
                 'material.is_active',
                 'material.category_id',
                 'material_category.category_name',
-                'current_price.price_id as current_price_id',
-                'current_price.price as current_price_value',
-                'current_price.effective_date as current_effective_date',
-                'current_price.expired_date as current_expired_date',
+                'selected_month_price.price_id as selected_month_price_id',
+                'selected_month_price.price as selected_month_price_value',
+                'selected_month_price.effective_date as selected_month_effective_date',
+                'selected_month_price.expired_date as selected_month_expired_date',
+                'carry_price.price_id as carry_forward_price_id',
+                'carry_price.price as carry_forward_price_value',
+                'carry_price.effective_date as carry_forward_effective_date',
+                'carry_price.expired_date as carry_forward_expired_date',
             ])
             ->leftJoin('material_category', 'material.category_id', '=', 'material_category.category_id')
-            ->leftJoinSub($this->currentPriceReferenceQuery($today), 'current_price_ref', function ($join) {
-                $join->on('material.material_id', '=', 'current_price_ref.material_id');
+            ->leftJoinSub($this->monthStartPriceReferenceQuery($monthStart), 'selected_month_ref', function ($join) {
+                $join->on('material.material_id', '=', 'selected_month_ref.material_id');
             })
-            ->leftJoin('material_price as current_price', 'current_price.price_id', '=', 'current_price_ref.price_id')
+            ->leftJoin('material_price as selected_month_price', 'selected_month_price.price_id', '=', 'selected_month_ref.price_id')
+            ->leftJoinSub($this->currentPriceReferenceQuery($carryForwardDate), 'carry_price_ref', function ($join) {
+                $join->on('material.material_id', '=', 'carry_price_ref.material_id');
+            })
+            ->leftJoin('material_price as carry_price', 'carry_price.price_id', '=', 'carry_price_ref.price_id')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where('material.material_name', 'like', "%{$q}%");
             })
@@ -63,12 +76,14 @@ class MaterialPriceController extends Controller
 
         $summary = [
             'materials' => $materials->count(),
-            'priced' => $materials->whereNotNull('current_price_id')->count(),
-            'missing' => $materials->whereNull('current_price_id')->count(),
+            'published' => $materials->whereNotNull('selected_month_price_id')->count(),
+            'carry_forward' => $materials->whereNull('selected_month_price_id')->whereNotNull('carry_forward_price_value')->count(),
+            'missing' => $materials->whereNull('selected_month_price_id')->whereNull('carry_forward_price_value')->count(),
             'active' => $materials->where('is_active', true)->count(),
         ];
         $priceEditorRows = $viewDataFactory->buildRows($materials);
-        $dirtySummary = 'ยังไม่มีรายการแก้ไข';
+        $targetMonthLabel = $this->thaiMonthLabel($targetMonthDate);
+        $dirtySummary = 'ยังไม่ได้ปรับราคาจากชุดตั้งต้น';
 
         return view('material_prices.index', compact(
             'materials',
@@ -79,7 +94,11 @@ class MaterialPriceController extends Controller
             'dirtySummary',
             'q',
             'categoryId',
-            'materialId'
+            'materialId',
+            'minimumTargetMonth',
+            'targetMonth',
+            'targetMonthLabel',
+            'monthStart'
         ));
     }
 
@@ -117,6 +136,7 @@ class MaterialPriceController extends Controller
     public function bulkUpdate(BulkUpdateMaterialPricesRequest $request, MaterialPriceService $materialPriceService)
     {
         $rows = $request->rows();
+        $targetMonth = $request->targetMonth();
 
         if ($rows === []) {
             return redirect()
@@ -124,30 +144,31 @@ class MaterialPriceController extends Controller
                 ->withErrors('ไม่พบข้อมูลราคาสำหรับบันทึก');
         }
 
-        ['updates' => $updates, 'creates' => $creates] = $materialPriceService->planBulkUpdate($rows);
+        ['updates' => $updates, 'creates' => $creates] = $materialPriceService->planMonthlyPublish($targetMonth, $rows);
 
         if ($updates === [] && $creates === []) {
             return redirect()
                 ->route('material-prices.index', $request->editorFilters())
-                ->with('success', 'ไม่มีรายการราคาที่เปลี่ยนแปลง');
+                ->with('success', 'เดือนนี้มีชุดราคาอยู่แล้ว หรือยังไม่มีรายการที่พร้อมเผยแพร่');
         }
 
         $createdBy = $this->currentUserId($request);
-        $materialPriceService->applyBulkUpdate($updates, $creates, $createdBy);
+        $materialPriceService->applyMonthlyPublish($updates, $creates, $createdBy);
         $touchedMaterials = $materialPriceService->touchedMaterialNames($updates, $creates);
+        $targetMonthLabel = $this->thaiMonthLabel(CarbonImmutable::createFromFormat('Y-m', $targetMonth)->startOfMonth());
 
         $preview = $touchedMaterials->take(5)->implode(', ');
         $remaining = $touchedMaterials->count() - min(5, $touchedMaterials->count());
 
         ActivityLogger::forCurrentUser(
             'material_prices',
-            'แก้ไขราคาวัสดุ '.$touchedMaterials->count().' รายการ'
+            'เผยแพร่ชุดราคาวัสดุเดือน '.$targetMonthLabel.' '.$touchedMaterials->count().' รายการ'
             .($preview !== '' ? ' ('.$preview.($remaining > 0 ? ' และอีก '.$remaining.' รายการ' : '').')' : '')
         );
 
         return redirect()
             ->route('material-prices.index', $request->editorFilters())
-            ->with('success', 'บันทึกการแก้ไขราคาเรียบร้อย '.$touchedMaterials->count().' รายการ');
+            ->with('success', 'เผยแพร่ชุดราคาประจำเดือน '.$targetMonthLabel.' เรียบร้อย '.$touchedMaterials->count().' รายการ');
     }
 
     public function destroy(MaterialPrice $material_price)
@@ -205,6 +226,20 @@ class MaterialPriceController extends Controller
             });
     }
 
+    private function monthStartPriceReferenceQuery(string $monthStart)
+    {
+        return DB::table('material_price as month_price')
+            ->select('month_price.material_id', 'month_price.price_id')
+            ->whereDate('month_price.effective_date', $monthStart)
+            ->whereNotExists(function ($query) use ($monthStart) {
+                $query->select(DB::raw(1))
+                    ->from('material_price as newer_month_price')
+                    ->whereColumn('newer_month_price.material_id', 'month_price.material_id')
+                    ->whereDate('newer_month_price.effective_date', $monthStart)
+                    ->whereColumn('newer_month_price.price_id', '>', 'month_price.price_id');
+            });
+    }
+
     private function currentUserId(Request $request): int
     {
         $userId = $request->user()?->user_id;
@@ -214,5 +249,40 @@ class MaterialPriceController extends Controller
         }
 
         return (int) $userId;
+    }
+
+    private function resolveTargetMonth(string $targetMonth): CarbonImmutable
+    {
+        $currentMonth = CarbonImmutable::now()->startOfMonth();
+
+        if (preg_match('/^\d{4}-\d{2}$/', $targetMonth) === 1) {
+            try {
+                $requestedMonth = CarbonImmutable::createFromFormat('Y-m', $targetMonth)->startOfMonth();
+
+                return $requestedMonth->lessThan($currentMonth) ? $currentMonth : $requestedMonth;
+            } catch (\Throwable) {
+                // fall through to current month
+            }
+        }
+
+        return $currentMonth;
+    }
+
+    private function thaiMonthLabel(CarbonImmutable $month): string
+    {
+        return match ((int) $month->format('n')) {
+            1 => 'มกราคม',
+            2 => 'กุมภาพันธ์',
+            3 => 'มีนาคม',
+            4 => 'เมษายน',
+            5 => 'พฤษภาคม',
+            6 => 'มิถุนายน',
+            7 => 'กรกฎาคม',
+            8 => 'สิงหาคม',
+            9 => 'กันยายน',
+            10 => 'ตุลาคม',
+            11 => 'พฤศจิกายน',
+            default => 'ธันวาคม',
+        }.' '.((int) $month->format('Y') + 543);
     }
 }

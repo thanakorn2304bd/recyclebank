@@ -22,8 +22,29 @@ class ActivityLogController extends Controller
             'to' => $to,
         ] = $request->filters();
 
+        $hiddenPdpaModules = [
+            'privacy.notice',
+            'privacy.consents',
+            'data_subject_requests',
+            'security_incidents',
+        ];
+        $hiddenPdpaEntities = [
+            'privacy_notice_version',
+            'privacy_consent',
+            'data_subject_request',
+            'security_incident',
+        ];
+        $pdpaEnabled = (bool) config('features.pdpa', false);
+
         $logsQuery = LogActivity::query()
             ->with(['user.household.community', 'user.staff'])
+            ->when(! $pdpaEnabled, function ($query) use ($hiddenPdpaModules, $hiddenPdpaEntities) {
+                $query->whereNotIn('module', $hiddenPdpaModules)
+                    ->where(function ($entityQuery) use ($hiddenPdpaEntities) {
+                        $entityQuery->whereNull('entity_type')
+                            ->orWhereNotIn('entity_type', $hiddenPdpaEntities);
+                    });
+            })
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($subQuery) use ($q) {
                     $subQuery->where('action', 'like', "%{$q}%")
@@ -76,6 +97,7 @@ class ActivityLogController extends Controller
 
         $modules = LogActivity::query()
             ->select('module')
+            ->when(! $pdpaEnabled, fn ($query) => $query->whereNotIn('module', $hiddenPdpaModules))
             ->distinct()
             ->orderBy('module')
             ->pluck('module');

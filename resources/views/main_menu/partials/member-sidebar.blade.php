@@ -55,6 +55,7 @@
                 </svg>
                 <span>อัปเดตล่าสุด {{ $updatedAtLabel }} น.</span>
             </div>
+            <div class="text-emerald-800">ราคาที่กำลังดู: {{ $selectedPriceMonthLabel }}</div>
             <div class="text-emerald-800">ผู้ใช้: {{ $authUser->username }} ({{ $authUser->role }})</div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

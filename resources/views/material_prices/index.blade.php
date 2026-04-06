@@ -26,6 +26,12 @@
       border: 1px solid #b8e4cc;
     }
 
+    .rb-price-status-carry {
+      background: #edf6ff;
+      color: #0b5394;
+      border: 1px solid #c9def8;
+    }
+
     .rb-price-status-missing {
       background: #fff7e8;
       color: #9a5b00;
