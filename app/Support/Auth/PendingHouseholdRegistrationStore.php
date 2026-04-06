@@ -29,19 +29,19 @@ class PendingHouseholdRegistrationStore
             now()->addMinutes((int) config('session.lifetime', 120))
         );
 
-        $request->session()->put(self::SESSION_KEY, [
-            'token' => $token,
-        ]);
+        // Store full payload in session so it survives in environments without
+        // persistent shared cache (e.g. Vercel serverless where file cache is ephemeral).
+        $request->session()->put(self::SESSION_KEY, $payload);
 
         return $token;
     }
 
     public function get(Request $request): ?array
     {
-        $legacySessionPayload = $request->session()->get(self::SESSION_KEY);
+        $sessionPayload = $request->session()->get(self::SESSION_KEY);
 
-        if ($this->isLegacyPayload($legacySessionPayload)) {
-            return $this->migrateLegacyPayload($request, $legacySessionPayload);
+        if ($this->isLegacyPayload($sessionPayload)) {
+            return $this->migrateLegacyPayload($request, $sessionPayload);
         }
 
         $tokens = collect([
@@ -59,11 +59,15 @@ class PendingHouseholdRegistrationStore
             }
 
             $payload['token'] = $token;
-            $request->session()->put(self::SESSION_KEY, [
-                'token' => $token,
-            ]);
+            $request->session()->put(self::SESSION_KEY, $payload);
 
             return $payload;
+        }
+
+        // Cache miss fallback: use session-stored payload when cache is unavailable
+        // (e.g. Vercel serverless where each invocation may have a fresh filesystem).
+        if (is_array($sessionPayload) && array_key_exists('household_attributes', $sessionPayload)) {
+            return $sessionPayload;
         }
 
         return null;
@@ -113,7 +117,11 @@ class PendingHouseholdRegistrationStore
 
     private function isLegacyPayload(mixed $value): bool
     {
-        return is_array($value) && array_key_exists('household_attributes', $value);
+        // Legacy payloads (pre-token era) have household_attributes but no valid token.
+        // New session-stored payloads also have household_attributes but include a token.
+        return is_array($value)
+            && array_key_exists('household_attributes', $value)
+            && ! (is_string($value['token'] ?? null) && $value['token'] !== '');
     }
 
     private function extractRequestToken(Request $request): ?string
