@@ -57,7 +57,8 @@
         ],
         "vercel": [
             "npm ci",
-            "npm run build"
+            "npm run build",
+            "@php scripts/vercel-run-migrations.php"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

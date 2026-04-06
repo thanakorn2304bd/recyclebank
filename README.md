@@ -74,6 +74,16 @@ Format code with Pint:
 ./vendor/bin/pint
 ```
 
+## Vercel / TiDB Deploys
+
+Production deploys on Vercel run the Composer `vercel` script. This project now uses that hook to run `php artisan migrate --force` automatically only when the deployment environment is `production`.
+
+If production TiDB is already behind on schema changes, trigger a new production deployment after pulling this change, or run the migration manually in an environment that has the production `TIDB_*` or `DB_*` variables:
+
+```bash
+php artisan migrate --force
+```
+
 ## Default Accounts
 
 Seeders create example accounts for local development:
