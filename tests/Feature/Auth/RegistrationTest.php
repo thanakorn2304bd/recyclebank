@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\CreatesRegistrationDocumentUploads;
@@ -333,6 +334,32 @@ class RegistrationTest extends TestCase
 
         $this->assertDatabaseCount('household', 1);
         $this->assertDatabaseCount('household_registration_document', 4);
+    }
+
+    public function test_document_step_can_still_open_when_default_cache_store_is_ephemeral(): void
+    {
+        config(['cache.default' => 'array']);
+
+        DB::table('community')->insert([
+            'community_id' => '01',
+            'community_name' => 'North Community',
+        ]);
+
+        $response = $this->post('/register', [
+            ...$this->validRegistrationPayload(),
+        ]);
+
+        $redirectLocation = $response->headers->get('Location');
+
+        $this->assertNotNull($redirectLocation);
+
+        Cache::store('array')->flush();
+        $this->app['session']->flush();
+
+        $this->get((string) $redirectLocation)
+            ->assertOk()
+            ->assertSee('ขั้นตอนที่ 2 จาก 2')
+            ->assertSee('ส่งเอกสารยืนยันตัวตน');
     }
 
     private function validRegistrationPayload(): array

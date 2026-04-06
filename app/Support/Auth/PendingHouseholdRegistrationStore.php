@@ -3,6 +3,7 @@
 namespace App\Support\Auth;
 
 use Illuminate\Http\Request;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -17,21 +18,22 @@ class PendingHouseholdRegistrationStore
         $existingToken = $this->requestToken($request);
 
         if ($existingToken !== null) {
-            Cache::forget($this->cacheKey($existingToken));
+            $this->draftStore()->forget($this->cacheKey($existingToken));
         }
 
         $token = Str::random(40);
         $payload['token'] = $token;
 
-        Cache::put(
+        $this->draftStore()->put(
             $this->cacheKey($token),
             $payload,
             now()->addMinutes((int) config('session.lifetime', 120))
         );
 
-        // Store full payload in session so it survives in environments without
-        // persistent shared cache (e.g. Vercel serverless where file cache is ephemeral).
-        $request->session()->put(self::SESSION_KEY, $payload);
+        // Keep only the token in the session to avoid oversized cookie sessions on Vercel.
+        $request->session()->put(self::SESSION_KEY, [
+            'token' => $token,
+        ]);
 
         return $token;
     }
@@ -52,14 +54,16 @@ class PendingHouseholdRegistrationStore
             ->values();
 
         foreach ($tokens as $token) {
-            $payload = Cache::get($this->cacheKey($token));
+            $payload = $this->draftStore()->get($this->cacheKey($token));
 
             if (! is_array($payload)) {
                 continue;
             }
 
             $payload['token'] = $token;
-            $request->session()->put(self::SESSION_KEY, $payload);
+            $request->session()->put(self::SESSION_KEY, [
+                'token' => $token,
+            ]);
 
             return $payload;
         }
@@ -83,7 +87,7 @@ class PendingHouseholdRegistrationStore
             ->values();
 
         foreach ($tokens as $token) {
-            Cache::forget($this->cacheKey($token));
+            $this->draftStore()->forget($this->cacheKey($token));
         }
 
         $request->session()->forget(self::SESSION_KEY);
@@ -102,7 +106,7 @@ class PendingHouseholdRegistrationStore
 
         $payload['token'] = $token;
 
-        Cache::put(
+        $this->draftStore()->put(
             $this->cacheKey($token),
             $payload,
             now()->addMinutes((int) config('session.lifetime', 120))
@@ -151,5 +155,10 @@ class PendingHouseholdRegistrationStore
     private function cacheKey(string $token): string
     {
         return self::CACHE_KEY_PREFIX.$token;
+    }
+
+    private function draftStore(): CacheRepository
+    {
+        return Cache::store('database');
     }
 }
