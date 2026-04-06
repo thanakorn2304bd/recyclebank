@@ -40,9 +40,17 @@ class RegistrationTest extends TestCase
             ...$this->validRegistrationPayload(),
         ]);
 
+        $redirectLocation = $response->headers->get('Location');
+        parse_str((string) parse_url((string) $redirectLocation, PHP_URL_QUERY), $query);
+
         $response
-            ->assertRedirect(route('register.documents'))
-            ->assertSessionHas('auth.pending_household_registration');
+            ->assertSessionHas('auth.pending_household_registration.token');
+
+        $this->assertNotNull($redirectLocation);
+        $this->assertStringStartsWith(route('register.documents'), (string) $redirectLocation);
+        $this->assertArrayHasKey('draft', $query);
+        $this->assertIsString($query['draft']);
+        $this->assertNotSame('', $query['draft']);
 
         $this->assertDatabaseCount('household', 0);
     }
@@ -261,6 +269,67 @@ class RegistrationTest extends TestCase
             ->assertSessionHasErrors('member_national_id_copies.1');
 
         $this->assertDatabaseCount('household', 0);
+    }
+
+    public function test_document_step_can_be_opened_via_draft_token_when_session_is_missing(): void
+    {
+        DB::table('community')->insert([
+            'community_id' => '01',
+            'community_name' => 'North Community',
+        ]);
+
+        $response = $this->post('/register', [
+            ...$this->validRegistrationPayload(),
+        ]);
+
+        $redirectLocation = $response->headers->get('Location');
+
+        $this->assertNotNull($redirectLocation);
+
+        $this->app['session']->flush();
+
+        $this->get((string) $redirectLocation)
+            ->assertOk()
+            ->assertSee('ขั้นตอนที่ 2 จาก 2')
+            ->assertSee('ส่งเอกสารยืนยันตัวตน');
+    }
+
+    public function test_registration_can_complete_via_draft_token_when_session_is_missing(): void
+    {
+        Storage::fake('local');
+
+        DB::table('community')->insert([
+            'community_id' => '01',
+            'community_name' => 'North Community',
+        ]);
+
+        $response = $this->post('/register', [
+            ...$this->validRegistrationPayload(),
+        ]);
+
+        $redirectLocation = $response->headers->get('Location');
+        parse_str((string) parse_url((string) $redirectLocation, PHP_URL_QUERY), $query);
+
+        $this->assertArrayHasKey('draft', $query);
+
+        $this->app['session']->flush();
+
+        $this->post(route('register.complete'), [
+            'draft_token' => $query['draft'],
+            'member_household_copies' => [
+                $this->fakeRegistrationPng('household-member-1.png'),
+                $this->fakeRegistrationPng('household-member-2.png'),
+            ],
+            'member_national_id_copies' => [
+                $this->fakeRegistrationPdf('national-id-member-1.pdf', 'National ID member 1'),
+                $this->fakeRegistrationPdf('national-id-member-2.pdf', 'National ID member 2'),
+            ],
+        ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseCount('household', 1);
+        $this->assertDatabaseCount('household_registration_document', 4);
     }
 
     private function validRegistrationPayload(): array

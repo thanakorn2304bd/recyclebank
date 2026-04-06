@@ -2,13 +2,12 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Support\Auth\PendingHouseholdRegistrationStore;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 class UploadRegistrationDocumentsRequest extends FormRequest
 {
-    private const PENDING_REGISTRATION_SESSION_KEY = 'auth.pending_household_registration';
-
     public function authorize(): bool
     {
         return true;
@@ -76,7 +75,7 @@ class UploadRegistrationDocumentsRequest extends FormRequest
 
     private function pendingRegistrationMembers(): array
     {
-        $registration = $this->session()->get(self::PENDING_REGISTRATION_SESSION_KEY);
+        $registration = app(PendingHouseholdRegistrationStore::class)->get($this);
         $members = $registration['members'] ?? [];
 
         return is_array($members) ? array_values($members) : [];

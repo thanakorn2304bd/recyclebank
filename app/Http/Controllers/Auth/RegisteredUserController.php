@@ -11,6 +11,7 @@ use App\Models\PrivacyConsent;
 use App\Models\PrivacyNoticeVersion;
 use App\Models\UserAccount;
 use App\Support\ActivityLogger;
+use App\Support\Auth\PendingHouseholdRegistrationStore;
 use App\Support\Households\HouseholdViewDataFactory;
 use App\Support\Households\RegistrationDocumentService;
 use Illuminate\Http\RedirectResponse;
@@ -22,21 +23,24 @@ use Throwable;
 
 class RegisteredUserController extends Controller
 {
-    private const PENDING_REGISTRATION_SESSION_KEY = 'auth.pending_household_registration';
-
     /**
      * Display the registration view.
      */
-    public function create(Request $request, HouseholdViewDataFactory $householdViewDataFactory): View
+    public function create(
+        Request $request,
+        HouseholdViewDataFactory $householdViewDataFactory,
+        PendingHouseholdRegistrationStore $pendingHouseholdRegistrationStore
+    ): View
     {
-        $registrationDraft = $this->pendingRegistration($request);
+        $registrationDraft = $pendingHouseholdRegistrationStore->get($request);
         $draftForm = is_array($registrationDraft['form'] ?? null) ? $registrationDraft['form'] : [];
         $communities = Community::orderBy('community_id')->get();
         $oldMembers = $householdViewDataFactory->oldMembers($request->old('members', $draftForm['members'] ?? []));
         $privacyNotice = $this->currentPrivacyNotice();
         $draftAccountNo = (string) ($registrationDraft['account_no'] ?? '');
+        $draftToken = (string) ($registrationDraft['token'] ?? $pendingHouseholdRegistrationStore->requestToken($request) ?? '');
 
-        return view('auth.register', compact('communities', 'oldMembers', 'privacyNotice', 'draftForm', 'draftAccountNo'));
+        return view('auth.register', compact('communities', 'oldMembers', 'privacyNotice', 'draftForm', 'draftAccountNo', 'draftToken'));
     }
 
     /**
@@ -44,13 +48,16 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(RegisterHouseholdRequest $request): RedirectResponse
+    public function store(
+        RegisterHouseholdRequest $request,
+        PendingHouseholdRegistrationStore $pendingHouseholdRegistrationStore
+    ): RedirectResponse
     {
         $privacyNotice = $this->currentPrivacyNotice();
 
         $householdAttributes = $request->householdAttributes();
 
-        $request->session()->put(self::PENDING_REGISTRATION_SESSION_KEY, [
+        $draftToken = $pendingHouseholdRegistrationStore->put($request, [
             'account_no' => $householdAttributes['account_no'],
             'form' => $this->registrationFormDraft($request),
             'household_attributes' => $householdAttributes,
@@ -59,15 +66,23 @@ class RegisteredUserController extends Controller
             'privacy_notice_version_id' => $privacyNotice?->privacy_notice_version_id,
         ]);
 
-        return redirect()->route('register.documents');
+        return redirect()->route('register.documents', [
+            'draft' => $draftToken,
+        ]);
     }
 
-    public function documents(Request $request, RegistrationDocumentService $registrationDocumentService): View|RedirectResponse
+    public function documents(
+        Request $request,
+        RegistrationDocumentService $registrationDocumentService,
+        PendingHouseholdRegistrationStore $pendingHouseholdRegistrationStore
+    ): View|RedirectResponse
     {
-        $registration = $this->pendingRegistration($request);
+        $registration = $pendingHouseholdRegistrationStore->get($request);
 
         if ($registration === null) {
-            return redirect()->route('register')->withErrors([
+            return redirect()->route('register', array_filter([
+                'draft' => $pendingHouseholdRegistrationStore->requestToken($request),
+            ]))->withErrors([
                 'registration' => 'กรุณากรอกข้อมูลสมัครสมาชิกก่อนเข้าสู่ขั้นตอนส่งเอกสารยืนยันตัวตน',
             ]);
         }
@@ -82,6 +97,7 @@ class RegisteredUserController extends Controller
             'community' => $community,
             'documentRequirements' => $registrationDocumentService->documentRequirements(),
             'registrationMembers' => $registrationDocumentService->normalizedMembers($registration['members'] ?? []),
+            'draftToken' => (string) ($registration['token'] ?? ''),
         ]);
     }
 
@@ -92,9 +108,10 @@ class RegisteredUserController extends Controller
      */
     public function complete(
         UploadRegistrationDocumentsRequest $request,
-        RegistrationDocumentService $registrationDocumentService
+        RegistrationDocumentService $registrationDocumentService,
+        PendingHouseholdRegistrationStore $pendingHouseholdRegistrationStore
     ): RedirectResponse {
-        $registration = $this->pendingRegistration($request);
+        $registration = $pendingHouseholdRegistrationStore->get($request);
 
         if ($registration === null) {
             return redirect()->route('register')->withErrors([
@@ -103,7 +120,7 @@ class RegisteredUserController extends Controller
         }
 
         if (! $this->registrationDraftIsStillAvailable($registration)) {
-            $request->session()->forget(self::PENDING_REGISTRATION_SESSION_KEY);
+            $pendingHouseholdRegistrationStore->forget($request);
 
             return redirect()->route('register')->withErrors([
                 'registration' => 'เลขบัญชีที่ระบบเตรียมไว้ถูกใช้งานแล้ว กรุณากรอกข้อมูลสมัครใหม่อีกครั้ง',
@@ -115,7 +132,7 @@ class RegisteredUserController extends Controller
         $passwordHash = $registration['password_hash'] ?? null;
 
         if (! is_array($householdAttributes) || ! is_array($members) || ! is_string($passwordHash) || $passwordHash === '') {
-            $request->session()->forget(self::PENDING_REGISTRATION_SESSION_KEY);
+            $pendingHouseholdRegistrationStore->forget($request);
 
             return redirect()->route('register')->withErrors([
                 'registration' => 'ข้อมูลสมัครสมาชิกไม่ครบถ้วน กรุณากรอกใหม่อีกครั้ง',
@@ -175,7 +192,7 @@ class RegisteredUserController extends Controller
             throw $throwable;
         }
 
-        $request->session()->forget(self::PENDING_REGISTRATION_SESSION_KEY);
+        $pendingHouseholdRegistrationStore->forget($request);
 
         ActivityLogger::log(
             $memberAccount,
@@ -231,13 +248,6 @@ class RegisteredUserController extends Controller
             'members' => $request->members(),
             'accepted_privacy_notice' => true,
         ];
-    }
-
-    private function pendingRegistration(Request $request): ?array
-    {
-        $registration = $request->session()->get(self::PENDING_REGISTRATION_SESSION_KEY);
-
-        return is_array($registration) ? $registration : null;
     }
 
     private function registrationDraftIsStillAvailable(array $registration): bool
