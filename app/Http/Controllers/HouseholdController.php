@@ -464,6 +464,22 @@ class HouseholdController extends Controller
 
         return $household->members
             ->values()
+            ->filter(function (Member $member) use ($confirmedDocumentEntries) {
+                foreach ($confirmedDocumentEntries as $entry) {
+                    $score = $this->scoreDocumentMatch(
+                        $member,
+                        $entry['member_name'] ?? null,
+                        $entry['member_last4'] ?? null,
+                        $entry['member_relation'] ?? null
+                    );
+                    if ($score >= 3) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })
+            ->values()
             ->map(function (Member $member, int $index) use ($documentRequirements, $confirmedDocumentEntries) {
                 $householdCopy = $this->pickBestDocumentEntryForMember($member, $confirmedDocumentEntries, 'household_copy');
                 $nationalIdCopy = $this->pickBestDocumentEntryForMember($member, $confirmedDocumentEntries, 'national_id_copy');
