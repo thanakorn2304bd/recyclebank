@@ -55,9 +55,9 @@ class RegistrationStatusController extends Controller
                 ->with('status', 'กรุณาเข้าสู่ระบบอีกครั้งก่อนแก้ไขเอกสาร');
         }
 
-        if ($trackedHousehold->active_status !== 'inactive') {
+        if ($trackedHousehold->active_status !== 'rejected') {
             return redirect()->route('registration-status.show')
-                ->withErrors(['tracking' => 'บัญชีนี้ยังไม่ได้อยู่ในสถานะตีกลับ จึงยังไม่สามารถส่งเอกสารแก้ไขได้']);
+                ->withErrors(['tracking' => 'บัญชีนี้ไม่ได้อยู่ในสถานะไม่อนุมัติ จึงไม่สามารถส่งเอกสารใหม่ได้']);
         }
 
         $storedDocuments = $registrationDocumentService->storeUploadedDocuments(
@@ -164,10 +164,19 @@ class RegistrationStatusController extends Controller
 
         if ($household->active_status === 'inactive') {
             return [
-                'badge' => 'ตีกลับให้แก้เอกสาร',
-                'badge_class' => 'border-rose-200 bg-rose-50 text-rose-700',
-                'title' => 'เจ้าหน้าที่ส่งคำขอกลับมาเพื่อแก้ไขเอกสาร',
-                'description' => 'ตรวจสอบหมายเหตุด้านล่าง แล้วอัปโหลดเอกสารชุดใหม่ให้ครบทุกคนก่อนส่งกลับไปพิจารณาอีกครั้ง',
+                'badge' => 'ปิดการใช้งาน',
+                'badge_class' => 'border-gray-300 bg-gray-100 text-gray-600',
+                'title' => 'บัญชีนี้ถูกปิดการใช้งาน',
+                'description' => 'กรุณาติดต่อเจ้าหน้าที่เพื่อสอบถามข้อมูลเพิ่มเติม',
+            ];
+        }
+
+        if ($household->active_status === 'rejected') {
+            return [
+                'badge' => 'ไม่อนุมัติ',
+                'badge_class' => 'border-red-200 bg-red-50 text-red-700',
+                'title' => 'คำขอสมัครสมาชิกไม่ผ่านการอนุมัติ',
+                'description' => 'เจ้าหน้าที่พิจารณาแล้วไม่อนุมัติคำขอนี้ กรุณาตรวจสอบหมายเหตุด้านล่างสำหรับรายละเอียดเพิ่มเติม',
             ];
         }
 

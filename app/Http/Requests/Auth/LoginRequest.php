@@ -154,7 +154,7 @@ class LoginRequest extends FormRequest
             return false;
         }
 
-        if (! in_array($user->household->active_status, ['pending', 'inactive'], true)) {
+        if (! in_array($user->household->active_status, ['pending', 'inactive', 'rejected'], true)) {
             return false;
         }
 
@@ -221,6 +221,10 @@ class LoginRequest extends FormRequest
 
         if ($user->household?->active_status === 'inactive') {
             return "คำขอสมัครสมาชิกของบัญชี {$accountNo} ถูกส่งกลับเพื่อแก้ไขเอกสาร กรุณาไปที่หน้าติดตามคำขอเพื่อดูหมายเหตุและอัปโหลดเอกสารใหม่";
+        }
+
+        if ($user->household?->active_status === 'rejected') {
+            return "คำขอสมัครสมาชิกของบัญชี {$accountNo} ไม่ผ่านการอนุมัติ กรุณาตรวจสอบหมายเหตุในหน้าสถานะคำขอสมัครสมาชิก";
         }
 
         return "คำขอสมัครสมาชิกของบัญชี {$accountNo} อยู่ระหว่างรออนุมัติจากเจ้าหน้าที่ กรุณาติดตามผลได้จากหน้าสถานะคำขอสมัครสมาชิก";

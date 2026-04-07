@@ -80,7 +80,12 @@
                     </div>
 
                     <div class="mt-5 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
-                        <div class="text-sm font-semibold text-gray-950">หมายเหตุจากเจ้าหน้าที่</div>
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="text-sm font-semibold text-gray-950">หมายเหตุจากเจ้าหน้าที่</div>
+                            <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold {{ $statusSummary['badge_class'] }}">
+                                {{ $statusSummary['badge'] }}
+                            </span>
+                        </div>
                         <p class="mt-3 text-sm leading-7 text-gray-700">
                             {{ $trackedHousehold->review_notes ?: 'ยังไม่มีหมายเหตุเพิ่มเติมจากเจ้าหน้าที่ในขณะนี้' }}
                         </p>
@@ -91,8 +96,12 @@
                     <h2 class="text-xl font-bold text-gray-950">ขั้นตอนถัดไป</h2>
 
                     @if ($trackedHousehold->active_status === 'inactive')
-                        <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-7 text-rose-800">
-                            เจ้าหน้าที่ส่งคำขอกลับมาเพื่อให้แก้ไขเอกสาร คุณสามารถอัปโหลดเอกสารใหม่ด้านล่างได้ทันที เมื่อส่งแล้วระบบจะเปลี่ยนสถานะกลับเป็นรอพิจารณาอีกครั้ง
+                        <div class="mt-5 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm leading-7 text-gray-700">
+                            บัญชีนี้ถูกปิดการใช้งาน กรุณาติดต่อเจ้าหน้าที่เพื่อสอบถามข้อมูลเพิ่มเติม
+                        </div>
+                    @elseif ($trackedHousehold->active_status === 'rejected')
+                        <div class="mt-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm leading-7 text-red-800">
+                            คำขอสมัครสมาชิกไม่ผ่านการอนุมัติ คุณสามารถอัปโหลดเอกสารชุดใหม่ด้านล่างเพื่อขอรับการพิจารณาอีกครั้ง
                         </div>
                     @elseif ($trackedHousehold->active_status === 'pending')
                         <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-7 text-amber-900">
@@ -156,7 +165,7 @@
                 </div>
             </section>
 
-            @if ($trackedHousehold->active_status === 'inactive')
+            @if ($trackedHousehold->active_status === 'rejected')
                 <form method="POST" action="{{ route('registration-status.documents.update') }}" enctype="multipart/form-data" class="rounded-[2rem] border border-rose-200 bg-white p-6 shadow-sm lg:p-8">
                     @csrf
                     @method('PATCH')
