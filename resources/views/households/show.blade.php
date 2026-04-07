@@ -199,6 +199,8 @@
                       ยังไม่ผ่านการพิจารณา
                     @elseif($household->active_status === 'active')
                       อนุมัติให้ใช้งานแล้ว
+                    @elseif($household->active_status === 'rejected')
+                      ไม่อนุมัติ
                     @else
                       ปิดการใช้งานแล้ว
                     @endif
@@ -224,6 +226,7 @@
                       <div class="rb-review-status-panel__title">เลือกสถานะที่จะใช้กับบัญชีนี้</div>
                       <select class="form-select rb-review-status-select" id="household-review-status" name="status" required>
                         <option value="active" @selected($selectedReviewStatus === 'active')>อนุมัติให้ใช้งาน</option>
+                        <option value="rejected" @selected($selectedReviewStatus === 'rejected')>ไม่อนุมัติ</option>
                         <option value="inactive" @selected($selectedReviewStatus === 'inactive')>ปิดการใช้งาน</option>
                       </select>
                       <div class="form-text rb-review-status-panel__help" id="household-review-status-help">เมื่ออนุมัติแล้ว บัญชีสมาชิกของครัวเรือนนี้จะถูกเปิดใช้งานอัตโนมัติถ้ามีการตั้งรหัสผ่านไว้แล้ว</div>
@@ -387,17 +390,23 @@
           return;
         }
 
-        const activeStatusHelpText = 'เมื่ออนุมัติแล้ว บัญชีสมาชิกของครัวเรือนนี้จะถูกเปิดใช้งานอัตโนมัติถ้ามีการตั้งรหัสผ่านไว้แล้ว';
-        const inactiveStatusHelpText = 'ใช้เมื่อจำเป็นต้องระงับการเข้าใช้งานบัญชี และควรระบุเหตุผลประกอบไว้ด้านล่าง';
-        const activeHelpText = 'การอนุมัติให้ใช้งานสามารถเว้นหมายเหตุได้ แต่หากปิดการใช้งานต้องระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา';
-        const inactiveHelpText = 'กรณีปิดการใช้งาน ต้องระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา เช่น ปิดใช้งานตามคำร้อง เอกสารไม่ครบ หรือข้อมูลไม่ตรงกัน';
+        const statusHelpTexts = {
+          active: 'เมื่ออนุมัติแล้ว บัญชีสมาชิกของครัวเรือนนี้จะถูกเปิดใช้งานอัตโนมัติถ้ามีการตั้งรหัสผ่านไว้แล้ว',
+          rejected: 'ใช้เมื่อเอกสารไม่ครบหรือข้อมูลไม่ถูกต้อง ต้องระบุเหตุผลประกอบ',
+          inactive: 'ใช้เมื่อจำเป็นต้องระงับการเข้าใช้งานบัญชี และควรระบุเหตุผลประกอบไว้ด้านล่าง',
+        };
+        const reviewNotesHelpTexts = {
+          active: 'การอนุมัติให้ใช้งานสามารถเว้นหมายเหตุได้ แต่หากปิดการใช้งานต้องระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา',
+          rejected: 'กรณีไม่อนุมัติ ต้องระบุเหตุผล เช่น เอกสารไม่ครบ ข้อมูลไม่ตรง หรือไม่ผ่านเงื่อนไข',
+          inactive: 'กรณีปิดการใช้งาน ต้องระบุเหตุผลหรือหลักฐานที่ใช้พิจารณา เช่น ปิดใช้งานตามคำร้อง เอกสารไม่ครบ หรือข้อมูลไม่ตรงกัน',
+        };
 
         function syncReviewNotesRequirement() {
-          const requiresReviewNotes = statusField.value === 'inactive';
+          const requiresReviewNotes = statusField.value === 'inactive' || statusField.value === 'rejected';
 
           statusPanel.classList.toggle('rb-review-status-panel--active', ! requiresReviewNotes);
           statusPanel.classList.toggle('rb-review-status-panel--inactive', requiresReviewNotes);
-          statusHelp.textContent = requiresReviewNotes ? inactiveStatusHelpText : activeStatusHelpText;
+          statusHelp.textContent = statusHelpTexts[statusField.value] ?? statusHelpTexts.active;
 
           if (requiresReviewNotes) {
             reviewNotesField.setAttribute('required', 'required');
@@ -407,7 +416,7 @@
             reviewNotesField.removeAttribute('aria-required');
           }
 
-          reviewNotesHelp.textContent = requiresReviewNotes ? inactiveHelpText : activeHelpText;
+          reviewNotesHelp.textContent = reviewNotesHelpTexts[statusField.value] ?? reviewNotesHelpTexts.active;
         }
 
         statusField.addEventListener('change', syncReviewNotesRequirement);

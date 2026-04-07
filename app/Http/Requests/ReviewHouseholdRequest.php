@@ -14,10 +14,10 @@ class ReviewHouseholdRequest extends FormRequest
 
     public function rules(): array
     {
-        $requiresReviewNotes = $this->input('status') === 'inactive';
+        $requiresReviewNotes = in_array($this->input('status'), ['inactive', 'rejected'], true);
 
         return [
-            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'status' => ['required', Rule::in(['active', 'inactive', 'rejected'])],
             'review_notes' => [
                 'nullable',
                 'string',

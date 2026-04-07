@@ -67,7 +67,7 @@ class HouseholdService
 
     public function review(Household $household, string $status, string $notes, int $reviewedBy): array
     {
-        if (! in_array($status, ['active', 'inactive'], true)) {
+        if (! in_array($status, ['active', 'inactive', 'rejected'], true)) {
             throw ValidationException::withMessages([
                 'status' => 'สถานะสำหรับการพิจารณาไม่ถูกต้อง',
             ]);

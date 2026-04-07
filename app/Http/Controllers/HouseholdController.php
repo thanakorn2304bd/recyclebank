@@ -274,7 +274,11 @@ class HouseholdController extends Controller
             $reviewedBy
         );
 
-        $statusLabel = $payload['status'] === 'active' ? 'อนุมัติใช้งาน' : 'กำหนดเป็นปิดใช้งาน';
+        $statusLabel = match ($payload['status']) {
+            'active' => 'อนุมัติใช้งาน',
+            'rejected' => 'ไม่อนุมัติ',
+            default => 'กำหนดเป็นปิดใช้งาน',
+        };
 
         ActivityLogger::forCurrentUser(
             'households.review',
@@ -292,9 +296,11 @@ class HouseholdController extends Controller
 
         return redirect()
             ->route('households.show', $reviewedHousehold)
-            ->with('success', $payload['status'] === 'active'
-                ? 'อนุมัติครัวเรือนเรียบร้อย'
-                : 'อัปเดตสถานะครัวเรือนเรียบร้อย');
+            ->with('success', match ($payload['status']) {
+                'active' => 'อนุมัติครัวเรือนเรียบร้อย',
+                'rejected' => 'บันทึกผลไม่อนุมัติครัวเรือนเรียบร้อย',
+                default => 'อัปเดตสถานะครัวเรือนเรียบร้อย',
+            });
     }
 
     public function createCredentials(
