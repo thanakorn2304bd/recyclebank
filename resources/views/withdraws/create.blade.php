@@ -125,10 +125,8 @@
       </div>
     </div>
 
-    <div class="d-flex flex-wrap gap-2 mt-4">
-      <button type="button" class="btn btn-outline-secondary" id="previewWithdrawPdfBtn">ตรวจสอบแบบฟอร์ม PDF</button>
-      <button class="btn btn-primary">บันทึกเป็นคำขอรออนุมัติ</button>
-      <a class="btn btn-outline-secondary" href="{{ route('materials.index') }}">กลับหน้า “วัสดุ”</a>
+    <div class=”d-flex flex-wrap gap-2 mt-4”>
+      <button class=”btn btn-primary”>บันทึกเป็นคำขอรออนุมัติ</button>
     </div>
 
     <div class="form-text mt-2">
