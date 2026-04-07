@@ -101,6 +101,8 @@
               <span class="badge bg-success">ใช้งาน</span>
             @elseif($household->active_status === 'pending')
               <span class="badge bg-warning text-dark">รออนุมัติ</span>
+            @elseif($household->active_status === 'rejected')
+              <span class="badge bg-danger">ไม่อนุมัติ</span>
             @else
               <span class="badge bg-secondary">ปิด</span>
             @endif
@@ -216,7 +218,8 @@
                   @csrf
                   @method('PATCH')
                   @php
-                    $selectedReviewStatus = old('status', $household->active_status === 'pending' ? 'active' : $household->active_status);
+                    $isPendingReview = in_array($household->active_status, ['pending', 'rejected']);
+                    $selectedReviewStatus = old('status', $isPendingReview ? 'active' : $household->active_status);
                   @endphp
 
                   <div class="mb-3">
@@ -226,8 +229,11 @@
                       <div class="rb-review-status-panel__title">เลือกสถานะที่จะใช้กับบัญชีนี้</div>
                       <select class="form-select rb-review-status-select" id="household-review-status" name="status" required>
                         <option value="active" @selected($selectedReviewStatus === 'active')>อนุมัติให้ใช้งาน</option>
-                        <option value="rejected" @selected($selectedReviewStatus === 'rejected')>ไม่อนุมัติ</option>
-                        <option value="inactive" @selected($selectedReviewStatus === 'inactive')>ปิดการใช้งาน</option>
+                        @if($isPendingReview)
+                          <option value="rejected" @selected($selectedReviewStatus === 'rejected')>ไม่อนุมัติ</option>
+                        @else
+                          <option value="inactive" @selected($selectedReviewStatus === 'inactive')>ปิดการใช้งาน</option>
+                        @endif
                       </select>
                       <div class="form-text rb-review-status-panel__help" id="household-review-status-help">เมื่ออนุมัติแล้ว บัญชีสมาชิกของครัวเรือนนี้จะถูกเปิดใช้งานอัตโนมัติถ้ามีการตั้งรหัสผ่านไว้แล้ว</div>
                     </div>

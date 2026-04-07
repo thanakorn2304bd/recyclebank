@@ -32,6 +32,11 @@
       <div class="rb-stat-meta">คำขอสมาชิกที่ยังรอตรวจสอบ</div>
     </div>
     <div class="rb-stat-card">
+      <div class="rb-stat-label">ไม่อนุมัติ</div>
+      <div class="rb-stat-value">{{ number_format($rejectedCount) }}</div>
+      <div class="rb-stat-meta">คำขอที่ถูกปฏิเสธการอนุมัติ</div>
+    </div>
+    <div class="rb-stat-card">
       <div class="rb-stat-label">ปิดใช้งาน</div>
       <div class="rb-stat-value">{{ number_format($inactiveCount) }}</div>
       <div class="rb-stat-meta">บัญชีที่ยังไม่เปิดใช้งานหรือถูกระงับ</div>
@@ -71,6 +76,7 @@
           <option value="">ทุกสถานะ</option>
           <option value="pending" @selected($status === 'pending')>รออนุมัติ</option>
           <option value="active" @selected($status === 'active')>ใช้งาน</option>
+          <option value="rejected" @selected($status === 'rejected')>ไม่อนุมัติ</option>
           <option value="inactive" @selected($status === 'inactive')>ปิด</option>
         </select>
       </div>
@@ -131,6 +137,8 @@
                   <span class="badge bg-success">ใช้งาน</span>
                 @elseif($h->active_status === 'pending')
                   <span class="badge bg-warning text-dark">รออนุมัติ</span>
+                @elseif($h->active_status === 'rejected')
+                  <span class="badge bg-danger">ไม่อนุมัติ</span>
                 @else
                   <span class="badge bg-secondary">ปิด</span>
                 @endif

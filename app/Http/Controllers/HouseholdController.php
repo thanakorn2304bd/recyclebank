@@ -72,6 +72,7 @@ class HouseholdController extends Controller
         [
             'activeCount' => $activeCount,
             'pendingCount' => $pendingCount,
+            'rejectedCount' => $rejectedCount,
             'inactiveCount' => $inactiveCount,
         ] = $householdService->indexViewMetrics($households);
         $isPrivileged = ! $this->isMember();
@@ -85,6 +86,7 @@ class HouseholdController extends Controller
             'memberAddition',
             'activeCount',
             'pendingCount',
+            'rejectedCount',
             'inactiveCount',
             'isPrivileged'
         ));

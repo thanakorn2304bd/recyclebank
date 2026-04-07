@@ -48,6 +48,7 @@ class HouseholdService
         return [
             'activeCount' => $pageHouseholds->where('active_status', 'active')->count(),
             'pendingCount' => $pageHouseholds->where('active_status', 'pending')->count(),
+            'rejectedCount' => $pageHouseholds->where('active_status', 'rejected')->count(),
             'inactiveCount' => $pageHouseholds->where('active_status', 'inactive')->count(),
         ];
     }
