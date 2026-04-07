@@ -40,7 +40,7 @@ class RegistrationStatusTest extends TestCase
     {
         Storage::fake('local');
 
-        ['memberAccount' => $memberAccount, 'household' => $household] = $this->seedTrackedHousehold('inactive');
+        ['memberAccount' => $memberAccount, 'household' => $household] = $this->seedTrackedHousehold('rejected');
 
         $oldPaths = [];
 
@@ -175,9 +175,9 @@ class RegistrationStatusTest extends TestCase
             'accumulated_months' => 0,
             'total_balance' => 0,
             'created_by' => null,
-            'reviewed_by' => $status === 'inactive' ? $staffUser->user_id : null,
-            'reviewed_at' => $status === 'inactive' ? now() : null,
-            'review_notes' => $status === 'inactive' ? 'โปรดแนบเอกสารใหม่ให้ชัดเจน' : null,
+            'reviewed_by' => in_array($status, ['inactive', 'rejected']) ? $staffUser->user_id : null,
+            'reviewed_at' => in_array($status, ['inactive', 'rejected']) ? now() : null,
+            'review_notes' => in_array($status, ['inactive', 'rejected']) ? 'โปรดแนบเอกสารใหม่ให้ชัดเจน' : null,
         ]);
 
         $household->members()->createMany([
