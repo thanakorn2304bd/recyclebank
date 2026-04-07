@@ -88,6 +88,8 @@ class HouseholdConvenienceFlowTest extends TestCase
 
     public function test_staff_main_menu_shows_attention_items(): void
     {
+        config(['features.pdpa' => true]);
+
         ['staff' => $staffUser, 'household' => $household, 'memberUser' => $memberUser] = $this->seedFixtures();
 
         Household::create([
