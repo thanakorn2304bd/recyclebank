@@ -8,7 +8,7 @@
       </p>
     </div>
     <div class="rb-page-actions">
-      <a class="btn btn-outline-dark" href="{{ route('deposits.create') }}">ไปหน้า “ฝาก/รับซื้อ”</a>
+      <a class="btn btn-outline-dark" href="{{ route('deposits.create') }}">ไปหน้า "ฝาก/รับซื้อ"</a>
     </div>
   </div>
 
@@ -125,8 +125,8 @@
       </div>
     </div>
 
-    <div class=”d-flex flex-wrap gap-2 mt-4”>
-      <button class=”btn btn-primary”>บันทึกเป็นคำขอรออนุมัติ</button>
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <button class="btn btn-success">บันทึกเป็นคำขอรออนุมัติ</button>
     </div>
 
     <div class="form-text mt-2">
@@ -143,7 +143,6 @@
   <script>
     const lookupUrl = @json(route('deposits.lookup-household'));
     const quickSearchUrl = @json(route('households.quick-search'));
-    const previewUrl = @json(route('withdraws.preview'));
     const withdrawForm = document.getElementById('withdrawForm');
     const communityIdInput = document.getElementById('communityIdInput');
     const houseNoInput = document.getElementById('houseNoInput');
@@ -151,7 +150,6 @@
     const quickSearchBtn = document.getElementById('quickSearchBtn');
     const quickSearchResults = document.getElementById('quickSearchResults');
     const searchHouseholdBtn = document.getElementById('searchHouseholdBtn');
-    const previewWithdrawPdfBtn = document.getElementById('previewWithdrawPdfBtn');
     const householdInfo = document.getElementById('householdInfo');
     const householdError = document.getElementById('householdError');
     const infoAccountNo = document.getElementById('infoAccountNo');
@@ -394,51 +392,7 @@
       }
     });
 
-    previewWithdrawPdfBtn.addEventListener('click', async () => {
-      const communityId = communityIdInput.value.trim();
-      const houseNo = houseNoInput.value.trim();
-      const transactionDate = transactionDateInput.value.trim();
-      const amount = amountInput.value.trim();
-
-      householdError.classList.add('d-none');
-      householdError.textContent = '';
-
-      if (!communityId || !houseNo || !transactionDate || !amount) {
-        householdError.textContent = 'กรุณากรอกข้อมูลให้ครบก่อนตรวจสอบไฟล์ PDF';
-        householdError.classList.remove('d-none');
-        return;
-      }
-
-      const found = await lookupHousehold();
-      if (!found) {
-        return;
-      }
-
-      const balance = parseFloat(infoBalance.value || '0');
-      const requestedAmount = parseFloat(amount || '0');
-
-      if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
-        householdError.textContent = 'กรุณาระบุจำนวนเงินที่ถอนให้ถูกต้อง';
-        householdError.classList.remove('d-none');
-        return;
-      }
-
-      if (requestedAmount > balance) {
-        householdError.textContent = `ยอดเงินไม่พอ (คงเหลือ ${balance.toFixed(2)})`;
-        householdError.classList.remove('d-none');
-        return;
-      }
-
-      const url = new URL(previewUrl, window.location.origin);
-      url.searchParams.set('community_id', communityId);
-      url.searchParams.set('house_no', houseNo);
-      url.searchParams.set('transaction_date', transactionDate);
-      url.searchParams.set('amount', requestedAmount.toFixed(2));
-
-      window.open(url.toString(), '_blank', 'noopener');
-    });
-
-    [communityIdInput, houseNoInput].forEach((el) => {
+[communityIdInput, houseNoInput].forEach((el) => {
       el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();

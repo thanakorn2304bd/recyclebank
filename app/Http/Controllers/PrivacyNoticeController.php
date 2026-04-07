@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\PrivacyNoticeVersion;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\View\View;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PrivacyNoticeController extends Controller
 {
     public function show(): View
     {
-        throw_unless((bool) config('features.pdpa', false), new NotFoundHttpException());
+        throw_unless((bool) config('features.pdpa', false), new NotFoundHttpException);
 
         $privacyNotice = PrivacyNoticeVersion::query()
             ->where('is_active', true)

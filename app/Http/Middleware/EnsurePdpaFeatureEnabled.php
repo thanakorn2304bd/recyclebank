@@ -11,7 +11,7 @@ class EnsurePdpaFeatureEnabled
 {
     public function handle(Request $request, Closure $next): Response
     {
-        throw_unless((bool) config('features.pdpa', false), new NotFoundHttpException());
+        throw_unless((bool) config('features.pdpa', false), new NotFoundHttpException);
 
         return $next($request);
     }

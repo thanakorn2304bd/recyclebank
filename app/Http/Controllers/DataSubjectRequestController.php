@@ -165,6 +165,6 @@ class DataSubjectRequestController extends Controller
 
     private function ensurePdpaEnabled(): void
     {
-        throw_unless((bool) config('features.pdpa', false), new NotFoundHttpException());
+        throw_unless((bool) config('features.pdpa', false), new NotFoundHttpException);
     }
 }

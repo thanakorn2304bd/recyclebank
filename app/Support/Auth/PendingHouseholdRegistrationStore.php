@@ -2,8 +2,8 @@
 
 namespace App\Support\Auth;
 
-use Illuminate\Http\Request;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
