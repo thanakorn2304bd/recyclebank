@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 class BackupController extends Controller
@@ -40,13 +38,13 @@ class BackupController extends Controller
     public function store(): RedirectResponse
     {
         $config = config('database.connections.mysql');
-        $filename = 'backup_' . now()->format('Y-m-d_H-i-s') . '.sql.gz';
+        $filename = 'backup_'.now()->format('Y-m-d_H-i-s').'.sql.gz';
 
         $process = new Process([
             'mysqldump',
-            '--host=' . $config['host'],
-            '--port=' . (string) $config['port'],
-            '--user=' . $config['username'],
+            '--host='.$config['host'],
+            '--port='.(string) $config['port'],
+            '--user='.$config['username'],
             $config['database'],
         ]);
 
@@ -55,18 +53,18 @@ class BackupController extends Controller
         $process->run();
 
         if (! $process->isSuccessful()) {
-            return back()->with('error', 'ไม่สามารถสร้าง backup ได้: ' . $process->getErrorOutput());
+            return back()->with('error', 'ไม่สามารถสร้าง backup ได้: '.$process->getErrorOutput());
         }
 
         Storage::disk('local')->makeDirectory('backups');
-        Storage::disk('local')->put('backups/' . $filename, gzencode($process->getOutput(), 9));
+        Storage::disk('local')->put('backups/'.$filename, gzencode($process->getOutput(), 9));
 
         $this->pruneOldBackups();
 
         ActivityLogger::forCurrentUser('backup', "สร้าง backup ฐานข้อมูล: {$filename}", [
             'entity_type' => 'backup',
             'entity_id' => $filename,
-            'after' => ['filename' => $filename, 'size' => Storage::disk('local')->size('backups/' . $filename)],
+            'after' => ['filename' => $filename, 'size' => Storage::disk('local')->size('backups/'.$filename)],
         ]);
 
         return redirect()->route('admin.backup.index')
@@ -110,9 +108,9 @@ class BackupController extends Controller
 
         $process = new Process([
             'mysql',
-            '--host=' . $config['host'],
-            '--port=' . (string) $config['port'],
-            '--user=' . $config['username'],
+            '--host='.$config['host'],
+            '--port='.(string) $config['port'],
+            '--user='.$config['username'],
             $config['database'],
         ]);
 
@@ -122,7 +120,7 @@ class BackupController extends Controller
         $process->run();
 
         if (! $process->isSuccessful()) {
-            return back()->withErrors('Restore ไม่สำเร็จ: ' . $process->getErrorOutput());
+            return back()->withErrors('Restore ไม่สำเร็จ: '.$process->getErrorOutput());
         }
 
         ActivityLogger::forCurrentUser('backup', "Restore ฐานข้อมูลจากไฟล์: {$originalName}", [
@@ -137,7 +135,7 @@ class BackupController extends Controller
     public function download(string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $filename = basename($filename);
-        $path = 'backups/' . $filename;
+        $path = 'backups/'.$filename;
 
         abort_unless(Storage::disk('local')->exists($path), 404);
 
@@ -152,7 +150,7 @@ class BackupController extends Controller
     public function destroy(string $filename): RedirectResponse
     {
         $filename = basename($filename);
-        $path = 'backups/' . $filename;
+        $path = 'backups/'.$filename;
 
         abort_unless(Storage::disk('local')->exists($path), 404);
 
@@ -170,13 +168,13 @@ class BackupController extends Controller
     private function formatBytes(int $bytes): string
     {
         if ($bytes < 1024) {
-            return $bytes . ' B';
+            return $bytes.' B';
         }
 
         if ($bytes < 1048576) {
-            return round($bytes / 1024, 1) . ' KB';
+            return round($bytes / 1024, 1).' KB';
         }
 
-        return round($bytes / 1048576, 2) . ' MB';
+        return round($bytes / 1048576, 2).' MB';
     }
 }

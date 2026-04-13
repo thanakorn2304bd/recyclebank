@@ -411,7 +411,8 @@ class RegistrationDocumentWatermarkService
         }
 
         $runtimeFontFile = $this->runtimeWatermarkFontFile($fontDirectory);
-        $runtimeFontPath = $fontDirectory.DIRECTORY_SEPARATOR.$runtimeFontFile;
+        $runtimeDirectory = is_writable($fontDirectory) ? $fontDirectory : sys_get_temp_dir();
+        $runtimeFontPath = $runtimeDirectory.DIRECTORY_SEPARATOR.$runtimeFontFile;
 
         if (! is_file($runtimeFontPath) || @filesize($runtimeFontPath) !== @filesize($fontPath)) {
             if (! @copy($fontPath, $runtimeFontPath)) {
@@ -420,7 +421,7 @@ class RegistrationDocumentWatermarkService
         }
 
         if (! defined('_SYSTEM_TTFONTS')) {
-            define('_SYSTEM_TTFONTS', rtrim($fontDirectory, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
+            define('_SYSTEM_TTFONTS', rtrim($runtimeDirectory, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR);
         }
 
         $pdf->AddFont('thsarabunnew', '', $runtimeFontFile, true);
