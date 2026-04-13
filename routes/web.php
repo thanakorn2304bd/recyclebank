@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AdminCommunityController;
 use App\Http\Controllers\AdminStaffController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataSubjectRequestController;
 use App\Http\Controllers\DepositController;
@@ -36,10 +38,29 @@ Route::middleware(['auth', 'active', 'password.current'])->group(function () {
 
     Route::middleware('role:admin')->group(function () {
         Route::get('admin/staff', [AdminStaffController::class, 'index'])->name('admin.staff.index');
+        Route::get('admin/staff/create', [AdminStaffController::class, 'create'])->name('admin.staff.create');
+        Route::post('admin/staff', [AdminStaffController::class, 'store'])->name('admin.staff.store');
         Route::get('admin/staff/{staff}', [AdminStaffController::class, 'show'])->name('admin.staff.show');
+        Route::get('admin/staff/{staff}/edit', [AdminStaffController::class, 'edit'])->name('admin.staff.edit');
+        Route::put('admin/staff/{staff}', [AdminStaffController::class, 'update'])->name('admin.staff.update');
+        Route::delete('admin/staff/{staff}', [AdminStaffController::class, 'destroy'])->name('admin.staff.destroy');
+
+        Route::get('admin/communities', [AdminCommunityController::class, 'index'])->name('admin.communities.index');
+        Route::get('admin/communities/create', [AdminCommunityController::class, 'create'])->name('admin.communities.create');
+        Route::post('admin/communities', [AdminCommunityController::class, 'store'])->name('admin.communities.store');
+        Route::get('admin/communities/{community}/edit', [AdminCommunityController::class, 'edit'])->name('admin.communities.edit');
+        Route::put('admin/communities/{community}', [AdminCommunityController::class, 'update'])->name('admin.communities.update');
+        Route::delete('admin/communities/{community}', [AdminCommunityController::class, 'destroy'])->name('admin.communities.destroy');
         Route::get('admin/users', [AdminUserController::class, 'index'])->name('admin.users.index');
         Route::post('admin/users/staff', [AdminUserController::class, 'storeStaff'])->name('admin.users.store-staff');
+        Route::patch('admin/users/{user}/toggle-active', [AdminUserController::class, 'toggleActive'])->name('admin.users.toggle-active');
         Route::get('admin/activity-logs', [ActivityLogController::class, 'index'])->name('admin.activity-logs.index');
+
+        Route::get('admin/backup', [BackupController::class, 'index'])->name('admin.backup.index');
+        Route::post('admin/backup', [BackupController::class, 'store'])->name('admin.backup.store');
+        Route::post('admin/backup/restore', [BackupController::class, 'restore'])->name('admin.backup.restore');
+        Route::get('admin/backup/{filename}/download', [BackupController::class, 'download'])->name('admin.backup.download');
+        Route::delete('admin/backup/{filename}', [BackupController::class, 'destroy'])->name('admin.backup.destroy');
     });
 
     Route::middleware('role:admin,staff')->group(function () {

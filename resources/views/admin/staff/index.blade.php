@@ -8,6 +8,7 @@
       </p>
     </div>
     <div class="rb-page-actions">
+      <a class="btn btn-primary" href="{{ route('admin.staff.create') }}">+ เพิ่มเจ้าหน้าที่</a>
       <a class="btn btn-outline-secondary" href="{{ route('admin.users.index') }}">ดูบัญชีผู้ใช้</a>
       <a class="btn btn-outline-secondary" href="{{ route('main-menu') }}">กลับเมนูหลัก</a>
     </div>
@@ -133,6 +134,7 @@
                 @endif
               </td>
               <td class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.staff.edit', $staff) }}">แก้ไข</a>
                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.staff.show', $staff) }}">ดูรายละเอียด</a>
               </td>
             </tr>

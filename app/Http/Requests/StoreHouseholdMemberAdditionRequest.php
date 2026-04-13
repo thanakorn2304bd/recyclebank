@@ -110,6 +110,13 @@ class StoreHouseholdMemberAdditionRequest extends FormRequest
                         );
                     }
 
+                    if ($member['id_card_hash'] && Member::where('id_card_hash', $member['id_card_hash'])->exists()) {
+                        $validator->errors()->add(
+                            'members.'.$index.'.id_card',
+                            'เลขบัตรประชาชนของ '.$label.' มีอยู่ในระบบแล้ว'
+                        );
+                    }
+
                     if (! $this->hasFile('member_household_copies.'.$index)) {
                         $validator->errors()->add(
                             'member_household_copies.'.$index,

@@ -103,6 +103,15 @@ class StoreHouseholdRequest extends FormRequest
                     if (collect($normalizedMembers)->where('is_head', true)->count() > 1) {
                         $memberValidator->errors()->add('members', 'เลือกหัวหน้าครัวเรือนได้เพียง 1 คน');
                     }
+
+                    foreach ($normalizedMembers as $index => $member) {
+                        if ($member['id_card_hash'] && Member::where('id_card_hash', $member['id_card_hash'])->exists()) {
+                            $memberValidator->errors()->add(
+                                'members.'.$index.'.id_card',
+                                'เลขบัตรประชาชนนี้มีอยู่ในระบบแล้ว'
+                            );
+                        }
+                    }
                 });
                 $memberValidator->passes();
 

@@ -10,6 +10,8 @@ class RegistrationDocumentWatermarkService
 {
     private const ORGANIZATION_NAME = 'ธนาคารวัสดุรีไซเคิลเทศบาลตำบลหนองไผ่';
 
+    private const MAX_IMAGE_DIMENSION = 1920;
+
     public function buildWatermarkedPdf(UploadedFile $uploadedFile, array $context): array
     {
         $sourcePath = $uploadedFile->getRealPath();
@@ -249,12 +251,16 @@ class RegistrationDocumentWatermarkService
             $image->autoOrient();
         }
 
+        if ($image->getImageWidth() > self::MAX_IMAGE_DIMENSION || $image->getImageHeight() > self::MAX_IMAGE_DIMENSION) {
+            $image->scaleImage(self::MAX_IMAGE_DIMENSION, self::MAX_IMAGE_DIMENSION, true);
+        }
+
         $flattenedImage = new \Imagick;
         $flattenedImage->newImage($image->getImageWidth(), $image->getImageHeight(), 'white');
         $flattenedImage->setImageFormat('jpeg');
         $flattenedImage->compositeImage($image, \Imagick::COMPOSITE_OVER, 0, 0);
         $flattenedImage->stripImage();
-        $flattenedImage->setImageCompressionQuality(92);
+        $flattenedImage->setImageCompressionQuality(85);
 
         $image->clear();
         $image->destroy();
@@ -292,6 +298,20 @@ class RegistrationDocumentWatermarkService
 
         $imageWidth = imagesx($sourceImage);
         $imageHeight = imagesy($sourceImage);
+
+        if ($imageWidth > self::MAX_IMAGE_DIMENSION || $imageHeight > self::MAX_IMAGE_DIMENSION) {
+            $scale = min(self::MAX_IMAGE_DIMENSION / $imageWidth, self::MAX_IMAGE_DIMENSION / $imageHeight);
+            $newWidth = (int) round($imageWidth * $scale);
+            $newHeight = (int) round($imageHeight * $scale);
+            $resized = imagescale($sourceImage, $newWidth, $newHeight);
+            if ($resized !== false) {
+                imagedestroy($sourceImage);
+                $sourceImage = $resized;
+                $imageWidth = $newWidth;
+                $imageHeight = $newHeight;
+            }
+        }
+
         $flattenedImage = imagecreatetruecolor($imageWidth, $imageHeight);
 
         if ($flattenedImage === false) {
@@ -305,7 +325,7 @@ class RegistrationDocumentWatermarkService
         imagecopy($flattenedImage, $sourceImage, 0, 0, 0, 0, $imageWidth, $imageHeight);
 
         ob_start();
-        imagejpeg($flattenedImage, null, 92);
+        imagejpeg($flattenedImage, null, 85);
         $jpegContent = ob_get_clean();
 
         imagedestroy($sourceImage);

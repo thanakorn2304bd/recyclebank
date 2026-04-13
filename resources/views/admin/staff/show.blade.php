@@ -10,7 +10,15 @@
       </p>
     </div>
     <div class="rb-page-actions">
-      <a class="btn btn-outline-secondary" href="{{ route('admin.staff.index') }}">กลับหน้ารายการเจ้าหน้าที่</a>
+      <a class="btn btn-primary" href="{{ route('admin.staff.edit', $staff) }}">แก้ไขข้อมูล</a>
+      @if($staff->userAccounts->isEmpty())
+        <form class="d-inline" method="POST" action="{{ route('admin.staff.destroy', $staff) }}"
+              onsubmit="return confirm('ลบเจ้าหน้าที่ {{ $staff->full_name }}?')">
+          @csrf @method('DELETE')
+          <button class="btn btn-outline-danger">ลบ</button>
+        </form>
+      @endif
+      <a class="btn btn-outline-secondary" href="{{ route('admin.staff.index') }}">กลับหน้ารายการ</a>
       <a class="btn btn-outline-secondary" href="{{ route('admin.users.index') }}">ดูบัญชีผู้ใช้</a>
     </div>
   </div>
@@ -106,6 +114,14 @@
                 <td>{{ $account->last_login?->format('d/m/Y H:i') ?? '-' }}</td>
                 <td class="text-end">{{ number_format($account->logs_count) }}</td>
                 <td class="text-end">
+                  <form method="POST" action="{{ route('admin.users.toggle-active', $account) }}"
+                        onsubmit="return confirm('{{ $account->is_active ? 'ระงับ' : 'เปิดใช้งาน' }}บัญชี {{ $account->username }}?')"
+                        class="d-inline">
+                    @csrf @method('PATCH')
+                    <button class="btn btn-sm {{ $account->is_active ? 'btn-outline-danger' : 'btn-outline-success' }}">
+                      {{ $account->is_active ? 'ระงับบัญชี' : 'เปิดใช้งาน' }}
+                    </button>
+                  </form>
                   <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.activity-logs.index', ['user_id' => $account->user_id]) }}">ดู log</a>
                 </td>
               </tr>

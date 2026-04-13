@@ -202,6 +202,40 @@
                     </svg>
                 </div>
             </a>
+
+            <a href="{{ route('admin.communities.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-[0_20px_40px_rgba(16,185,129,0.12)]">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M17 20h5V9l-5-4M17 20H7m10 0v-6a2 2 0 00-2-2h-2a2 2 0 00-2 2v6M7 20H2V5a2 2 0 012-2h8l5 4M9 9h1m4 0h1m-6 4h6"/>
+                    </svg>
+                </span>
+                <div class="mt-4 flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-lg font-bold text-slate-900">ชุมชน</div>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">จัดการข้อมูลชุมชนที่ใช้เป็นข้อมูลพื้นฐานในการลงทะเบียนครัวเรือน</p>
+                    </div>
+                    <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+
+            <a href="{{ route('admin.backup.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_20px_40px_rgba(139,92,246,0.12)]">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7M4 7l8-4 8 4M4 7h16M9 12h6"/>
+                    </svg>
+                </span>
+                <div class="mt-4 flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-lg font-bold text-slate-900">Backup ฐานข้อมูล</div>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">สร้างและดาวน์โหลด SQL dump ของฐานข้อมูลทั้งหมด เพื่อสำรองข้อมูลก่อนทำการเปลี่ยนแปลงสำคัญ</p>
+                    </div>
+                    <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
         @endif
     </div>
 </section>

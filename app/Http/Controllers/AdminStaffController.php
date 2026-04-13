@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SaveStaffRequest;
 use App\Models\LogActivity;
 use App\Models\Staff;
+use App\Support\ActivityLogger;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class AdminStaffController extends Controller
 {
@@ -116,5 +120,68 @@ class AdminStaffController extends Controller
         ];
 
         return view('admin.staff.show', compact('staff', 'recentLogs', 'summary'));
+    }
+
+    public function create(): View
+    {
+        return view('admin.staff.create');
+    }
+
+    public function store(SaveStaffRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        $staff = Staff::create($data);
+
+        ActivityLogger::forCurrentUser('staff', "เพิ่มเจ้าหน้าที่ {$staff->full_name}", [
+            'entity_type' => 'staff',
+            'entity_id' => (string) $staff->staff_id,
+            'after' => $data,
+        ]);
+
+        return redirect()->route('admin.staff.show', $staff)
+            ->with('success', "เพิ่มเจ้าหน้าที่ {$staff->full_name} เรียบร้อย");
+    }
+
+    public function edit(Staff $staff): View
+    {
+        return view('admin.staff.edit', compact('staff'));
+    }
+
+    public function update(SaveStaffRequest $request, Staff $staff): RedirectResponse
+    {
+        $before = $staff->only(['full_name', 'phone', 'position']);
+        $data = $request->validated();
+
+        $staff->update($data);
+
+        ActivityLogger::forCurrentUser('staff', "แก้ไขข้อมูลเจ้าหน้าที่ {$staff->full_name}", [
+            'entity_type' => 'staff',
+            'entity_id' => (string) $staff->staff_id,
+            'before' => $before,
+            'after' => $data,
+        ]);
+
+        return redirect()->route('admin.staff.show', $staff)
+            ->with('success', "แก้ไขข้อมูล {$staff->full_name} เรียบร้อย");
+    }
+
+    public function destroy(Staff $staff): RedirectResponse
+    {
+        if ($staff->userAccounts()->exists()) {
+            return back()->withErrors('ลบไม่ได้: เจ้าหน้าที่นี้มีบัญชีผู้ใช้ผูกอยู่');
+        }
+
+        $name = $staff->full_name;
+        $id = $staff->staff_id;
+
+        $staff->delete();
+
+        ActivityLogger::forCurrentUser('staff', "ลบเจ้าหน้าที่ {$name}", [
+            'entity_type' => 'staff',
+            'entity_id' => (string) $id,
+        ]);
+
+        return redirect()->route('admin.staff.index')
+            ->with('success', "ลบเจ้าหน้าที่ {$name} เรียบร้อย");
     }
 }

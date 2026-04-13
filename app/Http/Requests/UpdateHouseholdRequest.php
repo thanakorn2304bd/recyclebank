@@ -94,9 +94,21 @@ class UpdateHouseholdRequest extends FormRequest
                 ]);
 
                 $normalizedMembers = $this->normalizedMembers();
-                $memberValidator->after(function ($memberValidator) use ($normalizedMembers) {
+                $householdId = $this->route('household')?->household_id;
+                $memberValidator->after(function ($memberValidator) use ($normalizedMembers, $householdId) {
                     if (collect($normalizedMembers)->where('is_head', true)->count() > 1) {
                         $memberValidator->errors()->add('members', 'เลือกหัวหน้าครัวเรือนได้เพียง 1 คน');
+                    }
+
+                    foreach ($normalizedMembers as $index => $member) {
+                        if ($member['id_card_hash'] && Member::where('id_card_hash', $member['id_card_hash'])
+                            ->where('household_id', '!=', $householdId)
+                            ->exists()) {
+                            $memberValidator->errors()->add(
+                                'members.'.$index.'.id_card',
+                                'เลขบัตรประชาชนนี้มีอยู่ในระบบแล้ว'
+                            );
+                        }
                     }
                 });
                 $memberValidator->passes();

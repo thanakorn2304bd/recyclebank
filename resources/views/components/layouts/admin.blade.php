@@ -778,6 +778,7 @@
           @foreach($navItems as $item)
             @continue(($item['privileged'] ?? false) && !$isPrivileged)
             @continue(($item['admin_only'] ?? false) && !$isAdmin)
+            @continue(($item['staff_only'] ?? false) && $isAdmin)
             <a
               @class([
                   'nav-link',

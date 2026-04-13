@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AdminUserFiltersRequest;
 use App\Http\Requests\StoreStaffAccountRequest;
+use App\Models\UserAccount;
 use App\Support\ActivityLogger;
 use App\Support\AdminUsers\AdminUserService;
 use App\Support\AdminUsers\AdminUserViewDataFactory;
@@ -42,5 +43,25 @@ class AdminUserController extends Controller
         return redirect()
             ->route('admin.users.index')
             ->with('success', "เพิ่มบัญชี staff สำหรับ {$payload['full_name']} เรียบร้อย");
+    }
+
+    public function toggleActive(UserAccount $user): RedirectResponse
+    {
+        // ป้องกันไม่ให้ระงับบัญชี admin ตัวเอง
+        if ($user->user_id === auth()->id()) {
+            return back()->withErrors('ไม่สามารถระงับบัญชีของตัวเองได้');
+        }
+
+        $user->update(['is_active' => ! $user->is_active]);
+
+        $action = $user->is_active ? 'เปิดใช้งาน' : 'ระงับ';
+
+        ActivityLogger::forCurrentUser('admin.users', "{$action}บัญชี {$user->username}", [
+            'entity_type' => 'user_account',
+            'entity_id' => (string) $user->user_id,
+            'after' => ['is_active' => $user->is_active],
+        ]);
+
+        return back()->with('success', "{$action}บัญชี {$user->username} เรียบร้อย");
     }
 }
