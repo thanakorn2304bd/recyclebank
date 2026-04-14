@@ -81,7 +81,7 @@ class DocumentStorage
                 'x-api-version' => self::VERCEL_BLOB_API_VERSION,
                 'x-content-type' => $mimeType ?: 'application/octet-stream',
                 'x-add-random-suffix' => '0',
-                'x-access' => 'private',
+                'x-vercel-blob-access' => 'private',
             ])
             ->put(self::VERCEL_BLOB_API.'/'.ltrim($path, '/'));
 
