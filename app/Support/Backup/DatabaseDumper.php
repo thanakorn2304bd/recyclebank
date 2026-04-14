@@ -100,10 +100,12 @@ class DatabaseDumper
 
         $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
 
+        $sql = preg_replace('/^\s*--.*$/m', '', $sql) ?? $sql;
+
         foreach ($this->splitStatements($sql) as $statement) {
             $trimmed = trim($statement);
 
-            if ($trimmed === '' || str_starts_with($trimmed, '--')) {
+            if ($trimmed === '') {
                 continue;
             }
 
