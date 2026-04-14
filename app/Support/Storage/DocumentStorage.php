@@ -75,6 +75,9 @@ class DocumentStorage
 
     private function putToVercelBlob(string $path, string $contents, ?string $mimeType): string
     {
+        $pathname = ltrim($path, '/');
+        $uploadUrl = self::VERCEL_BLOB_API.'/?'.http_build_query(['pathname' => $pathname]);
+
         $response = Http::withToken($this->token())
             ->withBody($contents, $mimeType ?: 'application/octet-stream')
             ->withHeaders([
@@ -83,7 +86,7 @@ class DocumentStorage
                 'x-add-random-suffix' => '0',
                 'x-vercel-blob-access' => 'private',
             ])
-            ->put(self::VERCEL_BLOB_API.'/'.ltrim($path, '/'));
+            ->put($uploadUrl);
 
         try {
             $response->throw();
