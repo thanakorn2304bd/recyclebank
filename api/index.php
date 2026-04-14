@@ -1,5 +1,14 @@
 <?php
 
+ini_set('memory_limit', '512M');
+
+register_shutdown_function(function (): void {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        error_log('[FATAL-ERR] '.$error['message'].' in '.$error['file'].' on line '.$error['line']);
+    }
+});
+
 function detectStaticMimeType(string $path): string
 {
     return match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
