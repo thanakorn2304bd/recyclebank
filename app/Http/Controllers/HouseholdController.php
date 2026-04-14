@@ -193,16 +193,32 @@ class HouseholdController extends Controller
         $this->authorize('view', $household);
 
         abort_unless((int) $registrationDocument->household_id === (int) $household->household_id, 404);
-        abort_unless(Storage::exists($registrationDocument->stored_path), 404);
 
         $downloadName = $registrationDocument->original_name ?: basename((string) $registrationDocument->stored_path);
+        $mimeType = $registrationDocument->mime_type ?: 'application/octet-stream';
+
+        $content = $registrationDocument->getRawOriginal('content');
+
+        if ($content !== null && $content !== '') {
+            $disposition = $request->boolean('download') ? 'attachment' : 'inline';
+
+            return response()->stream(function () use ($content): void {
+                echo $content;
+            }, 200, [
+                'Content-Type' => $mimeType,
+                'Content-Disposition' => $disposition.'; filename="'.$downloadName.'"',
+                'Content-Length' => strlen($content),
+            ]);
+        }
+
+        abort_unless(Storage::exists($registrationDocument->stored_path), 404);
 
         if ($request->boolean('download')) {
             return Storage::download($registrationDocument->stored_path, $downloadName);
         }
 
         return Storage::response($registrationDocument->stored_path, $downloadName, [
-            'Content-Type' => $registrationDocument->mime_type ?: 'application/octet-stream',
+            'Content-Type' => $mimeType,
         ]);
     }
 
