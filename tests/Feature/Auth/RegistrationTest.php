@@ -163,10 +163,19 @@ class RegistrationTest extends TestCase
 
         foreach ($documents as $document) {
             Storage::disk('local')->assertExists($document->stored_path);
-            $this->assertSame('application/pdf', $document->mime_type);
-            $this->assertStringEndsWith('.pdf', $document->stored_path);
-            $this->assertStringEndsWith('.pdf', $document->original_name);
-            $this->assertStringStartsWith('%PDF-', Storage::disk('local')->get($document->stored_path));
+            $content = Storage::disk('local')->get($document->stored_path);
+
+            if ($document->document_type === 'household_copy') {
+                $this->assertSame('image/png', $document->mime_type);
+                $this->assertStringEndsWith('.png', $document->stored_path);
+                $this->assertStringEndsWith('.png', $document->original_name);
+                $this->assertStringStartsWith("\x89PNG", $content);
+            } else {
+                $this->assertSame('application/pdf', $document->mime_type);
+                $this->assertStringEndsWith('.pdf', $document->stored_path);
+                $this->assertStringEndsWith('.pdf', $document->original_name);
+                $this->assertStringStartsWith('%PDF-', $content);
+            }
         }
     }
 
@@ -209,7 +218,8 @@ class RegistrationTest extends TestCase
 
         foreach ($storedPaths as $storedPath) {
             Storage::disk('local')->assertExists($storedPath);
-            $this->assertStringStartsWith('%PDF-', Storage::disk('local')->get($storedPath));
+            $this->assertStringEndsWith('.jpg', $storedPath);
+            $this->assertStringStartsWith("\x89PNG", Storage::disk('local')->get($storedPath));
         }
     }
 

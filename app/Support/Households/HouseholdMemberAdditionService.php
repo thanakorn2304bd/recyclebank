@@ -9,16 +9,12 @@ use App\Models\Member;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class HouseholdMemberAdditionService
 {
-    public function __construct(
-        private readonly RegistrationDocumentWatermarkService $registrationDocumentWatermarkService
-    ) {}
 
     public function documentRequirements(): array
     {
@@ -256,14 +252,11 @@ class HouseholdMemberAdditionService
             if ($memberHouseholdCopy instanceof UploadedFile) {
                 $storedDocuments[] = $this->storeUploadedDocument(
                     $memberHouseholdCopy,
-                    $household,
                     $baseDirectory,
                     $timestamp,
                     'household_copy',
-                    'สำเนาทะเบียนบ้านของสมาชิก',
                     $member,
                     $index + 1,
-                    'member_household_copies.'.$index
                 );
             }
 
@@ -275,14 +268,11 @@ class HouseholdMemberAdditionService
 
             $storedDocuments[] = $this->storeUploadedDocument(
                 $memberNationalIdCopy,
-                $household,
                 $baseDirectory,
                 $timestamp,
                 'national_id_copy',
-                'สำเนาบัตรประจำตัวประชาชนของสมาชิก',
                 $member,
                 $index + 1,
-                'member_national_id_copies.'.$index
             );
         }
 
@@ -291,42 +281,17 @@ class HouseholdMemberAdditionService
 
     private function storeUploadedDocument(
         UploadedFile $uploadedFile,
-        Household $household,
         string $baseDirectory,
         string $timestamp,
         string $documentType,
-        string $documentLabel,
         array $member,
         int $memberPosition,
-        string $fieldKey
     ): array {
-        $storedPath = $baseDirectory.'/'.$this->storedFileName($documentType, $memberPosition, $timestamp);
+        $extension = strtolower($uploadedFile->getClientOriginalExtension() ?: $uploadedFile->extension() ?: 'bin');
+        $storedPath = $baseDirectory.'/'.$this->storedFileName($documentType, $memberPosition, $timestamp, $extension);
 
-        try {
-            $watermarkedDocument = $this->registrationDocumentWatermarkService->buildWatermarkedPdf($uploadedFile, [
-                'account_no' => $household->account_no,
-                'member_display_name' => $member['display_name'] ?? ('สมาชิกคนที่ '.$memberPosition),
-                'document_label' => $documentLabel,
-            ]);
-        } catch (Throwable $throwable) {
-            Log::warning('Failed to watermark household member addition document upload.', [
-                'field' => $fieldKey,
-                'document_type' => $documentType,
-                'household_id' => $household->household_id,
-                'member_position' => $memberPosition,
-                'original_name' => $uploadedFile->getClientOriginalName(),
-                'client_mime_type' => $uploadedFile->getClientMimeType(),
-                'detected_mime_type' => $uploadedFile->getMimeType(),
-                'error' => $throwable->getMessage(),
-            ]);
-
-            throw ValidationException::withMessages([
-                $fieldKey => 'ไฟล์นี้ไม่สามารถคาดข้อความความปลอดภัยได้ กรุณาอัปโหลดไฟล์ JPG, PNG หรือ PDF ที่เปิดอ่านได้อีกครั้ง',
-            ]);
-        }
-
-        if (! Storage::put($storedPath, $watermarkedDocument['content'])) {
-            throw new \RuntimeException('ไม่สามารถบันทึกไฟล์เอกสารคำขอเพิ่มสมาชิกที่คาดข้อความความปลอดภัยได้');
+        if (! Storage::put($storedPath, file_get_contents($uploadedFile->getRealPath()))) {
+            throw new \RuntimeException('ไม่สามารถบันทึกไฟล์เอกสารคำขอเพิ่มสมาชิกได้');
         }
 
         return [
@@ -335,20 +300,20 @@ class HouseholdMemberAdditionService
             'member_full_name' => $member['full_name'] !== '' ? $member['full_name'] : null,
             'member_relation' => $member['relation'] !== '' ? $member['relation'] : null,
             'member_id_card_last4' => $member['id_card_last4'] !== '' ? $member['id_card_last4'] : null,
-            'original_name' => $watermarkedDocument['original_name'],
+            'original_name' => $uploadedFile->getClientOriginalName(),
             'stored_path' => $storedPath,
-            'mime_type' => $watermarkedDocument['mime_type'],
-            'file_size' => $watermarkedDocument['file_size'],
+            'mime_type' => $uploadedFile->getMimeType() ?: $uploadedFile->getClientMimeType(),
+            'file_size' => $uploadedFile->getSize(),
         ];
     }
 
-    private function storedFileName(string $documentType, int $memberPosition, string $timestamp): string
+    private function storedFileName(string $documentType, int $memberPosition, string $timestamp, string $extension): string
     {
         $prefix = $documentType === 'household_copy'
             ? 'household-copy-member-'
             : 'national-id-copy-member-';
 
-        return $prefix.$memberPosition.'-'.$timestamp.'.pdf';
+        return $prefix.$memberPosition.'-'.$timestamp.'.'.$extension;
     }
 
     private function ensureNoPendingRequest(Household $household): void
