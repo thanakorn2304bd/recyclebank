@@ -21,12 +21,9 @@ class HouseholdMemberAdditionRequestDocument extends Model
         'member_id_card_last4',
         'original_name',
         'stored_path',
-        'content',
         'mime_type',
         'file_size',
     ];
-
-    protected $hidden = ['content'];
 
     protected $casts = [
         'member_position' => 'integer',

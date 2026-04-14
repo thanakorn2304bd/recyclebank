@@ -86,32 +86,17 @@ class HouseholdMemberAdditionRequestController extends Controller
         $this->ensureRequestBelongsToHousehold($household, $memberAdditionRequest);
         $this->ensureDocumentBelongsToRequest($memberAdditionRequest, $memberAdditionRequestDocument);
 
+        abort_unless(Storage::exists($memberAdditionRequestDocument->stored_path), 404);
+
         $downloadName = $memberAdditionRequestDocument->original_name
             ?: basename((string) $memberAdditionRequestDocument->stored_path);
-        $mimeType = $memberAdditionRequestDocument->mime_type ?: 'application/octet-stream';
-
-        $content = $memberAdditionRequestDocument->getRawOriginal('content');
-
-        if ($content !== null && $content !== '') {
-            $disposition = $request->boolean('download') ? 'attachment' : 'inline';
-
-            return response()->stream(function () use ($content): void {
-                echo $content;
-            }, 200, [
-                'Content-Type' => $mimeType,
-                'Content-Disposition' => $disposition.'; filename="'.$downloadName.'"',
-                'Content-Length' => strlen($content),
-            ]);
-        }
-
-        abort_unless(Storage::exists($memberAdditionRequestDocument->stored_path), 404);
 
         if ($request->boolean('download')) {
             return Storage::download($memberAdditionRequestDocument->stored_path, $downloadName);
         }
 
         return Storage::response($memberAdditionRequestDocument->stored_path, $downloadName, [
-            'Content-Type' => $mimeType,
+            'Content-Type' => $memberAdditionRequestDocument->mime_type ?: 'application/octet-stream',
         ]);
     }
 

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -178,7 +179,15 @@ class RegistrationDocumentService
 
     public function deleteStoredFiles(array $storedDocuments): void
     {
-        // Documents are stored in the database; no filesystem cleanup required.
+        $paths = collect($storedDocuments)
+            ->map(fn ($document) => $document['stored_path'] ?? null)
+            ->filter(fn ($path) => is_string($path) && $path !== '')
+            ->values()
+            ->all();
+
+        if ($paths !== []) {
+            Storage::delete($paths);
+        }
     }
 
     public function documentLookup(Household $household): Collection
@@ -227,6 +236,10 @@ class RegistrationDocumentService
             ]);
         }
 
+        if (! Storage::put($storedPath, $watermarkedDocument['content'])) {
+            throw new \RuntimeException('ไม่สามารถบันทึกไฟล์เอกสารที่คาดข้อความความปลอดภัยได้');
+        }
+
         return [
             'document_type' => $documentType,
             'member_position' => $memberPosition,
@@ -235,7 +248,6 @@ class RegistrationDocumentService
             'member_id_card_last4' => $member['id_card_last4'] !== '' ? $member['id_card_last4'] : null,
             'original_name' => $watermarkedDocument['original_name'],
             'stored_path' => $storedPath,
-            'content' => $watermarkedDocument['content'],
             'mime_type' => $watermarkedDocument['mime_type'],
             'file_size' => $watermarkedDocument['file_size'],
         ];

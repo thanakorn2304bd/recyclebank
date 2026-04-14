@@ -56,7 +56,8 @@
             "@php artisan test"
         ],
         "vercel": [
-            "composer install --no-dev --optimize-autoloader --no-interaction",
+            "npm ci",
+            "npm run build",
             "@php scripts/vercel-run-migrations.php"
         ],
         "post-autoload-dump": [
