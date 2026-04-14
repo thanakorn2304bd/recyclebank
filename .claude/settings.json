@@ -6,7 +6,8 @@
       "Bash(./vendor/bin/sail mysql:*)",
       "Bash(./vendor/bin/sail exec:*)",
       "Bash(./vendor/bin/sail test:*)",
-      "WebFetch(domain:unpkg.com)"
+      "WebFetch(domain:unpkg.com)",
+      "Bash(./vendor/bin/pint app/Http/Controllers/BackupController.php app/Support/Backup/ app/Providers/AppServiceProvider.php config/services.php)"
     ]
   }
 }

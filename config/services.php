@@ -41,4 +41,10 @@ return [
         'vercel_blob_token' => env('BLOB_READ_WRITE_TOKEN'),
     ],
 
+    'backup_storage' => [
+        'driver' => env('BACKUP_STORAGE_DRIVER', env('DOCUMENT_STORAGE_DRIVER', 'local')),
+        'local_disk' => env('BACKUP_STORAGE_LOCAL_DISK', 'local'),
+        'vercel_blob_token' => env('BLOB_READ_WRITE_TOKEN'),
+    ],
+
 ];
