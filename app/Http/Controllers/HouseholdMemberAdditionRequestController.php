@@ -10,9 +10,9 @@ use App\Models\HouseholdMemberAdditionRequestDocument;
 use App\Support\ActivityLogger;
 use App\Support\Auth\CurrentUserIdResolver;
 use App\Support\Households\HouseholdMemberAdditionService;
+use App\Support\Storage\DocumentStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -80,24 +80,24 @@ class HouseholdMemberAdditionRequestController extends Controller
         Request $request,
         Household $household,
         HouseholdMemberAdditionRequest $memberAdditionRequest,
-        HouseholdMemberAdditionRequestDocument $memberAdditionRequestDocument
+        HouseholdMemberAdditionRequestDocument $memberAdditionRequestDocument,
+        DocumentStorage $documentStorage,
     ): StreamedResponse {
         $this->authorize('view', $household);
         $this->ensureRequestBelongsToHousehold($household, $memberAdditionRequest);
         $this->ensureDocumentBelongsToRequest($memberAdditionRequest, $memberAdditionRequestDocument);
 
-        abort_unless(Storage::exists($memberAdditionRequestDocument->stored_path), 404);
+        abort_unless($documentStorage->exists($memberAdditionRequestDocument->stored_path), 404);
 
         $downloadName = $memberAdditionRequestDocument->original_name
             ?: basename((string) $memberAdditionRequestDocument->stored_path);
 
-        if ($request->boolean('download')) {
-            return Storage::download($memberAdditionRequestDocument->stored_path, $downloadName);
-        }
-
-        return Storage::response($memberAdditionRequestDocument->stored_path, $downloadName, [
-            'Content-Type' => $memberAdditionRequestDocument->mime_type ?: 'application/octet-stream',
-        ]);
+        return $documentStorage->response(
+            $memberAdditionRequestDocument->stored_path,
+            $downloadName,
+            ['Content-Type' => $memberAdditionRequestDocument->mime_type ?: 'application/octet-stream'],
+            forceDownload: $request->boolean('download'),
+        );
     }
 
     public function review(

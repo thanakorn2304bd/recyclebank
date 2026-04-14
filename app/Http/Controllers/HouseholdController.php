@@ -17,11 +17,11 @@ use App\Support\Households\HouseholdMemberAdditionService;
 use App\Support\Households\HouseholdService;
 use App\Support\Households\HouseholdViewDataFactory;
 use App\Support\Households\RegistrationDocumentService;
+use App\Support\Storage\DocumentStorage;
 use App\Support\Transactions\HouseholdTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -188,22 +188,22 @@ class HouseholdController extends Controller
     public function showRegistrationDocument(
         Request $request,
         Household $household,
-        HouseholdRegistrationDocument $registrationDocument
+        HouseholdRegistrationDocument $registrationDocument,
+        DocumentStorage $documentStorage,
     ): StreamedResponse {
         $this->authorize('view', $household);
 
         abort_unless((int) $registrationDocument->household_id === (int) $household->household_id, 404);
-        abort_unless(Storage::exists($registrationDocument->stored_path), 404);
+        abort_unless($documentStorage->exists($registrationDocument->stored_path), 404);
 
         $downloadName = $registrationDocument->original_name ?: basename((string) $registrationDocument->stored_path);
 
-        if ($request->boolean('download')) {
-            return Storage::download($registrationDocument->stored_path, $downloadName);
-        }
-
-        return Storage::response($registrationDocument->stored_path, $downloadName, [
-            'Content-Type' => $registrationDocument->mime_type ?: 'application/octet-stream',
-        ]);
+        return $documentStorage->response(
+            $registrationDocument->stored_path,
+            $downloadName,
+            ['Content-Type' => $registrationDocument->mime_type ?: 'application/octet-stream'],
+            forceDownload: $request->boolean('download'),
+        );
     }
 
     public function update(

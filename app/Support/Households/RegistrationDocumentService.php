@@ -4,13 +4,14 @@ namespace App\Support\Households;
 
 use App\Models\Household;
 use App\Models\HouseholdRegistrationDocument;
+use App\Support\Storage\DocumentStorage;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 
 class RegistrationDocumentService
 {
+    public function __construct(private readonly DocumentStorage $documentStorage) {}
 
     public function documentRequirements(): array
     {
@@ -176,7 +177,7 @@ class RegistrationDocumentService
             ->all();
 
         if ($paths !== []) {
-            Storage::delete($paths);
+            $this->documentStorage->delete($paths);
         }
     }
 
@@ -201,11 +202,14 @@ class RegistrationDocumentService
         string $timestamp,
     ): array {
         $extension = strtolower($uploadedFile->getClientOriginalExtension() ?: $uploadedFile->extension() ?: 'bin');
-        $storedPath = $baseDirectory.'/'.$this->storedFileName($documentType, $memberPosition, $timestamp, $extension);
+        $pathname = $baseDirectory.'/'.$this->storedFileName($documentType, $memberPosition, $timestamp, $extension);
+        $mimeType = $uploadedFile->getMimeType() ?: $uploadedFile->getClientMimeType();
 
-        if (! Storage::put($storedPath, file_get_contents($uploadedFile->getRealPath()))) {
-            throw new \RuntimeException('ไม่สามารถบันทึกไฟล์เอกสารได้');
-        }
+        $storedPath = $this->documentStorage->put(
+            $pathname,
+            file_get_contents($uploadedFile->getRealPath()),
+            $mimeType,
+        );
 
         return [
             'document_type' => $documentType,
@@ -215,7 +219,7 @@ class RegistrationDocumentService
             'member_id_card_last4' => $member['id_card_last4'] !== '' ? $member['id_card_last4'] : null,
             'original_name' => $uploadedFile->getClientOriginalName(),
             'stored_path' => $storedPath,
-            'mime_type' => $uploadedFile->getMimeType() ?: $uploadedFile->getClientMimeType(),
+            'mime_type' => $mimeType,
             'file_size' => $uploadedFile->getSize(),
         ];
     }

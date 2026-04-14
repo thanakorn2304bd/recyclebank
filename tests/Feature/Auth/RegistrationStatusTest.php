@@ -101,16 +101,16 @@ class RegistrationStatusTest extends TestCase
             'household_id' => $household->household_id,
             'document_type' => 'household_copy',
             'member_position' => 1,
-            'original_name' => 'new-household-1.pdf',
-            'mime_type' => 'application/pdf',
+            'original_name' => 'new-household-1.png',
+            'mime_type' => 'image/png',
         ]);
 
         $this->assertDatabaseHas('household_registration_document', [
             'household_id' => $household->household_id,
             'document_type' => 'household_copy',
             'member_position' => 2,
-            'original_name' => 'new-household-2.pdf',
-            'mime_type' => 'application/pdf',
+            'original_name' => 'new-household-2.png',
+            'mime_type' => 'image/png',
         ]);
 
         $this->assertDatabaseHas('household_registration_document', [
@@ -133,15 +133,21 @@ class RegistrationStatusTest extends TestCase
             Storage::disk('local')->assertMissing($oldPath);
         }
 
-        $newPaths = DB::table('household_registration_document')
+        $documents = DB::table('household_registration_document')
             ->where('household_id', $household->household_id)
-            ->pluck('stored_path')
-            ->all();
+            ->get();
 
-        foreach ($newPaths as $newPath) {
-            Storage::disk('local')->assertExists($newPath);
-            $this->assertStringEndsWith('.pdf', $newPath);
-            $this->assertStringStartsWith('%PDF-', Storage::disk('local')->get($newPath));
+        foreach ($documents as $document) {
+            Storage::disk('local')->assertExists($document->stored_path);
+            $content = Storage::disk('local')->get($document->stored_path);
+
+            if ($document->document_type === 'household_copy') {
+                $this->assertStringEndsWith('.png', $document->stored_path);
+                $this->assertStringStartsWith("\x89PNG", $content);
+            } else {
+                $this->assertStringEndsWith('.pdf', $document->stored_path);
+                $this->assertStringStartsWith('%PDF-', $content);
+            }
         }
     }
 

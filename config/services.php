@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'document_storage' => [
+        'driver' => env('DOCUMENT_STORAGE_DRIVER', 'local'),
+        'local_disk' => env('DOCUMENT_STORAGE_LOCAL_DISK', 'local'),
+        'vercel_blob_token' => env('BLOB_READ_WRITE_TOKEN'),
+    ],
+
 ];
