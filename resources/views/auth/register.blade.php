@@ -57,12 +57,14 @@
         <div class="mt-4">
             <x-input-label for="contact_person" value="ชื่อผู้ติดต่อ" />
             <x-text-input id="contact_person" class="block mt-1 w-full" type="text" name="contact_person" :value="old('contact_person', $draftForm['contact_person'] ?? '')" required />
+            <p class="mt-1 text-sm text-red-600 hidden" id="contact_person_error">ชื่อผู้ติดต่อไม่ควรมีตัวเลข</p>
             <x-input-error :messages="$errors->get('contact_person')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="phone" value="เบอร์โทร" />
-            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" :value="old('phone', $draftForm['phone'] ?? '')" />
+            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" inputmode="numeric" maxlength="10" :value="old('phone', $draftForm['phone'] ?? '')" />
+            <p class="mt-1 text-sm text-red-600 hidden" id="phone_error">เบอร์โทรต้องเป็นตัวเลข 10 หลัก</p>
             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
         </div>
 
@@ -395,6 +397,53 @@
 
             syncMemberRowState();
             updateAccountNo();
+
+            // --- Client-side validation ---
+            const phoneInput = document.getElementById('phone');
+            const contactPersonError = document.getElementById('contact_person_error');
+            const phoneError = document.getElementById('phone_error');
+            const form = document.querySelector('form');
+
+            contactPersonInput.addEventListener('input', function () {
+                const hasDigit = /\d/.test(contactPersonInput.value);
+                contactPersonError.classList.toggle('hidden', !hasDigit);
+            });
+
+            phoneInput.addEventListener('input', function () {
+                const value = phoneInput.value.trim();
+                const isValid = value === '' || /^\d{10}$/.test(value);
+                phoneError.classList.toggle('hidden', isValid);
+            });
+
+            form.addEventListener('submit', function (e) {
+                let hasError = false;
+
+                if (/\d/.test(contactPersonInput.value)) {
+                    contactPersonError.classList.remove('hidden');
+                    hasError = true;
+                }
+
+                const phoneValue = phoneInput.value.trim();
+                if (phoneValue !== '' && !/^\d{10}$/.test(phoneValue)) {
+                    phoneError.classList.remove('hidden');
+                    hasError = true;
+                }
+
+                const idCardInputs = householdMembersContainer.querySelectorAll('input[name*="[id_card]"]');
+                idCardInputs.forEach(function (input) {
+                    const value = input.value.replace(/\D/g, '');
+                    if (value !== '' && value.length !== 13) {
+                        hasError = true;
+                        input.classList.add('border-red-500');
+                    } else {
+                        input.classList.remove('border-red-500');
+                    }
+                });
+
+                if (hasError) {
+                    e.preventDefault();
+                }
+            });
         });
     </script>
 </x-guest-layout>

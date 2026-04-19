@@ -21,8 +21,8 @@ class RegisterHouseholdRequest extends FormRequest
             'community_id' => ['required', 'string', 'exists:community,community_id'],
             'house_no' => ['required', 'string', 'max:20', 'regex:/\d/'],
             'village_no' => ['nullable', 'string', 'max:10'],
-            'contact_person' => ['required', 'string', 'max:100'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'contact_person' => ['required', 'string', 'max:100', 'regex:/^[^\d]+$/'],
+            'phone' => ['nullable', 'string', 'digits:10'],
             'members' => ['nullable', 'array'],
             'members.*.full_name' => ['nullable', 'string', 'max:100'],
             'members.*.id_card' => ['nullable', 'string', 'max:20'],
@@ -37,6 +37,8 @@ class RegisterHouseholdRequest extends FormRequest
     {
         return [
             'house_no.regex' => 'บ้านเลขที่ต้องมีตัวเลขอย่างน้อย 1 หลัก',
+            'contact_person.regex' => 'ชื่อผู้ติดต่อไม่ควรมีตัวเลข',
+            'phone.digits' => 'เบอร์โทรต้องเป็นตัวเลข 10 หลัก',
             'accepted_privacy_notice.accepted' => 'กรุณารับทราบประกาศคุ้มครองข้อมูลส่วนบุคคลก่อนสมัครสมาชิก',
             'password.min' => 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',
             'password.confirmed' => 'ยืนยันรหัสผ่านไม่ตรงกัน',
