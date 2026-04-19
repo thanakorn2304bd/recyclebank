@@ -108,6 +108,7 @@ class WithdrawRequestController extends Controller
         $this->ensureHouseholdCanRequestWithdraw($household);
         $payload = $request->payload();
         $withdrawService->ensureSufficientBalance((float) $household->total_balance, $payload['requested_amount']);
+        $this->ensureMinimumRemainingBalance((float) $household->total_balance, $payload['requested_amount']);
 
         $withdrawRequest = WithdrawRequest::create([
             'request_no' => $this->nextRequestNo(),
@@ -307,6 +308,20 @@ class WithdrawRequestController extends Controller
 
         throw ValidationException::withMessages([
             'requested_amount' => 'บัญชีครัวเรือนนี้ยังไม่พร้อมสำหรับการยื่นคำขอถอน',
+        ]);
+    }
+
+    private function ensureMinimumRemainingBalance(float $balance, float $amount): void
+    {
+        $minimumBalance = 300.00;
+        $remaining = $balance - $amount;
+
+        if ($remaining >= $minimumBalance) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'requested_amount' => 'ถอนได้ไม่เกิน '.number_format($balance - $minimumBalance, 2).' บาท เนื่องจากต้องมียอดเงินคงเหลือไม่ต่ำกว่า '.number_format($minimumBalance, 2).' บาท',
         ]);
     }
 

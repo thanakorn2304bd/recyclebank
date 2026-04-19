@@ -21,7 +21,7 @@
     <div class="rb-stat-card">
       <div class="rb-stat-label">ยอดคงเหลือปัจจุบัน</div>
       <div class="rb-stat-value">{{ number_format((float) $household->total_balance, 2) }}</div>
-      <div class="rb-stat-meta">ระบบจะตรวจสอบไม่ให้ยื่นเกินยอดคงเหลือปัจจุบัน</div>
+      <div class="rb-stat-meta">ต้องมียอดเงินคงเหลือไม่ต่ำกว่า 300.00 บาท</div>
     </div>
     <div class="rb-stat-card">
       <div class="rb-stat-label">ชุมชน / บ้านเลขที่</div>
@@ -58,7 +58,8 @@
       </div>
       <div class="col-lg-4">
         <label class="form-label">จำนวนเงินที่ต้องการถอน</label>
-        <input class="form-control" type="number" step="0.01" min="0.01" max="{{ number_format((float) $household->total_balance, 2, '.', '') }}" name="requested_amount" value="{{ old('requested_amount') }}" required>
+        <input class="form-control" type="number" step="0.01" min="0.01" max="{{ number_format(max((float) $household->total_balance - 300, 0), 2, '.', '') }}" name="requested_amount" value="{{ old('requested_amount') }}" required id="requested_amount">
+        <div class="form-text text-warning d-none" id="minBalanceWarning">ต้องมียอดเงินคงเหลือไม่ต่ำกว่า 300.00 บาท</div>
       </div>
       <div class="col-lg-4">
         <label class="form-label">ยอดคงเหลืออ้างอิง</label>
@@ -91,4 +92,25 @@
       font-size: 1.35rem;
     }
   </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const input = document.getElementById('requested_amount');
+      const warning = document.getElementById('minBalanceWarning');
+      const balance = {{ (float) $household->total_balance }};
+      const minBalance = 300;
+
+      input.addEventListener('input', function () {
+        const amount = parseFloat(input.value) || 0;
+        const remaining = balance - amount;
+
+        if (amount > 0 && remaining < minBalance) {
+          warning.textContent = 'ถอนได้ไม่เกิน ' + (balance - minBalance).toFixed(2) + ' บาท เนื่องจากต้องมียอดเงินคงเหลือไม่ต่ำกว่า 300.00 บาท';
+          warning.classList.remove('d-none');
+        } else {
+          warning.classList.add('d-none');
+        }
+      });
+    });
+  </script>
 </x-layouts.admin>
