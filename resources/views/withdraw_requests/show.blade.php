@@ -3,11 +3,13 @@
     'pending' => 'รออนุมัติ',
     'approved' => 'อนุมัติแล้ว',
     'rejected' => 'ไม่อนุมัติ',
+    'cancelled' => 'ยกเลิกแล้ว',
   ];
   $statusClasses = [
     'pending' => 'bg-warning text-dark',
     'approved' => 'bg-success',
     'rejected' => 'bg-danger',
+    'cancelled' => 'bg-secondary',
   ];
 @endphp
 
@@ -24,6 +26,13 @@
     <div class="rb-page-actions">
       <a class="btn btn-outline-secondary" href="{{ route('withdraw-requests.index') }}">กลับรายการคำขอ</a>
       <a class="btn btn-outline-secondary" href="{{ route('withdraw-requests.form', $withdrawRequest) }}" target="_blank">พิมพ์แบบฟอร์ม</a>
+      @if(! $isPrivileged && $withdrawRequest->status === 'pending')
+        <form method="POST" action="{{ route('withdraw-requests.cancel', $withdrawRequest) }}" class="d-inline" onsubmit="return confirm('ยืนยันการยกเลิกคำขอถอน {{ $withdrawRequest->request_no }} ใช่หรือไม่?');">
+          @csrf
+          @method('PATCH')
+          <button type="submit" class="btn btn-outline-danger">ยกเลิกคำขอ</button>
+        </form>
+      @endif
       @if($withdrawRequest->approvedTransaction)
         <a class="btn btn-primary" href="{{ route('transactions.show', $withdrawRequest->approvedTransaction) }}">ดูรายการถอนจริง</a>
       @endif
@@ -43,6 +52,10 @@
       @if($withdrawRequest->approvedTransaction)
         และสร้างรายการถอนจริง #{{ $withdrawRequest->approvedTransaction->transaction_id }} เรียบร้อย
       @endif
+    </div>
+  @elseif($withdrawRequest->status === 'cancelled')
+    <div class="alert alert-secondary">
+      คำขอนี้ถูกยกเลิกโดยสมาชิกแล้ว
     </div>
   @else
     <div class="alert alert-danger">

@@ -3,11 +3,13 @@
     'pending' => 'รออนุมัติ',
     'approved' => 'อนุมัติแล้ว',
     'rejected' => 'ไม่อนุมัติ',
+    'cancelled' => 'ยกเลิกแล้ว',
   ];
   $statusClasses = [
     'pending' => 'bg-warning text-dark',
     'approved' => 'bg-success',
     'rejected' => 'bg-danger',
+    'cancelled' => 'bg-secondary',
   ];
 @endphp
 
@@ -165,6 +167,13 @@
                   {{ $item->status === 'pending' && $isPrivileged ? 'พิจารณา' : 'ดูรายละเอียด' }}
                 </a>
                 <a class="btn btn-sm btn-outline-secondary" href="{{ route('withdraw-requests.form', $item) }}" target="_blank">พิมพ์แบบฟอร์ม</a>
+                @if(! $isPrivileged && $item->status === 'pending')
+                  <form method="POST" action="{{ route('withdraw-requests.cancel', $item) }}" class="d-inline" onsubmit="return confirm('ยืนยันการยกเลิกคำขอถอน {{ $item->request_no }} ใช่หรือไม่?');">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="btn btn-sm btn-outline-danger">ยกเลิกคำขอ</button>
+                  </form>
+                @endif
               </td>
             </tr>
           @empty

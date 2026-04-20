@@ -42,6 +42,9 @@ class TransactionHistoryController extends Controller
             'pageWeight' => $pageWeight,
         ] = $transactionHistoryService->indexViewMetrics($txs);
         $isPrivileged = ! $isMember;
+        $householdBalance = $householdId
+            ? (float) (Household::query()->where('household_id', $householdId)->value('total_balance') ?? 0)
+            : null;
 
         return view('transactions.index', compact(
             'txs',
@@ -54,7 +57,8 @@ class TransactionHistoryController extends Controller
             'withdrawCount',
             'pageAmount',
             'pageWeight',
-            'isPrivileged'
+            'isPrivileged',
+            'householdBalance'
         ));
     }
 

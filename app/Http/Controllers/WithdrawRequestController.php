@@ -285,6 +285,36 @@ class WithdrawRequestController extends Controller
             ->with('success', $successMessage);
     }
 
+    public function cancel(Request $request, WithdrawRequest $withdrawRequest): RedirectResponse
+    {
+        abort_unless($request->user()?->role === 'member', 403);
+        $this->authorize('view', $withdrawRequest);
+
+        if ($withdrawRequest->status !== 'pending') {
+            throw ValidationException::withMessages([
+                'status' => 'คำขอนี้ไม่อยู่ในสถานะรออนุมัติ ไม่สามารถยกเลิกได้',
+            ]);
+        }
+
+        $before = $this->snapshot($withdrawRequest);
+        $withdrawRequest->forceFill(['status' => 'cancelled'])->save();
+
+        ActivityLogger::forCurrentUser(
+            'withdraw_requests',
+            "ยกเลิกคำขอถอน {$withdrawRequest->request_no}",
+            [
+                'entity_type' => 'withdraw_request',
+                'entity_id' => (string) $withdrawRequest->withdraw_request_id,
+                'before' => $before,
+                'after' => $this->snapshot($withdrawRequest->fresh()),
+            ]
+        );
+
+        return redirect()
+            ->route('withdraw-requests.index')
+            ->with('success', "ยกเลิกคำขอถอน {$withdrawRequest->request_no} เรียบร้อยแล้ว");
+    }
+
     private function memberHousehold(Request $request, CurrentUserHouseholdResolver $currentUserHouseholdResolver): Household
     {
         $householdId = $currentUserHouseholdResolver->householdId($request);

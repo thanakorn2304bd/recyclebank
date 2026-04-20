@@ -124,6 +124,7 @@ Route::middleware(['auth', 'active', 'password.current'])->group(function () {
             ->name('households.member-additions.store');
         Route::get('withdraw-requests/create', [WithdrawRequestController::class, 'create'])->name('withdraw-requests.create');
         Route::post('withdraw-requests', [WithdrawRequestController::class, 'store'])->name('withdraw-requests.store');
+        Route::patch('withdraw-requests/{withdrawRequest}/cancel', [WithdrawRequestController::class, 'cancel'])->name('withdraw-requests.cancel');
     });
     Route::get('withdraw-requests/{withdrawRequest}', [WithdrawRequestController::class, 'show'])->name('withdraw-requests.show');
     Route::get('withdraw-requests/{withdrawRequest}/form', [WithdrawRequestController::class, 'form'])->name('withdraw-requests.form');

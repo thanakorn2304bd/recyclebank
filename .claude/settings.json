@@ -12,7 +12,13 @@
       "Bash(php -l app/Http/Controllers/WithdrawRequestController.php)",
       "Bash(php -l resources/views/withdraw_requests/create.blade.php)",
       "Bash(php -l app/Http/Requests/Auth/RegisterHouseholdRequest.php)",
-      "Bash(php -l resources/views/auth/register.blade.php)"
+      "Bash(php -l resources/views/auth/register.blade.php)",
+      "Bash(php -l app/Http/Controllers/TransactionHistoryController.php)",
+      "Bash(php -l resources/views/transactions/index.blade.php)",
+      "Bash(php -l resources/views/withdraw_requests/index.blade.php)",
+      "Bash(php -l resources/views/withdraw_requests/show.blade.php)",
+      "Bash(php -l database/migrations/2026_04_20_000001_add_cancelled_to_withdraw_request_status_enum.php)",
+      "Bash(docker exec *)"
     ]
   }
 }

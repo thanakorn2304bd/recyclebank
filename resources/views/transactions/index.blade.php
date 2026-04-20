@@ -32,9 +32,14 @@
       <div class="rb-stat-meta">จำนวนรายการถอนในหน้าปัจจุบัน</div>
     </div>
     <div class="rb-stat-card">
-      <div class="rb-stat-label">ยอดรวมในหน้า</div>
-      <div class="rb-stat-value">{{ number_format((float) $pageAmount, 2) }}</div>
-      <div class="rb-stat-meta">น้ำหนักรวม {{ number_format((float) $pageWeight, 2) }} กก.</div>
+      <div class="rb-stat-label">ยอดเงินฝากคงเหลือ</div>
+      @if($householdBalance !== null)
+        <div class="rb-stat-value">{{ number_format((float) $householdBalance, 2) }}</div>
+        <div class="rb-stat-meta">บาท ยอดคงเหลือในบัญชีของครัวเรือน</div>
+      @else
+        <div class="rb-stat-value">-</div>
+        <div class="rb-stat-meta">กรุณาเลือกครัวเรือนเพื่อดูยอดคงเหลือ</div>
+      @endif
     </div>
   </div>
 
