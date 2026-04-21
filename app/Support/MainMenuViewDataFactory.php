@@ -65,14 +65,13 @@ class MainMenuViewDataFactory
             ->with('category')
             ->joinCurrentPriceAt($date)
             ->get()
+            ->filter(fn (Material $material) => $material->current_price !== null)
             ->map(function (Material $material) {
                 return [
                     'category_name' => $material->category?->category_name ?? 'ไม่ระบุหมวด',
                     'name' => $material->material_name,
                     'unit' => $material->unit,
-                    'priceDisplay' => $material->current_price !== null
-                        ? number_format((float) $material->current_price, 2)
-                        : null,
+                    'priceDisplay' => number_format((float) $material->current_price, 2),
                 ];
             })
             ->sortBy(fn (array $item) => $item['category_name'].'|'.$item['name'])

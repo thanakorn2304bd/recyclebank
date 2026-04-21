@@ -46,7 +46,7 @@ class WithdrawSlipTest extends TestCase
             ->with('pdf.withdraw_slip_a5_landscape', Mockery::on(function (array $data) use ($withdrawTransaction) {
                 $this->assertSame($withdrawTransaction->transaction_id, $data['tx']->transaction_id);
                 $this->assertSame('กองทุนธนาคารวัสดุรีไซเคิลเทศบาลตำบลหนองไผ่', $data['orgName']);
-                $this->assertSame('ใบถอนเงิน', $data['title']);
+                $this->assertSame('ใบคำขอถอนเงิน', $data['title']);
                 $this->assertSame('ACC0000001', $data['accountNo']);
                 $this->assertSame('สมชาย ใจดี', $data['accountName']);
                 $this->assertSame(20.0, $data['amount']);

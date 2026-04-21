@@ -20,7 +20,7 @@ class TransactionPdfViewDataFactory
         return [
             'tx' => $transaction,
             'orgName' => self::ORGANIZATION_NAME,
-            'title' => 'ใบถอนเงิน',
+            'title' => 'ใบคำขอถอนเงิน',
             'accountNo' => $household?->account_no ?? '-',
             'accountName' => $household?->contact_person ?? '-',
             'amount' => $amount,
@@ -45,6 +45,7 @@ class TransactionPdfViewDataFactory
             'villageNo' => $household?->village_no ?? '..........',
             'community' => $household?->community_id ?? '..........',
             'accountNo' => $household?->account_no ?? '................................',
+            'accountName' => $household?->contact_person ?? '................................',
             'rowsPerPage' => $rowsPerPage,
             'pages' => $this->buildReceiptPages($transaction, $rowsPerPage),
         ];

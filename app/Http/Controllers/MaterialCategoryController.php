@@ -14,7 +14,13 @@ class MaterialCategoryController extends Controller
             ->orderBy('category_name')
             ->paginate(15);
 
-        return view('material_categories.index', compact('categories'));
+        $categorySequence = MaterialCategory::orderBy('category_id')
+            ->pluck('category_id')
+            ->flip()
+            ->map(fn (int $index) => $index + 1)
+            ->all();
+
+        return view('material_categories.index', compact('categories', 'categorySequence'));
     }
 
     public function create()

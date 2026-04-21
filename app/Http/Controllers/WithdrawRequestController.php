@@ -165,7 +165,7 @@ class WithdrawRequestController extends Controller
 
         $pdf = Pdf::loadView(
             'pdf.withdraw_slip_a5_landscape',
-            $withdrawRequestPdfViewDataFactory->make($withdrawRequest)
+            $withdrawRequestPdfViewDataFactory->make($withdrawRequest, $request->user())
         )->setPaper('a5', 'landscape');
 
         return $pdf->stream('withdraw-request_'.$withdrawRequest->request_no.'.pdf');

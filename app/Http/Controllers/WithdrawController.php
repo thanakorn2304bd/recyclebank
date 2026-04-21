@@ -43,7 +43,7 @@ class WithdrawController extends Controller
 
         $pdf = Pdf::loadView(
             'pdf.withdraw_slip_a5_landscape',
-            $withdrawRequestPdfViewDataFactory->make($previewRequest)
+            $withdrawRequestPdfViewDataFactory->make($previewRequest, $request->user())
         )->setPaper('a5', 'landscape');
 
         return $pdf->stream('withdraw-slip-preview.pdf');

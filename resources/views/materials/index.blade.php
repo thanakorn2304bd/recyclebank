@@ -69,7 +69,7 @@
         <div class="input-group">
           <select class="form-select" name="sort">
             <option value="">ค่าเริ่มต้น</option>
-            <option value="id" @selected($sort === 'id')>ID</option>
+            <option value="id" @selected($sort === 'id')>ลำดับ</option>
             <option value="name" @selected($sort === 'name')>ชื่อวัสดุ</option>
             <option value="category" @selected($sort === 'category')>หมวด</option>
             <option value="unit" @selected($sort === 'unit')>หน่วย</option>
@@ -107,7 +107,7 @@
           <tr>
             <th style="width:90px;" @class(['rb-sort-active' => $sortColumns['id']['active']]) aria-sort="{{ $sortColumns['id']['aria'] }}">
               <a class="rb-sort-button" href="{{ $sortColumns['id']['url'] }}">
-                <span class="rb-sort-label">ID</span>
+                <span class="rb-sort-label">ลำดับ</span>
                 <span class="rb-sort-indicator" aria-hidden="true">{{ $sortColumns['id']['indicator'] }}</span>
               </a>
             </th>
@@ -147,7 +147,7 @@
         <tbody>
           @forelse($materials as $m)
             <tr>
-              <td>{{ $m->material_id }}</td>
+              <td>{{ $materialSequence[$m->material_id] ?? '-' }}</td>
               <td>{{ $m->material_name }}</td>
               <td>{{ $m->category?->category_name }}</td>
               <td>{{ $m->unit }}</td>

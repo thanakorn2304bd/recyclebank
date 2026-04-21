@@ -42,7 +42,7 @@
       <table class="table table-striped align-middle" data-sortable-table>
         <thead>
           <tr>
-            <th style="width:120px;">ID</th>
+            <th style="width:120px;">ลำดับ</th>
             <th>ชื่อหมวด</th>
             <th style="width:200px;" data-sortable="false"></th>
           </tr>
@@ -50,7 +50,7 @@
         <tbody>
           @forelse($categories as $c)
             <tr>
-              <td>{{ $c->category_id }}</td>
+              <td>{{ $categorySequence[$c->category_id] ?? '-' }}</td>
               <td>{{ $c->category_name }}</td>
               <td class="text-end">
                 <a class="btn btn-sm btn-outline-secondary" href="{{ route('material-categories.edit', $c) }}">แก้ไข</a>

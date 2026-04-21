@@ -202,6 +202,13 @@
       font-weight: bold;
       padding: 6px 8px 8px;
     }
+
+    .printed-by {
+      margin-top: 4px;
+      text-align: right;
+      font-size: 16px;
+      color: #6b78a8;
+    }
   </style>
 </head>
 <body>
@@ -229,7 +236,7 @@
           <div class="field">เลขที่บัญชี<span class="field-fill">{{ $accountNo }}</span></div>
         </td>
         <td style="width: 42%;">
-          <div class="field">วันที่<span class="field-fill date">{{ $dateText }}</span></div>
+          <div class="field">วันที่ยื่นคำขอ<span class="field-fill date">{{ $dateText }}</span></div>
         </td>
       </tr>
       <tr>
@@ -337,6 +344,9 @@
         <td colspan="2" class="footer-note">{{ $footerNote ?? '***โปรดนำบัตรประจำตัวประชาชนไปด้วยทุกครั้งที่มีการถอนเงิน' }}</td>
       </tr>
     </table>
+    @if(! empty($printedByText))
+      <div class="printed-by">{{ $printedByText }}</div>
+    @endif
   </div>
 </body>
 </html>

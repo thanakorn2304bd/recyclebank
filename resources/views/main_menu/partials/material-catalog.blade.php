@@ -48,70 +48,72 @@
     </div>
 
     <div class="p-4 sm:p-6">
-        <div class="mb-6 rounded-3xl border border-emerald-100 bg-[linear-gradient(135deg,rgba(236,253,245,0.96),rgba(255,255,255,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-            <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-                <div>
-                    <div class="text-sm font-semibold text-emerald-900">เลือกเดือนที่ต้องการดูราคา</div>
-                    <p class="mt-1 text-xs text-emerald-700/80 sm:text-sm">
-                        เลือกดูราคาปัจจุบันหรือราคาย้อนหลังตามเดือนที่มีข้อมูลในระบบ
-                    </p>
+        @auth
+            <div class="mb-6 rounded-3xl border border-emerald-100 bg-[linear-gradient(135deg,rgba(236,253,245,0.96),rgba(255,255,255,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div>
+                        <div class="text-sm font-semibold text-emerald-900">เลือกเดือนที่ต้องการดูราคา</div>
+                        <p class="mt-1 text-xs text-emerald-700/80 sm:text-sm">
+                            เลือกดูราคาปัจจุบันหรือราคาย้อนหลังตามเดือนที่มีข้อมูลในระบบ
+                        </p>
+                    </div>
+
+                    <form method="GET" action="{{ route('main-menu') }}" class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                        <label for="price_month" class="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                            เดือนราคา
+                        </label>
+                        <select
+                            id="price_month"
+                            name="price_month"
+                            onchange="this.form.submit()"
+                            class="min-w-[13rem] rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
+                        >
+                            @foreach($priceMonthOptions as $option)
+                                <option value="{{ $option['value'] }}" @selected($option['value'] === $selectedPriceMonth)>
+                                    {{ $option['label'] }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @if($newerPriceMonth)
+                            <a
+                                href="{{ route('main-menu', ['price_month' => $newerPriceMonth['value']]) }}"
+                                class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-50"
+                            >
+                                เดือนใหม่กว่า
+                            </a>
+                        @endif
+
+                        @if($olderPriceMonth)
+                            <a
+                                href="{{ route('main-menu', ['price_month' => $olderPriceMonth['value']]) }}"
+                                class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-50"
+                            >
+                                เดือนเก่ากว่า
+                            </a>
+                        @endif
+
+                        @unless($isCurrentPriceMonth)
+                            <a
+                                href="{{ route('main-menu') }}"
+                                class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                            >
+                                กลับเดือนล่าสุด
+                            </a>
+                        @endunless
+                    </form>
                 </div>
 
-                <form method="GET" action="{{ route('main-menu') }}" class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                    <label for="price_month" class="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
-                        เดือนราคา
-                    </label>
-                    <select
-                        id="price_month"
-                        name="price_month"
-                        onchange="this.form.submit()"
-                        class="min-w-[13rem] rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-                    >
-                        @foreach($priceMonthOptions as $option)
-                            <option value="{{ $option['value'] }}" @selected($option['value'] === $selectedPriceMonth)>
-                                {{ $option['label'] }}
-                            </option>
-                        @endforeach
-                    </select>
-
-                    @if($newerPriceMonth)
-                        <a
-                            href="{{ route('main-menu', ['price_month' => $newerPriceMonth['value']]) }}"
-                            class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-50"
-                        >
-                            เดือนใหม่กว่า
-                        </a>
-                    @endif
-
-                    @if($olderPriceMonth)
-                        <a
-                            href="{{ route('main-menu', ['price_month' => $olderPriceMonth['value']]) }}"
-                            class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-50"
-                        >
-                            เดือนเก่ากว่า
-                        </a>
-                    @endif
-
-                    @unless($isCurrentPriceMonth)
-                        <a
-                            href="{{ route('main-menu') }}"
-                            class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-                        >
-                            กลับเดือนล่าสุด
-                        </a>
-                    @endunless
-                </form>
+                <div class="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium text-emerald-700/80">
+                    <span class="rounded-full border border-emerald-200 bg-white/80 px-3 py-1">
+                        กำลังแสดง: <span class="font-semibold text-emerald-900">{{ $selectedPriceMonthLabel }}</span>
+                    </span>
+                    <span class="rounded-full border border-emerald-200 bg-white/80 px-3 py-1">
+                        อ้างอิงวันที่ {{ $selectedPriceDateLabel }}
+                    </span>
+                </div>
             </div>
-
-            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium text-emerald-700/80">
-                <span class="rounded-full border border-emerald-200 bg-white/80 px-3 py-1">
-                    กำลังแสดง: <span class="font-semibold text-emerald-900">{{ $selectedPriceMonthLabel }}</span>
-                </span>
-                <span class="rounded-full border border-emerald-200 bg-white/80 px-3 py-1">
-                    อ้างอิงวันที่ {{ $selectedPriceDateLabel }}
-                </span>
-            </div>
-        </div>
+        @endauth
 
         @if($totalCategories > 1)
             <div class="mb-6 rounded-3xl border border-emerald-100 bg-[linear-gradient(135deg,rgba(236,253,245,0.96),rgba(255,255,255,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
@@ -209,12 +211,8 @@
                                 <div class="text-base font-semibold break-words text-emerald-900">{{ $item['name'] }}</div>
                                 <div class="mt-1 text-sm text-emerald-700">
                                     ราคา/หน่วย:
-                                    @if($item['priceDisplay'] !== null)
-                                        <span class="font-semibold text-emerald-900">{{ $item['priceDisplay'] }}</span>
-                                        <span class="text-emerald-700">บาท/{{ $item['unit'] }}</span>
-                                    @else
-                                        <span class="text-amber-600">ยังไม่มีราคา</span>
-                                    @endif
+                                    <span class="font-semibold text-emerald-900">{{ $item['priceDisplay'] }}</span>
+                                    <span class="text-emerald-700">บาท/{{ $item['unit'] }}</span>
                                 </div>
                             </div>
                         @endforeach

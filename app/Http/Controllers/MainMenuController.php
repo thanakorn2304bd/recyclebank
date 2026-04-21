@@ -16,7 +16,7 @@ class MainMenuController extends Controller
     public function __invoke(Request $request): View|RedirectResponse
     {
         $user = $request->user();
-        $priceMonth = trim($request->string('price_month')->toString()) ?: null;
+        $priceMonth = $user ? (trim($request->string('price_month')->toString()) ?: null) : null;
 
         if ($user?->force_password_reset) {
             return redirect()->route('account.password.edit');

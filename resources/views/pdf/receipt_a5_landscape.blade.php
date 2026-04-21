@@ -206,9 +206,6 @@
     <div class="box">
       <div class="box-title">{{ $title }}</div>
 
-      <div class="row">
-        <div class="grow">บ้านเลขที่ {{ $houseNo }} หมู่ {{ $villageNo }} ชุมชนที่ {{ $community }}</div>
-      </div>
       <table class="meta-table">
         <colgroup>
           <col style="width:55%;">
@@ -216,6 +213,10 @@
           <col style="width:15%;">
           <col style="width:15%;">
         </colgroup>
+        <tr>
+          <td colspan="2">บ้านเลขที่ {{ $houseNo }} หมู่ {{ $villageNo }} ชุมชนที่ {{ $community }}</td>
+          <td colspan="2">ชื่อเจ้าของบัญชี {{ $accountName }}</td>
+        </tr>
         <tr>
           <td colspan="2">เลขที่บัญชี {{ $accountNo }}</td>
           <td class="meta-date date-right">

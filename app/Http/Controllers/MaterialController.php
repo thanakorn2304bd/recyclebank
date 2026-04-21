@@ -57,6 +57,12 @@ class MaterialController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $materialSequence = Material::orderBy('material_id')
+            ->pluck('material_id')
+            ->flip()
+            ->map(fn (int $index) => $index + 1)
+            ->all();
+
         $categories = MaterialCategory::orderBy('category_name')->get();
         [
             'activeCount' => $activeCount,
@@ -73,7 +79,8 @@ class MaterialController extends Controller
             'dir',
             'activeCount',
             'inactiveCount',
-            'sortColumns'
+            'sortColumns',
+            'materialSequence'
         ));
     }
 

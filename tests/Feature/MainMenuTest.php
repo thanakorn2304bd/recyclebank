@@ -83,7 +83,7 @@ class MainMenuTest extends TestCase
             ->assertDontSeeText('รายการวัสดุและราคา');
     }
 
-    public function test_guest_can_view_material_prices_for_a_selected_past_month(): void
+    public function test_guest_price_month_query_is_ignored_and_current_month_is_shown(): void
     {
         Carbon::setTestNow('2026-04-15 09:30:00');
 
@@ -134,10 +134,9 @@ class MainMenuTest extends TestCase
 
             $this->get(route('main-menu', ['price_month' => '2026-03']))
                 ->assertOk()
-                ->assertSeeText('มีนาคม 2569')
-                ->assertSeeText('31/03/2026')
-                ->assertSeeText('125.50')
-                ->assertDontSeeText('140.75');
+                ->assertDontSeeText('เลือกเดือนที่ต้องการดูราคา')
+                ->assertSeeText('140.75')
+                ->assertDontSeeText('125.50');
         } finally {
             Carbon::setTestNow();
         }
