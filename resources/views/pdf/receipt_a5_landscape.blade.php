@@ -195,6 +195,14 @@
       border-top: none;
       padding: 0.5mm 0.5mm;
     }
+
+    .printed-by {
+      margin-top: 0.4mm;
+      text-align: right;
+      font-size: 18px;
+      color: #555;
+      line-height: 1;
+    }
   </style>
 </head>
 <body>
@@ -293,6 +301,9 @@
         </table>
       </div>
     </div>
+    @if(! empty($printedByText))
+      <div class="printed-by">{{ $printedByText }}</div>
+    @endif
   </div>
 
   @if($pageIndex < $pages->count() - 1)

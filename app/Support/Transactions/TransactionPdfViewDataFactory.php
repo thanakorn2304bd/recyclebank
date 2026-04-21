@@ -3,8 +3,10 @@
 namespace App\Support\Transactions;
 
 use App\Models\Transaction;
+use App\Models\UserAccount;
 use App\Support\ThaiBaht;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -12,7 +14,7 @@ class TransactionPdfViewDataFactory
 {
     private const ORGANIZATION_NAME = 'กองทุนธนาคารวัสดุรีไซเคิลเทศบาลตำบลหนองไผ่';
 
-    public function withdrawSlip(Transaction $transaction): array
+    public function withdrawSlip(Transaction $transaction, ?UserAccount $printedBy = null): array
     {
         $household = $transaction->household;
         $amount = round((float) $transaction->total_amount, 2);
@@ -29,10 +31,11 @@ class TransactionPdfViewDataFactory
             'officerName' => $transaction->recordedByUser?->staff?->full_name
                 ?? $transaction->recordedByUser?->username
                 ?? '',
+            'printedByText' => $this->printedByText($printedBy),
         ];
     }
 
-    public function receipt(Transaction $transaction, int $rowsPerPage = 7): array
+    public function receipt(Transaction $transaction, int $rowsPerPage = 7, ?UserAccount $printedBy = null): array
     {
         $household = $transaction->household;
 
@@ -48,7 +51,21 @@ class TransactionPdfViewDataFactory
             'accountName' => $household?->contact_person ?? '................................',
             'rowsPerPage' => $rowsPerPage,
             'pages' => $this->buildReceiptPages($transaction, $rowsPerPage),
+            'printedByText' => $this->printedByText($printedBy),
         ];
+    }
+
+    private function printedByText(?UserAccount $printedBy): string
+    {
+        $name = $printedBy?->staff?->full_name
+            ?? $printedBy?->household?->contact_person
+            ?? $printedBy?->username;
+
+        if (! $name) {
+            return '';
+        }
+
+        return 'พิมพ์โดย '.$name.' เมื่อ '.CarbonImmutable::now()->format('d/m/Y H:i');
     }
 
     private function buildReceiptPages(Transaction $transaction, int $rowsPerPage): Collection
