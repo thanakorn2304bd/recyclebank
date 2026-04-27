@@ -197,8 +197,10 @@
     }
 
     .printed-by {
-      margin-top: 0.4mm;
-      text-align: right;
+      position: fixed;
+      top: 0;
+      left: 0;
+      text-align: left;
       font-size: 18px;
       color: #555;
       line-height: 1;
@@ -301,14 +303,14 @@
         </table>
       </div>
     </div>
-    @if(! empty($printedByText))
-      <div class="printed-by">{{ $printedByText }}</div>
-    @endif
   </div>
 
   @if($pageIndex < $pages->count() - 1)
     <div style="page-break-after: always;"></div>
   @endif
 @endforeach
+@if(! empty($printedByText))
+  <div class="printed-by">{{ $printedByText }}</div>
+@endif
 </body>
 </html>

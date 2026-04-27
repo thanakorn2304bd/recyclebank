@@ -24,8 +24,9 @@ class AdminUserController extends Controller
             'status' => $status,
         ]);
         $roleLabels = $adminUserViewDataFactory->roleLabels();
+        $staffOptions = $adminUserService->staffOptions();
 
-        return view('admin.users.index', compact('users', 'summary', 'q', 'role', 'status', 'roleLabels'));
+        return view('admin.users.index', compact('users', 'summary', 'q', 'role', 'status', 'roleLabels', 'staffOptions'));
     }
 
     public function storeStaff(
@@ -34,15 +35,16 @@ class AdminUserController extends Controller
     ): RedirectResponse {
         $payload = $request->payload();
         $createdUser = $adminUserService->createStaffAccount($payload);
+        $staffName = $createdUser->staff?->full_name ?? '';
 
         ActivityLogger::forCurrentUser(
             'admin.users',
-            "เพิ่มบัญชีเจ้าหน้าที่ {$createdUser->username} ({$payload['full_name']})"
+            "เพิ่มบัญชีเจ้าหน้าที่ {$createdUser->username} ({$staffName})"
         );
 
         return redirect()
             ->route('admin.users.index')
-            ->with('success', "เพิ่มบัญชี staff สำหรับ {$payload['full_name']} เรียบร้อย");
+            ->with('success', "เพิ่มบัญชีเจ้าหน้าที่สำหรับ {$staffName} เรียบร้อย");
     }
 
     public function toggleActive(UserAccount $user): RedirectResponse

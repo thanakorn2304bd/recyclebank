@@ -56,10 +56,14 @@ class AdminMonitoringTest extends TestCase
     {
         ['admin' => $adminUser] = $this->seedAdminMonitoringFixtures();
 
-        $response = $this->actingAs($adminUser)->post(route('admin.users.store-staff'), [
+        $existingStaffId = DB::table('staff')->insertGetId([
             'full_name' => 'เจ้าหน้าที่ใหม่',
             'phone' => '0801234567',
             'position' => 'เจ้าหน้าที่ประจำจุดรับซื้อ',
+        ]);
+
+        $response = $this->actingAs($adminUser)->post(route('admin.users.store-staff'), [
+            'staff_id' => $existingStaffId,
             'username' => 'staff.new',
             'password' => 'password123',
             'password_confirmation' => 'password123',
@@ -80,7 +84,7 @@ class AdminMonitoringTest extends TestCase
         $this->assertTrue((bool) $createdUser->is_active);
         $this->assertTrue((bool) $createdUser->force_password_reset);
         $this->assertNull($createdUser->household_id);
-        $this->assertNotNull($createdUser->staff_id);
+        $this->assertSame($existingStaffId, $createdUser->staff_id);
         $this->assertTrue(Hash::check('password123', $createdUser->password));
         $this->assertNotNull($createdUser->password_changed_at);
         $this->assertSame('เจ้าหน้าที่ใหม่', $createdUser->staff?->full_name);

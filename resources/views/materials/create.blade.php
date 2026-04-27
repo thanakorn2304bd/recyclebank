@@ -33,8 +33,8 @@
     <div class="mb-3">
       <label class="form-label">สถานะ</label>
       <select class="form-select" name="is_active" required>
-        <option value="1" @selected(old('is_active','1')=='1')>ใช้งาน</option>
-        <option value="0" @selected(old('is_active')==='0')>ปิด</option>
+        <option value="1" @selected(old('is_active','1')=='1')>รับซื้อ</option>
+        <option value="0" @selected(old('is_active')==='0')>ปิดการรับซื้อ</option>
       </select>
     </div>
 

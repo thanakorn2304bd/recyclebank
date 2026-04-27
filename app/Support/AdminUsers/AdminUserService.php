@@ -4,6 +4,7 @@ namespace App\Support\AdminUsers;
 
 use App\Models\Staff;
 use App\Models\UserAccount;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class AdminUserService
@@ -57,13 +58,7 @@ class AdminUserService
     public function createStaffAccount(array $payload): UserAccount
     {
         return DB::transaction(function () use ($payload) {
-            $staff = Staff::create([
-                'full_name' => $payload['full_name'],
-                'phone' => $payload['phone'] !== '' ? $payload['phone'] : null,
-                'position' => $payload['position'] !== '' && $payload['position'] !== null
-                    ? $payload['position']
-                    : 'เจ้าหน้าที่',
-            ]);
+            $staff = Staff::query()->findOrFail($payload['staff_id']);
 
             $userAccount = UserAccount::create([
                 'username' => $payload['username'],
@@ -82,5 +77,19 @@ class AdminUserService
 
             return $userAccount->load('staff');
         });
+    }
+
+    public function staffOptions(): Collection
+    {
+        return Staff::query()
+            ->orderBy('full_name')
+            ->get(['staff_id', 'full_name', 'phone', 'position'])
+            ->map(fn (Staff $staff) => [
+                'id' => $staff->staff_id,
+                'name' => $staff->full_name,
+                'phone' => $staff->phone,
+                'position' => $staff->position,
+            ])
+            ->values();
     }
 }

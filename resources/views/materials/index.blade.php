@@ -161,9 +161,9 @@
               </td>
               <td>
                 @if($m->is_active)
-                  <span class="badge bg-success">ใช้งาน</span>
+                  <span class="badge bg-success">รับซื้อ</span>
                 @else
-                  <span class="badge bg-secondary">ปิด</span>
+                  <span class="badge bg-secondary">ปิดการรับซื้อ</span>
                 @endif
               </td>
               <td class="text-end">

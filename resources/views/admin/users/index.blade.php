@@ -8,7 +8,7 @@
       </p>
     </div>
     <div class="rb-page-actions">
-      <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createStaffAccountModal">+ เพิ่มบัญชี staff</button>
+      <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createStaffAccountModal">+ เพิ่มบัญชีเจ้าหน้าที่</button>
       <a class="btn btn-outline-secondary" href="{{ route('admin.staff.index') }}">ดูข้อมูลเจ้าหน้าที่</a>
       <a class="btn btn-outline-secondary" href="{{ route('admin.activity-logs.index') }}">ดู Activity Log</a>
       <a class="btn btn-outline-secondary" href="{{ route('main-menu') }}">กลับเมนูหลัก</a>

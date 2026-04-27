@@ -17,9 +17,7 @@ class StoreStaffAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'full_name' => ['required', 'string', 'max:100'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'position' => ['nullable', 'string', 'max:50'],
+            'staff_id' => ['required', Rule::exists('staff', 'staff_id')],
             'username' => [
                 'required',
                 'string',
@@ -35,7 +33,8 @@ class StoreStaffAccountRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'full_name.required' => 'กรุณากรอกชื่อเจ้าหน้าที่',
+            'staff_id.required' => 'กรุณาเลือกเจ้าหน้าที่',
+            'staff_id.exists' => 'ไม่พบเจ้าหน้าที่ที่เลือก',
             'username.required' => 'กรุณากรอกชื่อผู้ใช้',
             'username.unique' => 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว',
             'username.regex' => 'ชื่อผู้ใช้ใช้ได้เฉพาะตัวอักษรอังกฤษ ตัวเลข จุด ขีดล่าง และขีดกลาง',
@@ -51,9 +50,7 @@ class StoreStaffAccountRequest extends FormRequest
         $validated = $this->validated();
 
         return [
-            'full_name' => trim((string) $validated['full_name']),
-            'phone' => $this->filled('phone') ? trim((string) $validated['phone']) : null,
-            'position' => $this->filled('position') ? trim((string) $validated['position']) : null,
+            'staff_id' => (int) $validated['staff_id'],
             'username' => trim((string) $validated['username']),
             'password' => (string) $validated['password'],
             'is_active' => $validated['account_status'] === 'active',
@@ -63,9 +60,7 @@ class StoreStaffAccountRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'full_name' => trim((string) $this->input('full_name', '')),
-            'phone' => $this->filled('phone') ? trim((string) $this->input('phone')) : null,
-            'position' => $this->filled('position') ? trim((string) $this->input('position')) : null,
+            'staff_id' => $this->filled('staff_id') ? (int) $this->input('staff_id') : null,
             'username' => trim((string) $this->input('username', '')),
             'account_status' => $this->filled('account_status') ? trim((string) $this->input('account_status')) : null,
         ]);
