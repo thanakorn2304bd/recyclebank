@@ -202,7 +202,7 @@ class MainMenuViewDataFactory
         $pdpaEnabled = (bool) config('features.pdpa', false);
 
         return match ($authUser?->role) {
-            'admin' => $pdpaEnabled ? 12 : 11,
+            'admin' => $pdpaEnabled ? 10 : 9,
             'staff' => $pdpaEnabled ? 8 : 7,
             default => 0,
         };

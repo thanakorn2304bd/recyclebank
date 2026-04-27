@@ -19,7 +19,8 @@
       "Bash(php -l resources/views/withdraw_requests/show.blade.php)",
       "Bash(php -l database/migrations/2026_04_20_000001_add_cancelled_to_withdraw_request_status_enum.php)",
       "Bash(docker exec *)",
-      "Bash(./vendor/bin/pint resources/views/admin/users/partials/create-staff-modal.blade.php app/Http/Controllers/AdminUserController.php app/Http/Requests/StoreStaffAccountRequest.php app/Support/AdminUsers/AdminUserService.php tests/Feature/AdminMonitoringTest.php)"
+      "Bash(./vendor/bin/pint resources/views/admin/users/partials/create-staff-modal.blade.php app/Http/Controllers/AdminUserController.php app/Http/Requests/StoreStaffAccountRequest.php app/Support/AdminUsers/AdminUserService.php tests/Feature/AdminMonitoringTest.php)",
+      "Bash(./vendor/bin/pint app/Support/MainMenuViewDataFactory.php resources/views/main_menu/partials/privileged/system-menu.blade.php)"
     ]
   }
 }

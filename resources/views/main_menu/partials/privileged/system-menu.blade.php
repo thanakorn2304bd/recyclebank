@@ -1,55 +1,109 @@
 <div class="grid gap-4 md:grid-cols-2">
-    <a href="{{ route('deposits.create') }}" class="group relative overflow-hidden rounded-[28px] bg-[linear-gradient(140deg,#059669_0%,#10b981_70%,#6ee7b7_125%)] p-5 text-white shadow-[0_18px_50px_rgba(16,185,129,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(16,185,129,0.28)]">
-        <div class="absolute -right-10 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl"></div>
-        <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white shadow-inner shadow-emerald-900/10">
-            <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M12 4v16m8-8H4"/>
-            </svg>
-        </span>
-        <div class="relative mt-6">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <div class="text-xl font-bold">รับซื้อวัสดุรีไซเคิ้ล</div>
-                    <p class="mt-2 text-sm leading-6 text-emerald-50/90">
-                        เริ่มบันทึกรายการรับซื้อ ชั่งน้ำหนัก และคำนวณยอดฝากของครัวเรือนได้ทันที
-                    </p>
-                </div>
-                <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">เมนูหลัก</span>
-            </div>
-            <div class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
-                เปิดหน้ารับซื้อ
-                <svg class="h-4 w-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+    @if($authUser?->role === 'admin')
+        <a href="{{ route('admin.users.index') }}" class="group relative overflow-hidden rounded-[28px] bg-[linear-gradient(140deg,#0284c7_0%,#0ea5e9_70%,#7dd3fc_125%)] p-5 text-white shadow-[0_18px_50px_rgba(14,165,233,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(14,165,233,0.28)]">
+            <div class="absolute -right-10 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl"></div>
+            <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white shadow-inner shadow-sky-900/10">
+                <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M17 20h5V9l-5-4M17 20H7m10 0v-6a2 2 0 00-2-2h-2a2 2 0 00-2 2v6M7 20H2V5a2 2 0 012-2h8l5 4M9 9h1m4 0h1m-6 4h6"/>
                 </svg>
+            </span>
+            <div class="relative mt-6">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-xl font-bold">บัญชีผู้ใช้ทั้งหมด</div>
+                        <p class="mt-2 text-sm leading-6 text-sky-50/90">
+                            ดูรายชื่อผู้ใช้ทุก role พร้อมสถานะ การเข้าใช้ล่าสุด และลิงก์ไปยัง log ของแต่ละบัญชี
+                        </p>
+                    </div>
+                    <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">เมนูหลัก</span>
+                </div>
+                <div class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
+                    เปิดหน้าบัญชีผู้ใช้
+                    <svg class="h-4 w-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
             </div>
-        </div>
-    </a>
+        </a>
 
-    <a href="{{ route('withdraws.create') }}" class="group relative overflow-hidden rounded-[28px] bg-[linear-gradient(140deg,#f59e0b_0%,#f97316_68%,#fdba74_130%)] p-5 text-white shadow-[0_18px_50px_rgba(249,115,22,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(249,115,22,0.26)]">
-        <div class="absolute -right-10 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl"></div>
-        <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white shadow-inner shadow-amber-950/10">
-            <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M20 12H4"/>
-            </svg>
-        </span>
-        <div class="relative mt-6">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <div class="text-xl font-bold">ถอน</div>
-                    <p class="mt-2 text-sm leading-6 text-amber-50/90">
-                        ดำเนินการถอนยอดสะสมของสมาชิก พร้อมตรวจสอบข้อมูลก่อนยืนยันรายการ
-                    </p>
-                </div>
-                <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">เมนูหลัก</span>
-            </div>
-            <div class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
-                เปิดหน้าถอน
-                <svg class="h-4 w-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+        <a href="{{ route('admin.activity-logs.index') }}" class="group relative overflow-hidden rounded-[28px] bg-[linear-gradient(140deg,#7c3aed_0%,#a855f7_68%,#d8b4fe_130%)] p-5 text-white shadow-[0_18px_50px_rgba(168,85,247,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(168,85,247,0.26)]">
+            <div class="absolute -right-10 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl"></div>
+            <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white shadow-inner shadow-purple-950/10">
+                <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
+            </span>
+            <div class="relative mt-6">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-xl font-bold">Activity Log</div>
+                        <p class="mt-2 text-sm leading-6 text-purple-50/90">
+                            ตรวจสอบได้ว่าใครเข้าสู่ระบบ สร้าง แก้ไข หรือลบข้อมูลอะไรในระบบบ้าง
+                        </p>
+                    </div>
+                    <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">เมนูหลัก</span>
+                </div>
+                <div class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
+                    เปิดหน้า Activity Log
+                    <svg class="h-4 w-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
             </div>
-        </div>
-    </a>
+        </a>
+    @else
+        <a href="{{ route('deposits.create') }}" class="group relative overflow-hidden rounded-[28px] bg-[linear-gradient(140deg,#059669_0%,#10b981_70%,#6ee7b7_125%)] p-5 text-white shadow-[0_18px_50px_rgba(16,185,129,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(16,185,129,0.28)]">
+            <div class="absolute -right-10 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl"></div>
+            <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white shadow-inner shadow-emerald-900/10">
+                <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M12 4v16m8-8H4"/>
+                </svg>
+            </span>
+            <div class="relative mt-6">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-xl font-bold">รับซื้อวัสดุรีไซเคิ้ล</div>
+                        <p class="mt-2 text-sm leading-6 text-emerald-50/90">
+                            เริ่มบันทึกรายการรับซื้อ ชั่งน้ำหนัก และคำนวณยอดฝากของครัวเรือนได้ทันที
+                        </p>
+                    </div>
+                    <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">เมนูหลัก</span>
+                </div>
+                <div class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
+                    เปิดหน้ารับซื้อ
+                    <svg class="h-4 w-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ route('withdraws.create') }}" class="group relative overflow-hidden rounded-[28px] bg-[linear-gradient(140deg,#f59e0b_0%,#f97316_68%,#fdba74_130%)] p-5 text-white shadow-[0_18px_50px_rgba(249,115,22,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(249,115,22,0.26)]">
+            <div class="absolute -right-10 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl"></div>
+            <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white shadow-inner shadow-amber-950/10">
+                <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M20 12H4"/>
+                </svg>
+            </span>
+            <div class="relative mt-6">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-xl font-bold">ถอน</div>
+                        <p class="mt-2 text-sm leading-6 text-amber-50/90">
+                            ดำเนินการถอนยอดสะสมของสมาชิก พร้อมตรวจสอบข้อมูลก่อนยืนยันรายการ
+                        </p>
+                    </div>
+                    <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">เมนูหลัก</span>
+                </div>
+                <div class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
+                    เปิดหน้าถอน
+                    <svg class="h-4 w-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </div>
+        </a>
+    @endif
 </div>
 
 <section>
@@ -169,40 +223,6 @@
         </a>
 
         @if($authUser?->role === 'admin')
-            <a href="{{ route('admin.users.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-sky-200 hover:shadow-[0_20px_40px_rgba(14,165,233,0.12)]">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M17 20h5V9l-5-4M17 20H7m10 0v-6a2 2 0 00-2-2h-2a2 2 0 00-2 2v6M7 20H2V5a2 2 0 012-2h8l5 4M9 9h1m4 0h1m-6 4h6"/>
-                    </svg>
-                </span>
-                <div class="mt-4 flex items-start justify-between gap-3">
-                    <div>
-                        <div class="text-lg font-bold text-slate-900">บัญชีผู้ใช้ทั้งหมด</div>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">ดูรายชื่อผู้ใช้ทุก role พร้อมสถานะ การเข้าใช้ล่าสุด และลิงก์ไปยัง log ของแต่ละบัญชี</p>
-                    </div>
-                    <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </div>
-            </a>
-
-            <a href="{{ route('admin.activity-logs.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-amber-200 hover:shadow-[0_20px_40px_rgba(245,158,11,0.12)]">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </span>
-                <div class="mt-4 flex items-start justify-between gap-3">
-                    <div>
-                        <div class="text-lg font-bold text-slate-900">Activity Log</div>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">ตรวจสอบได้ว่าใครเข้าสู่ระบบ สร้าง แก้ไข หรือลบข้อมูลอะไรในระบบบ้าง</p>
-                    </div>
-                    <svg class="mt-1 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </div>
-            </a>
-
             <a href="{{ route('admin.communities.index') }}" class="group rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-[0_20px_40px_rgba(16,185,129,0.12)]">
                 <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
